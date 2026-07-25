@@ -10,6 +10,14 @@ import {
   sweepPnJunction,
   validatePnConfig,
 } from "../src/ddm-core.js";
+import { createNiceScale, formatChartTick } from "../src/plot-utils.js";
+
+const voltageScale = createNiceScale([-1, 0.65], 8);
+assert.deepEqual(voltageScale.ticks, [-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75]);
+const currentScale = createNiceScale([-1e-12, 2.9], 7, true);
+assert.deepEqual(currentScale.ticks, [0, 0.5, 1, 1.5, 2, 2.5, 3]);
+assert.equal(formatChartTick(-0.75, voltageScale.step), "-0.75");
+assert.equal(formatChartTick(0, voltageScale.step), "0");
 
 assert.equal(bernoulli(0), 1);
 for (const x of [-80, -4, -0.2, 0.2, 4, 80]) {

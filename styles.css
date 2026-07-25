@@ -456,10 +456,11 @@ sub {
 .plot-card {
   min-width: 0;
   margin: 0;
-  padding: 12px;
+  padding: 16px;
   border: 1px solid var(--border);
-  border-radius: 11px;
+  border-radius: 12px;
   background: var(--surface);
+  box-shadow: 0 8px 24px rgb(31 70 79 / 0.06);
 }
 
 .plot-wide {
@@ -475,10 +476,11 @@ sub {
 }
 
 .plot-card figcaption {
-  padding: 5px 5px 0;
+  padding: 10px 4px 0;
   color: var(--muted);
   font-size: 0.77rem;
-  font-weight: 700;
+  font-weight: 600;
+  line-height: 1.45;
 }
 
 .cursor-readout {

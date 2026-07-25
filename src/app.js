@@ -6,6 +6,7 @@ import {
   solvePnJunction1D,
   validatePnConfig,
 } from "./ddm-core.js";
+import { createNiceScale, formatChartTick } from "./plot-utils.js";
 
 const LESSONS = Object.freeze({
   equilibrium: {
@@ -471,6 +472,7 @@ function renderJv(sweep) {
     x: voltage,
     xLabel: "V_D (V)",
     yLabel: "I_D (mA)",
+    includeZero: true,
     series: [
       { label: "DD + SRH", values: current, color: "#087e8b" },
       { label: "Shockley", values: reference, color: "#ca7b00", dash: [7, 4] },
@@ -606,7 +608,7 @@ function downloadBlob(content, type, filename) {
 
 function drawLineChart(canvas, specification) {
   const { context, width, height } = prepareCanvas(canvas);
-  const pad = { left: 74, right: 22, top: 46, bottom: 52 };
+  const pad = { left: 86, right: 18, top: 48, bottom: 58 };
   const plotWidth = width - pad.left - pad.right;
   const plotHeight = height - pad.top - pad.bottom;
   const transform = specification.transform ?? linearTransform();
@@ -615,48 +617,49 @@ function drawLineChart(canvas, specification) {
   for (const series of specification.series) {
     for (const value of series.values) if (Number.isFinite(value) && transform.valid(value)) yValues.push(transform.forward(value));
   }
-  const xRange = paddedRange(xValues, 0.02);
-  const yRange = paddedRange(yValues, 0.08);
+  const xScale = createNiceScale(xValues, 8);
+  const yScale = createNiceScale(yValues, 7, specification.includeZero);
+  const mapX = (value) => pad.left + ((value - xScale.min) / (xScale.max - xScale.min)) * plotWidth;
+  const mapY = (value) => pad.top + plotHeight - ((value - yScale.min) / (yScale.max - yScale.min)) * plotHeight;
 
   context.clearRect(0, 0, width, height);
   context.fillStyle = "#ffffff";
   context.fillRect(0, 0, width, height);
-  context.strokeStyle = "#dce6e8";
-  context.lineWidth = 1;
-  context.font = "700 11px Inter, system-ui, sans-serif";
-  context.fillStyle = "#60747b";
+  context.font = "600 11px Inter, system-ui, sans-serif";
+  context.fillStyle = "#52676e";
 
-  for (let tick = 0; tick <= 5; tick += 1) {
-    const fraction = tick / 5;
-    const x = pad.left + fraction * plotWidth;
-    const y = pad.top + fraction * plotHeight;
+  for (const tick of xScale.ticks) {
+    const x = mapX(tick);
+    context.strokeStyle = tick === 0 ? "#b8c7cb" : "#e8eef0";
+    context.lineWidth = tick === 0 ? 1.2 : 1;
     drawLine(context, x, pad.top, x, pad.top + plotHeight);
-    drawLine(context, pad.left, y, pad.left + plotWidth, y);
     context.textAlign = "center";
-    context.fillText(formatAxis(xRange.min + fraction * (xRange.max - xRange.min)), x, height - 29);
+    context.fillText(formatChartTick(tick, xScale.step), x, pad.top + plotHeight + 21);
+  }
+  for (const tick of yScale.ticks) {
+    const y = mapY(tick);
+    context.strokeStyle = tick === 0 ? "#b8c7cb" : "#e8eef0";
+    context.lineWidth = tick === 0 ? 1.2 : 1;
+    drawLine(context, pad.left, y, pad.left + plotWidth, y);
     context.textAlign = "right";
-    const transformedY = yRange.max - fraction * (yRange.max - yRange.min);
-    context.fillText(formatAxis(transform.inverse(transformedY)), pad.left - 9, y + 4);
+    const labelStep = transform.kind === "linear" ? yScale.step : 0;
+    context.fillText(formatChartTick(transform.inverse(tick), labelStep), pad.left - 11, y + 4);
   }
 
-  context.strokeStyle = "#263a41";
-  context.lineWidth = 1.4;
+  context.strokeStyle = "#334a51";
+  context.lineWidth = 1.25;
   drawLine(context, pad.left, pad.top + plotHeight, pad.left + plotWidth, pad.top + plotHeight);
   drawLine(context, pad.left, pad.top, pad.left, pad.top + plotHeight);
 
-  if (transform.valid(0)) {
-    const zero = transform.forward(0);
-    if (zero >= yRange.min && zero <= yRange.max) {
-      const y = pad.top + plotHeight - ((zero - yRange.min) / (yRange.max - yRange.min)) * plotHeight;
-      context.strokeStyle = "#8da0a6";
-      context.lineWidth = 1;
-      drawLine(context, pad.left, y, pad.left + plotWidth, y);
-    }
-  }
-
+  context.save();
+  context.beginPath();
+  context.rect(pad.left, pad.top, plotWidth, plotHeight);
+  context.clip();
+  context.lineJoin = "round";
+  context.lineCap = "round";
   for (const series of specification.series) {
     context.strokeStyle = series.color;
-    context.lineWidth = 2.4;
+    context.lineWidth = 2.6;
     context.setLineDash(series.dash ?? []);
     context.beginPath();
     let drawing = false;
@@ -667,37 +670,38 @@ function drawLineChart(canvas, specification) {
         drawing = false;
         continue;
       }
-      const x = pad.left + ((xValue - xRange.min) / (xRange.max - xRange.min)) * plotWidth;
+      const x = mapX(xValue);
       const transformedY = transform.forward(yValue);
-      const y = pad.top + plotHeight - ((transformedY - yRange.min) / (yRange.max - yRange.min)) * plotHeight;
+      const y = mapY(transformedY);
       if (!drawing) context.moveTo(x, y);
       else context.lineTo(x, y);
       drawing = true;
     }
     context.stroke();
   }
+  context.restore();
   context.setLineDash([]);
 
   context.textAlign = "center";
   context.fillStyle = "#20343b";
-  context.font = "800 12px Inter, system-ui, sans-serif";
-  context.fillText(specification.xLabel, pad.left + plotWidth / 2, height - 9);
+  context.font = "700 12px Inter, system-ui, sans-serif";
+  context.fillText(specification.xLabel, pad.left + plotWidth / 2, height - 10);
   context.save();
-  context.translate(15, pad.top + plotHeight / 2);
+  context.translate(17, pad.top + plotHeight / 2);
   context.rotate(-Math.PI / 2);
   context.fillText(specification.yLabel, 0, 0);
   context.restore();
 
   let legendX = pad.left;
   context.textAlign = "left";
-  context.font = "800 11px Inter, system-ui, sans-serif";
+  context.font = "700 11px Inter, system-ui, sans-serif";
   for (const series of specification.series) {
     context.strokeStyle = series.color;
     context.lineWidth = 3;
     context.setLineDash(series.dash ?? []);
     drawLine(context, legendX, 20, legendX + 22, 20);
     context.setLineDash([]);
-    context.fillStyle = "#33484f";
+    context.fillStyle = "#40555c";
     context.fillText(series.label, legendX + 28, 24);
     legendX += 42 + context.measureText(series.label).width;
   }
@@ -748,11 +752,12 @@ function updateCursorReadout(event) {
 }
 
 function linearTransform() {
-  return { forward: (value) => value, inverse: (value) => value, valid: Number.isFinite };
+  return { kind: "linear", forward: (value) => value, inverse: (value) => value, valid: Number.isFinite };
 }
 
 function logTransform() {
   return {
+    kind: "log",
     forward: (value) => Math.log10(value),
     inverse: (value) => 10 ** value,
     valid: (value) => Number.isFinite(value) && value > 0,
@@ -761,22 +766,11 @@ function logTransform() {
 
 function symlogTransform(linear) {
   return {
+    kind: "symlog",
     forward: (value) => Math.sign(value) * Math.log10(1 + Math.abs(value) / linear),
     inverse: (value) => Math.sign(value) * linear * (10 ** Math.abs(value) - 1),
     valid: Number.isFinite,
   };
-}
-
-function paddedRange(values, fraction) {
-  if (!values.length) return { min: -1, max: 1 };
-  let min = Math.min(...values);
-  let max = Math.max(...values);
-  if (min === max) {
-    const padding = Math.max(1, Math.abs(min) * 0.1);
-    return { min: min - padding, max: max + padding };
-  }
-  const padding = (max - min) * fraction;
-  return { min: min - padding, max: max + padding };
 }
 
 function drawLine(context, x1, y1, x2, y2) {
@@ -784,13 +778,6 @@ function drawLine(context, x1, y1, x2, y2) {
   context.moveTo(x1, y1);
   context.lineTo(x2, y2);
   context.stroke();
-}
-
-function formatAxis(value) {
-  if (!Number.isFinite(value)) return "–";
-  const absolute = Math.abs(value);
-  if (absolute >= 1e4 || (absolute > 0 && absolute < 1e-2)) return value.toExponential(1);
-  return Number(value.toPrecision(3)).toString();
 }
 
 function formatScientific(value) {
