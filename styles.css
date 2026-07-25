@@ -292,32 +292,38 @@ sub {
   height: auto;
 }
 
-.construction-grid {
+.cutaway-marker {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: stretch;
-  gap: 1px;
-  background: var(--border);
+  place-items: center;
+  position: absolute;
+  width: 1.55rem;
+  height: 1.55rem;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  color: #fff;
+  background: #0c6571;
+  box-shadow: 0 2px 7px rgb(0 0 0 / 0.35);
+  font-size: 0.72rem;
+  font-weight: 900;
+  transform: translate(-50%, -50%);
 }
 
-.construction-panel {
-  display: grid;
-  grid-template-rows: auto 1fr;
-  align-items: center;
-  min-width: 0;
-  background: #fbfaf7;
-}
+.cutaway-diode .marker-1 { left: 67%; top: 49%; }
+.cutaway-diode .marker-2 { left: 29%; top: 38%; }
+.cutaway-diode .marker-3 { left: 88%; top: 56%; }
+.cutaway-diode .marker-4 { left: 59%; top: 39%; }
+.cutaway-diode .marker-5 { left: 50%; top: 50%; }
+.cutaway-diode .marker-6 { left: 54%; top: 65%; }
+.cutaway-diode .marker-7 { left: 45%; top: 34%; }
 
-.construction-panel-label {
-  padding: 0.65rem 0.75rem;
-  color: var(--accent-dark);
-  background: #eef6f7;
-  font-size: 0.68rem;
-  font-weight: 850;
-  letter-spacing: 0.06em;
-  text-align: center;
-  text-transform: uppercase;
-}
+.cutaway-bjt .marker-1 { left: 36%; top: 18%; }
+.cutaway-bjt .marker-2 { left: 42%; top: 82%; }
+.cutaway-bjt .marker-3 { left: 52%; top: 55%; }
+.cutaway-bjt .marker-4 { left: 50%; top: 30%; }
+.cutaway-bjt .marker-5 { left: 52%; top: 43%; }
+.cutaway-bjt .marker-6 { left: 43%; top: 39%; }
+.cutaway-bjt .marker-7 { left: 61%; top: 39%; }
+.cutaway-bjt .marker-8 { left: 62%; top: 48%; }
 
 .cutaway-caption {
   display: grid;
@@ -1348,8 +1354,21 @@ sub {
     font-size: 0.72rem;
   }
 
-  .construction-grid {
-    grid-template-columns: 1fr;
+  .cutaway-marker {
+    width: 1.3rem;
+    height: 1.3rem;
+    font-size: 0.62rem;
   }
+
+  .cutaway-bjt img {
+    height: 280px;
+    object-fit: cover;
+  }
+
+  .cutaway-bjt .marker-1 { left: 28%; }
+  .cutaway-bjt .marker-3 { top: 64%; }
+  .cutaway-bjt .marker-6 { left: 46%; top: 37%; }
+  .cutaway-bjt .marker-7 { left: 59%; top: 37%; }
+  .cutaway-bjt .marker-8 { left: 64%; top: 50%; }
 
 }

@@ -88,33 +88,34 @@
 
         <section id="bjtOverview" class="bjt-overview">
           <figure class="component-cutaway">
-            <div class="cutaway-stage construction-grid">
-              <div class="construction-panel">
-                <span class="construction-panel-label">Representative package assembly</span>
-                <img src="assets/device-cutaways/bjt-to92-assembly.svg" width="620" height="620" alt="Deterministic section of a representative TO-92 assembly with three leads, collector paddle, backside die attach, and two bond wires">
-              </div>
-              <div class="construction-panel">
-                <span class="construction-panel-label">Vertical die section · enlarged</span>
-                <img src="assets/device-cutaways/bjt-vertical-die-section.svg" width="760" height="520" alt="Enlarged deterministic section of a vertical planar NPN die with nested emitter and base diffusions, collector epitaxy, substrate, and backside metal">
-              </div>
+            <div class="cutaway-stage cutaway-bjt">
+              <img src="assets/device-cutaways/bjt-to92-cutaway-realistic.png" width="1536" height="1024" alt="Realistic section of a representative TO-92 NPN transistor with three isolated leads, a center collector paddle, backside die attach, and two top-side bond wires">
+              <span class="cutaway-marker marker-1" aria-hidden="true">1</span>
+              <span class="cutaway-marker marker-2" aria-hidden="true">2</span>
+              <span class="cutaway-marker marker-3" aria-hidden="true">3</span>
+              <span class="cutaway-marker marker-4" aria-hidden="true">4</span>
+              <span class="cutaway-marker marker-5" aria-hidden="true">5</span>
+              <span class="cutaway-marker marker-6" aria-hidden="true">6</span>
+              <span class="cutaway-marker marker-7" aria-hidden="true">7</span>
+              <span class="cutaway-marker marker-8" aria-hidden="true">8</span>
             </div>
             <figcaption class="cutaway-caption">
               <div>
-                <p class="section-label">Two explicitly separated scales</p>
-                <h3>Package assembly and silicon die</h3>
-                <p class="cutaway-note">The die topology follows the <a href="https://assets.nexperia.com/documents/brochure/nexperia_BJT_Handbook_V2_240425_lowres.pdf">Nexperia vertical BJT process</a>. The TO-92 assembly is representative; lead frame and pin order vary by part.</p>
+                <p class="section-label">Representative construction</p>
+                <h3>Inside a discrete NPN transistor</h3>
+                <p class="cutaway-note">Realistic TO-92 reconstruction based on the <a href="https://assets.nexperia.com/documents/brochure/nexperia_BJT_Handbook_V2_240425_lowres.pdf">Nexperia vertical BJT process</a>. Lead frame and pin order vary by part.</p>
               </div>
               <ol class="cutaway-legend">
                 <li><span>1</span><strong>Molded package</strong></li>
-                <li><span>2</span><strong>External leads</strong></li>
-                <li><span>3</span><strong>Collector paddle and lead frame</strong></li>
+                <li><span>2</span><strong>Three isolated leads</strong></li>
+                <li><span>3</span><strong>Center collector paddle</strong></li>
                 <li><span>4</span><strong>Two bond wires</strong></li>
-                <li><span>5</span><strong>N+ emitter diffusion</strong></li>
-                <li><span>6</span><strong>P base diffusion</strong></li>
-                <li><span>7</span><strong>N− epitaxy and N+ substrate</strong></li>
+                <li><span>5</span><strong>Silicon die</strong></li>
+                <li><span>6</span><strong>Emitter top pad</strong></li>
+                <li><span>7</span><strong>Base top pad</strong></li>
                 <li><span>8</span><strong>Backside metal and die attach</strong></li>
               </ol>
-              <p class="model-bridge"><strong>Model boundary:</strong> the real die is vertical, with collector current through its backside. The solver below is a different lateral teaching geometry; it shares the NPN junction sequence and transport equations, not the dimensions or package current path.</p>
+              <p class="model-bridge"><strong>Model boundary:</strong> doped regions are not optically visible. In the real die, emitter and base are formed at the top and collector current leaves through the backside. The solver below uses a distinct lateral teaching geometry.</p>
             </figcaption>
           </figure>
           <p class="abstraction-step">Vertical discrete-device example <span aria-hidden="true">→</span> distinct lateral 2D model</p>
