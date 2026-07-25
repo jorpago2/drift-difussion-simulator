@@ -145,6 +145,8 @@ function selectView(view) {
   dom.carriersView.hidden = view !== "carriers";
   dom.validationView.hidden = view !== "validation";
   dom.jvView.hidden = view !== "jv";
+  dom.circuitMetrics.hidden = view !== "jv";
+  dom.resultExplanation.hidden = view !== "jv";
   dom.cursorReadout.hidden = view === "validation";
   redrawActiveView();
   updateExportState();
@@ -259,6 +261,7 @@ function invalidateResults() {
   dom.circuitMetrics.replaceChildren();
   dom.validationMetrics.replaceChildren();
   dom.warningList.replaceChildren();
+  dom.resultsArea.parentElement.classList.remove("showing-results");
   setMessage(dom.validationBanner, "No result to validate.", "idle");
   updateGlobalStatus("Not solved", "idle");
   updateExportState();
@@ -285,11 +288,13 @@ async function solveCurrentConfiguration() {
     currentSweep = null;
     if (!result.diagnostics.converged) {
       dom.resultsArea.hidden = true;
+      dom.resultsArea.parentElement.classList.remove("showing-results");
       updateGlobalStatus("Not converged", "failed");
       setMessage(dom.solverMessage, result.diagnostics.failureReason || "The solver did not converge.", "error");
     } else {
       dom.resultsArea.hidden = false;
       dom.deviceOverview.hidden = true;
+      dom.resultsArea.parentElement.classList.add("showing-results");
       const lesson = LESSONS[dom.lessonSelect.value] ?? LESSONS.equilibrium;
       dom.workspaceTitle.textContent = `${lesson.kicker} operating point`;
       dom.generateJvButton.disabled = false;
@@ -307,11 +312,12 @@ async function solveCurrentConfiguration() {
         "ready",
       );
       if (!dockedPanelMedia.matches) dom.controlPanel.open = false;
-      dom.resultsArea.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (!dockedPanelMedia.matches) dom.resultsArea.scrollIntoView({ behavior: "smooth", block: "start" });
       generateSweep = true;
     }
   } catch (error) {
     currentResult = null;
+    dom.resultsArea.parentElement.classList.remove("showing-results");
     updateGlobalStatus("Error", "failed");
     setMessage(dom.solverMessage, error instanceof Error ? error.message : String(error), "error");
   } finally {

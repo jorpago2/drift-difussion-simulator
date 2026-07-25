@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="styles.css">
     <script type="module" src="src/app.js"></script>
   </head>
-  <body>
+  <body class="pn-page">
     <header class="topbar">
       <div class="brand">
         <span class="eyebrow">Semiconductor device physics</span>
@@ -256,11 +256,13 @@
             </div>
           </div>
 
-          <div class="export-row result-exports">
-            <button id="exportCsvButton" type="button" disabled>Export active data as CSV</button>
-            <button id="exportPngButton" type="button" disabled>Export active figure as PNG</button>
-          </div>
-          <output id="cursorReadout" class="cursor-readout" aria-live="polite">Move the pointer over a plot to inspect the profile.</output>
+          <footer class="result-footer">
+            <div class="export-row result-exports">
+              <button id="exportCsvButton" type="button" disabled>Export CSV</button>
+              <button id="exportPngButton" type="button" disabled>Export PNG</button>
+            </div>
+            <output id="cursorReadout" class="cursor-readout" aria-live="polite">Move the pointer over a plot to inspect the profile.</output>
+          </footer>
         </section>
 
         <aside class="model-note">

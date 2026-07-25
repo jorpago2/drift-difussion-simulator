@@ -1412,17 +1412,188 @@ sub {
   margin-top: 1rem;
 }
 
+.result-footer {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 0.75rem;
+}
+
+.result-footer .result-exports,
+.result-footer .cursor-readout {
+  margin-top: 0;
+}
+
 .validation-metrics {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 @media (min-width: 981px) {
+  .pn-page {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .pn-page .topbar {
+    flex: 0 0 auto;
+  }
+
+  .pn-page .pn-shell {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .pn-page .pn-controls,
+  .pn-page .pn-workspace {
+    height: 100%;
+    max-height: none;
+  }
+
+  .pn-page .pn-workspace {
+    overflow: auto;
+  }
+
+  .pn-page .pn-workspace.showing-results {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .showing-results > .workspace-heading {
+    display: none;
+  }
+
+  .showing-results .results-area {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding-top: 0;
+  }
+
+  .showing-results .results-toolbar,
+  .showing-results .circuit-metrics,
+  .showing-results .result-explanation {
+    margin-bottom: 0.65rem;
+  }
+
+  .showing-results .circuit-metrics {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .showing-results .circuit-metrics div {
+    padding: 0.65rem 0.7rem;
+  }
+
+  .showing-results .result-explanation {
+    display: grid;
+    grid-template-columns: minmax(15rem, 0.75fr) minmax(20rem, 1.25fr);
+    column-gap: 1.25rem;
+    align-items: center;
+    padding: 0.7rem 0.9rem;
+  }
+
+  .showing-results .result-explanation span,
+  .showing-results .result-explanation h3 {
+    grid-column: 1;
+  }
+
+  .showing-results .result-explanation p {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .showing-results .result-view {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .showing-results #jvView {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .showing-results #jvFigure {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    height: 100%;
+    min-height: 0;
+    padding: 0.65rem;
+  }
+
+  .showing-results #jvFigure canvas,
+  .showing-results .plot-grid canvas {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .showing-results .plot-grid {
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    height: 100%;
+  }
+
+  .showing-results .plot-card {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    min-height: 0;
+    padding: 0.6rem;
+  }
+
+  .showing-results .validation-view {
+    overflow: auto;
+  }
+
+  .showing-results .validation-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .showing-results .warning-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .showing-results .result-footer {
+    margin-top: 0.6rem;
+  }
+
   #openPanelButton {
     display: none;
   }
 }
 
+@media (min-width: 981px) and (max-height: 800px) {
+  .showing-results .result-explanation,
+  .showing-results .model-note {
+    display: none;
+  }
+
+  .showing-results .plot-grid {
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .showing-results #electrostaticsView .plot-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .showing-results #carriersView .plot-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .showing-results .plot-grid .plot-wide {
+    grid-column: auto;
+  }
+}
+
 @media (max-width: 980px) {
+  .pn-page {
+    display: block;
+    height: auto;
+    overflow: visible;
+  }
+
   .pn-shell {
     grid-template-columns: 1fr;
     padding: 0.75rem;
@@ -1486,7 +1657,8 @@ sub {
   }
 
   .result-action-row,
-  .validation-metrics {
+  .validation-metrics,
+  .result-footer {
     grid-template-columns: 1fr;
   }
 
