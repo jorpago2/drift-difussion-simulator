@@ -48,7 +48,7 @@ const dom = Object.fromEntries([
   "globalStatus", "openPanelButton", "closePanelButton", "controlPanel", "stageKicker", "panelTitle",
   "lessonKicker", "workspaceTitle", "biasBadge", "predictionText", "pDopingLabel", "nDopingLabel",
   "depletionZone", "preflightSummary", "resultsArea", "lessonSelect", "acceptorInput", "donorInput",
-  "deviceOverview",
+  "deviceOverview", "deviceAreaInput", "circuitMetrics",
   "biasInput", "lengthInput", "cellsInput", "electronLifetimeInput", "holeLifetimeInput", "predictionTitle",
   "predictionDetail", "preflightDetails", "derivedMetrics", "solveButton", "solverMessage", "resultExplanation",
   "showElectrostaticsButton", "showCarriersButton", "generateJvButton", "jvInlineButton", "sweepMessage",
@@ -65,6 +65,7 @@ const configInputs = [
   dom.acceptorInput,
   dom.donorInput,
   dom.biasInput,
+  dom.deviceAreaInput,
   dom.lengthInput,
   dom.cellsInput,
   dom.electronLifetimeInput,
@@ -73,7 +74,7 @@ const configInputs = [
 const chartRegistry = new Map();
 
 let activeStage = "device";
-let activeView = "electrostatics";
+let activeView = "jv";
 let currentResult = null;
 let currentSweep = null;
 let solving = false;
@@ -221,6 +222,7 @@ function readConfig() {
     acceptorCm3: Number(dom.acceptorInput.value),
     donorCm3: Number(dom.donorInput.value),
     biasV: Number(dom.biasInput.value),
+    deviceAreaUm2: Number(dom.deviceAreaInput.value),
     lengthUm: Number(dom.lengthInput.value),
     cells: Number(dom.cellsInput.value),
     electronLifetimeS: Number(dom.electronLifetimeInput.value),
@@ -274,6 +276,7 @@ function invalidateResults() {
   dom.jvFigure.hidden = true;
   dom.jvEmpty.hidden = false;
   dom.sweepMessage.textContent = "Solve an operating point first.";
+  dom.circuitMetrics.replaceChildren();
   dom.validationMetrics.replaceChildren();
   dom.warningList.replaceChildren();
   setMessage(dom.validationBanner, "No result to validate.", "idle");
@@ -295,6 +298,7 @@ async function solveCurrentConfiguration() {
   setMessage(dom.solverMessage, "Solving equilibrium, voltage continuation, and residuals…", "warning");
   await nextPaint();
 
+  let generateSweep = false;
   try {
     const result = solvePnJunction1D(validation.config);
     currentResult = result;
@@ -310,10 +314,11 @@ async function solveCurrentConfiguration() {
       dom.generateJvButton.disabled = false;
       dom.jvFigure.hidden = true;
       dom.jvEmpty.hidden = false;
-      dom.sweepMessage.textContent = "Ready to solve 67 points from −1.00 to 0.65 V.";
+      dom.sweepMessage.textContent = "Preparing the I–V characteristic…";
       renderResult(result);
       renderValidation(result);
-      selectView("electrostatics");
+      renderCircuitMetrics(result, null);
+      selectView("jv");
       selectStage("results");
       updateGlobalStatus("Converged", "converged");
       setMessage(
@@ -321,6 +326,7 @@ async function solveCurrentConfiguration() {
         `Converged in ${result.diagnostics.totalIterations} cumulative iterations; current-conservation error ${formatScientific(result.diagnostics.currentContinuityError)}.`,
         "ready",
       );
+      generateSweep = true;
     }
   } catch (error) {
     currentResult = null;
@@ -331,6 +337,7 @@ async function solveCurrentConfiguration() {
     updatePreflight();
     updateExportState();
   }
+  if (generateSweep) await generateJvSweep();
 }
 
 function renderResult(result) {
@@ -387,7 +394,7 @@ async function generateJvSweep() {
   solving = true;
   dom.generateJvButton.disabled = true;
   dom.jvInlineButton.disabled = true;
-  updateGlobalStatus("J–V sweep…", "solving");
+  updateGlobalStatus("I–V sweep…", "solving");
   setMessage(dom.sweepMessage, "Preparing equilibrium for the sweep…", "warning");
 
   try {
@@ -407,7 +414,7 @@ async function generateJvSweep() {
         previous = solvePnJunction1D({ ...baseConfig, biasV: voltage }, previous);
         results.set(voltage, previous);
         solved += 1;
-        setMessage(dom.sweepMessage, `Solving J–V: ${solved}/67 points…`, "warning");
+        setMessage(dom.sweepMessage, `Solving I–V: ${solved}/67 points…`, "warning");
         await nextPaint();
         if (!previous.diagnostics.converged) break;
       }
@@ -434,10 +441,11 @@ async function generateJvSweep() {
       throw new Error("The sweep stopped because at least one point did not converge.");
     }
     renderJv(currentSweep);
+    renderCircuitMetrics(currentResult, currentSweep);
     dom.jvEmpty.hidden = true;
     dom.jvFigure.hidden = false;
     selectView("jv");
-    updateGlobalStatus("J–V converged", "converged");
+    updateGlobalStatus("I–V converged", "converged");
     setMessage(dom.sweepMessage, "67 points converged from −1.00 to 0.65 V.", "ready");
     if (dom.controlPanel.open && !dockedPanelMedia.matches) closePanel(false);
   } catch (error) {
@@ -454,21 +462,51 @@ async function generateJvSweep() {
 
 function renderJv(sweep) {
   const voltage = Float64Array.from(sweep.points, (point) => point.voltageV);
-  const current = Float64Array.from(sweep.points, (point) => point.currentDensityAm2 / 1e4);
+  const areaM2 = sweep.config.deviceAreaUm2 * 1e-12;
+  const current = Float64Array.from(sweep.points, (point) => point.currentDensityAm2 * areaM2 * 1e3);
   const reference = Float64Array.from(sweep.points, (point) =>
-    point.shockleyCurrentDensityAm2 == null ? NaN : point.shockleyCurrentDensityAm2 / 1e4,
+    point.shockleyCurrentDensityAm2 == null ? NaN : point.shockleyCurrentDensityAm2 * areaM2 * 1e3,
   );
   drawLineChart(dom.jvCanvas, {
     x: voltage,
     xLabel: "V_D (V)",
-    yLabel: "J (A/cm², symlog)",
-    transform: symlogTransform(1e-10),
+    yLabel: "I_D (mA)",
     series: [
       { label: "DD + SRH", values: current, color: "#087e8b" },
       { label: "Shockley", values: reference, color: "#ca7b00", dash: [7, 4] },
     ],
   });
   chartRegistry.set(dom.jvCanvas, { type: "sweep", x: voltage });
+}
+
+function renderCircuitMetrics(result, sweep) {
+  const currentA = result.diagnostics.meanCurrentDensityAm2 * result.derived.deviceAreaM2;
+  const biasV = result.config.biasV;
+  const region = biasV > 1e-12 ? "Forward bias" : biasV < -1e-12 ? "Reverse bias" : "Equilibrium";
+  let dynamicResistance = "Available after I–V sweep";
+  if (sweep?.converged) {
+    let index = 0;
+    for (let i = 1; i < sweep.points.length; i += 1) {
+      if (Math.abs(sweep.points[i].voltageV - biasV) < Math.abs(sweep.points[index].voltageV - biasV)) index = i;
+    }
+    if (Math.abs(sweep.points[index].voltageV - biasV) <= 0.0126) {
+      const left = sweep.points[Math.max(0, index - 1)];
+      const right = sweep.points[Math.min(sweep.points.length - 1, index + 1)];
+      const deltaCurrentA = (right.currentDensityAm2 - left.currentDensityAm2) * result.derived.deviceAreaM2;
+      const resistanceOhm = (right.voltageV - left.voltageV) / deltaCurrentA;
+      if (Number.isFinite(resistanceOhm) && resistanceOhm > 0) dynamicResistance = `${formatScientific(resistanceOhm)} Ω`;
+    } else {
+      dynamicResistance = "Outside plotted range";
+    }
+  }
+  renderMetricList(dom.circuitMetrics, [
+    ["Operating region", region],
+    ["Operating voltage", `${formatFixed(biasV, 3)} V`],
+    ["Terminal current", formatNearZero(currentA * 1e3, 1e-12, "mA")],
+    ["Current density", formatNearZero(result.diagnostics.meanCurrentDensityAm2 / 1e4, 1e-15, "A/cm²")],
+    ["Small-signal r_d", dynamicResistance],
+    ["Defined area", `${formatScientific(result.config.deviceAreaUm2)} µm²`],
+  ]);
 }
 
 function renderValidation(result) {
@@ -544,7 +582,7 @@ function exportCsv() {
   if (!currentResult?.diagnostics.converged) return;
   const isSweep = activeView === "jv";
   const csv = isSweep ? serializePnSweepCsv(currentSweep) : serializePnProfileCsv(currentResult);
-  downloadBlob(csv, "text/csv;charset=utf-8", isSweep ? "pn-junction-jv.csv" : "pn-junction-profile.csv");
+  downloadBlob(csv, "text/csv;charset=utf-8", isSweep ? "pn-junction-iv.csv" : "pn-junction-profile.csv");
 }
 
 function exportPng() {
@@ -695,7 +733,8 @@ function updateCursorReadout(event) {
   if (chart.type === "sweep") {
     const point = currentSweep?.points[index];
     if (point) {
-      dom.cursorReadout.textContent = `V_D=${formatFixed(point.voltageV, 3)} V | J=${formatScientific(point.currentDensityAm2 / 1e4)} A/cm²`;
+      const currentMa = point.currentDensityAm2 * currentSweep.config.deviceAreaUm2 * 1e-9;
+      dom.cursorReadout.textContent = `V_D=${formatFixed(point.voltageV, 3)} V | I_D=${formatScientific(currentMa)} mA | J=${formatScientific(point.currentDensityAm2 / 1e4)} A/cm²`;
     }
     return;
   }
@@ -758,6 +797,10 @@ function formatScientific(value) {
   if (!Number.isFinite(value)) return "–";
   if (value === 0) return "0";
   return value.toExponential(2).replace("e+", "e");
+}
+
+function formatNearZero(value, threshold, unit) {
+  return `${Math.abs(value) < threshold ? "≈ 0" : formatScientific(value)} ${unit}`;
 }
 
 function formatFixed(value, decimals) {

@@ -26,7 +26,10 @@ for (const dopant of [-1e8, 0, 1e8]) {
 assert.throws(() => solvePnJunction1D({ acceptorCm3: NaN }), RangeError);
 assert.throws(() => solvePnJunction1D({ donorCm3: -1 }), RangeError);
 assert.throws(() => solvePnJunction1D({ cells: 400 }), RangeError);
+assert.throws(() => solvePnJunction1D({ deviceAreaUm2: NaN }), RangeError);
+assert.throws(() => solvePnJunction1D({ deviceAreaUm2: 0 }), RangeError);
 assert.equal(validatePnConfig(DEFAULT_PN_CONFIG).errors.length, 0);
+assert.equal(validatePnConfig(DEFAULT_PN_CONFIG).derived.deviceAreaM2, 1e-8);
 
 const equilibrium = solvePnJunction1D({ biasV: 0, cells: 401 });
 assert.ok(equilibrium.diagnostics.converged);
@@ -73,11 +76,14 @@ assert.ok(sweep.points[0].currentDensityAm2 < 0);
 assert.ok(sweep.points.at(-1).currentDensityAm2 > sweep.points.at(-2).currentDensityAm2);
 
 const profileCsv = serializePnProfileCsv(equilibrium);
-assert.equal(profileCsv.trimEnd().split("\n").length, equilibrium.xM.length + 4);
+assert.equal(profileCsv.trimEnd().split("\n").length, equilibrium.xM.length + 5);
 assert.match(profileCsv, /x_um,doping_cm-3,potential_V/);
+assert.match(profileCsv, /Jn_A_cm-2,Jp_A_cm-2,Jtotal_A_cm-2,In_A,Ip_A,Itotal_A/);
 const sweepCsv = serializePnSweepCsv(sweep);
-assert.equal(sweepCsv.trimEnd().split("\n").length, sweep.points.length + 2);
-assert.match(sweepCsv, /voltage_V,J_A_cm-2/);
+assert.equal(sweepCsv.trimEnd().split("\n").length, sweep.points.length + 3);
+assert.match(sweepCsv, /voltage_V,I_A,J_A_cm-2,I_Shockley_A,J_Shockley_A_cm-2/);
+const firstSweepRow = sweepCsv.trimEnd().split("\n").at(-sweep.points.length).split(",");
+assert.equal(Number(firstSweepRow[1]), sweep.points[0].currentDensityAm2 * 1e-8);
 
 console.log("self-check passed");
 

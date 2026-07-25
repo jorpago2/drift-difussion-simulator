@@ -14,6 +14,10 @@ On desktop viewports, controls are docked at the right and can be collapsed;
 on smaller screens they open as a modal panel. Plots use a high-density canvas
 backing store so curves and labels remain sharp on HiDPI displays.
 
+The primary result is the diode I–V characteristic. Solving an operating point
+automatically computes the 67-point curve; electrostatic, carrier, and band
+profiles remain available as secondary views that explain the terminal behavior.
+
 ## Run
 
 A recent Node.js version is required only to serve the ES modules and run the
@@ -69,7 +73,8 @@ levels are relative energies with an arbitrary zero.
 - `validatePnConfig(config)` validates ranges and estimates `V_bi`, depletion
   width, Debye lengths, and spatial step.
 - `solvePnJunction1D(config, previousSolution?)` solves one bias point.
-- `sweepPnJunction(config, voltages?)` generates the J–V sweep.
+- `sweepPnJunction(config, voltages?)` generates the numerical I–V sweep from
+  the internally computed current density and the defined area.
 - `shockleyReferenceCurrentDensity(config, voltage)` provides an independent
   low-injection analytical reference.
 
@@ -86,8 +91,11 @@ hole residual          < 1e-8
 current nonuniformity  < 1e-3
 ```
 
-Core quantities use SI units. The interface converts current density from A/m²
-to A/cm²; it never displays total current without a defined device area.
+Core quantities use SI units. The one-dimensional solver returns current density
+in A/m². A separately defined device area (10,000 µm² by default) converts it to
+terminal current through `I = J A`; changing area scales current but does not
+change the one-dimensional solution. The interface retains J in A/cm² for
+device-level comparison.
 
 ## Parameters and warnings
 
@@ -101,6 +109,7 @@ Inputs are restricted to:
 |---|---:|
 | NA, ND | 10¹⁴–10¹⁸ cm⁻³ |
 | Length | 1–20 µm |
+| Device area | 1–10⁸ µm² |
 | VD | −1–0.8 V |
 | Odd mesh | 101–2001 nodes |
 | τn, τp | 10⁻¹²–10⁻³ s |
@@ -122,12 +131,13 @@ with it is not a convergence criterion.
 
 `scripts/self-check.mjs` verifies the Bernoulli function, neutrality, mass
 action, built-in potential, equilibrium current and SRH, convergence at −0.5,
-0, 0.3, and 0.6 V, J–V sign and monotonicity, current conservation,
+0, 0.3, and 0.6 V, current-density sign and monotonicity, current conservation,
 201/401/801-node refinement, invalid-input rejection, and CSV serialization.
 The refinement criterion requires less than 2% difference between the 401- and
 801-node meshes.
 
-CSV files contain metadata and units in every header. PNG export captures the
+CSV files contain model and area metadata plus both terminal-current and
+current-density columns with units in their headers. PNG export captures the
 active plot. Both exports remain disabled unless the current result has
 converged.
 

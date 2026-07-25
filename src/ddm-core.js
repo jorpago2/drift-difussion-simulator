@@ -767,6 +767,7 @@ export const DEFAULT_PN_CONFIG = Object.freeze({
   acceptorCm3: 1e16,
   donorCm3: 1e16,
   lengthUm: 4,
+  deviceAreaUm2: 1e4,
   biasV: 0,
   cells: 401,
   temperatureK: 300,
@@ -786,6 +787,7 @@ const PN_LIMITS = Object.freeze({
   acceptorCm3: [1e14, 1e18],
   donorCm3: [1e14, 1e18],
   lengthUm: [1, 20],
+  deviceAreaUm2: [1, 1e8],
   biasV: [-1, 0.8],
   cells: [101, 2001],
   electronLifetimeS: [1e-12, 1e-3],
@@ -833,6 +835,7 @@ export function validatePnConfig(input = {}) {
     const donorM3 = config.donorCm3 * 1e6;
     const intrinsicM3 = config.intrinsicDensityCm3 * 1e6;
     const lengthM = config.lengthUm * 1e-6;
+    const deviceAreaM2 = config.deviceAreaUm2 * 1e-12;
     const dxM = lengthM / (config.cells - 1);
     const builtInPotentialV = vt * Math.log((acceptorM3 * donorM3) / (intrinsicM3 * intrinsicM3));
     const depletionVoltageV = Math.max(0, builtInPotentialV - config.biasV);
@@ -851,6 +854,7 @@ export function validatePnConfig(input = {}) {
       donorM3,
       intrinsicM3,
       lengthM,
+      deviceAreaM2,
       dxM,
       builtInPotentialV,
       depletionWidthM,
@@ -972,7 +976,8 @@ export function serializePnProfileCsv(result) {
     `# model=1D Poisson-continuity Scharfetter-Gummel SRH`,
     `# bias_V=${result.config.biasV}`,
     `# cells=${result.config.cells}`,
-    "x_um,doping_cm-3,potential_V,field_V_m,charge_C_m-3,electron_cm-3,hole_cm-3,recombination_m-3_s-1,Jn_A_cm-2,Jp_A_cm-2,Jtotal_A_cm-2,Ec_eV,Ei_eV,Ev_eV,Fn_eV,Fp_eV",
+    `# device_area_um2=${result.config.deviceAreaUm2}`,
+    "x_um,doping_cm-3,potential_V,field_V_m,charge_C_m-3,electron_cm-3,hole_cm-3,recombination_m-3_s-1,Jn_A_cm-2,Jp_A_cm-2,Jtotal_A_cm-2,In_A,Ip_A,Itotal_A,Ec_eV,Ei_eV,Ev_eV,Fn_eV,Fp_eV",
   ];
   for (let i = 0; i < result.xM.length; i += 1) {
     lines.push([
@@ -987,6 +992,9 @@ export function serializePnProfileCsv(result) {
       result.electronCurrentAm2[i] / 1e4,
       result.holeCurrentAm2[i] / 1e4,
       result.totalCurrentAm2[i] / 1e4,
+      result.electronCurrentAm2[i] * result.derived.deviceAreaM2,
+      result.holeCurrentAm2[i] * result.derived.deviceAreaM2,
+      result.totalCurrentAm2[i] * result.derived.deviceAreaM2,
       result.conductionBandEv[i],
       result.intrinsicBandEv[i],
       result.valenceBandEv[i],
@@ -1001,10 +1009,13 @@ export function serializePnSweepCsv(sweep) {
   if (!sweep?.converged) throw new Error("Only converged sweeps can be exported.");
   const lines = [
     "# model=1D Poisson-continuity Scharfetter-Gummel SRH",
-    "voltage_V,J_A_cm-2,J_Shockley_A_cm-2",
+    `# device_area_um2=${sweep.config.deviceAreaUm2}`,
+    "voltage_V,I_A,J_A_cm-2,I_Shockley_A,J_Shockley_A_cm-2",
     ...sweep.points.map((point) => [
       point.voltageV,
+      point.currentDensityAm2 * sweep.config.deviceAreaUm2 * 1e-12,
       point.currentDensityAm2 / 1e4,
+      point.shockleyCurrentDensityAm2 == null ? "" : point.shockleyCurrentDensityAm2 * sweep.config.deviceAreaUm2 * 1e-12,
       point.shockleyCurrentDensityAm2 == null ? "" : point.shockleyCurrentDensityAm2 / 1e4,
     ].join(",")),
   ];

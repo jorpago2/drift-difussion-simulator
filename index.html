@@ -53,16 +53,30 @@
           <div class="results-toolbar">
             <div>
               <p class="section-label">Converged solution</p>
-              <h2 id="resultsTitle">Self-consistent profiles</h2>
+              <h2 id="resultsTitle">Diode I–V characteristic</h2>
             </div>
             <div class="view-tabs" role="tablist" aria-label="Result views">
-              <button id="electrostaticsTab" type="button" role="tab" aria-selected="true" aria-controls="electrostaticsView" data-view-tab="electrostatics">Electrostatics</button>
+              <button id="jvTab" type="button" role="tab" aria-selected="true" aria-controls="jvView" data-view-tab="jv">I–V characteristic</button>
+              <button id="electrostaticsTab" type="button" role="tab" aria-selected="false" aria-controls="electrostaticsView" data-view-tab="electrostatics">Electrostatics</button>
               <button id="carriersTab" type="button" role="tab" aria-selected="false" aria-controls="carriersView" data-view-tab="carriers">Carriers and bands</button>
-              <button id="jvTab" type="button" role="tab" aria-selected="false" aria-controls="jvView" data-view-tab="jv">J–V</button>
             </div>
           </div>
 
-          <div id="electrostaticsView" class="result-view" role="tabpanel" aria-labelledby="electrostaticsTab">
+          <dl id="circuitMetrics" class="circuit-metrics" aria-label="Diode operating-point metrics"></dl>
+
+          <div id="jvView" class="result-view" role="tabpanel" aria-labelledby="jvTab">
+            <div id="jvEmpty" class="jv-empty">
+              <h3>Calculating the I–V characteristic</h3>
+              <p>The operating point is followed by 67 self-consistent states from −1.00 to 0.65 V.</p>
+              <button id="jvInlineButton" class="primary-button" type="button">Recalculate I–V</button>
+            </div>
+            <figure id="jvFigure" class="plot-card plot-wide" hidden>
+              <canvas id="jvCanvas" width="960" height="430" aria-label="Diode current versus voltage"></canvas>
+              <figcaption>Terminal current for the defined area; Shockley is a low-injection reference only</figcaption>
+            </figure>
+          </div>
+
+          <div id="electrostaticsView" class="result-view" role="tabpanel" aria-labelledby="electrostaticsTab" hidden>
             <div class="plot-grid">
               <figure class="plot-card plot-wide">
                 <canvas id="potentialCanvas" width="960" height="330" aria-label="Electrostatic potential profile"></canvas>
@@ -90,18 +104,6 @@
                 <figcaption>Relative bands and quasi-Fermi levels</figcaption>
               </figure>
             </div>
-          </div>
-
-          <div id="jvView" class="result-view" role="tabpanel" aria-labelledby="jvTab" hidden>
-            <div id="jvEmpty" class="jv-empty">
-              <h3>The sweep has not been calculated yet</h3>
-              <p>The curve is obtained by solving 67 self-consistent states from −1.00 to 0.65 V.</p>
-              <button id="jvInlineButton" class="primary-button" type="button">Generate J–V curve</button>
-            </div>
-            <figure id="jvFigure" class="plot-card plot-wide" hidden>
-              <canvas id="jvCanvas" width="960" height="430" aria-label="Current-density versus voltage curve"></canvas>
-              <figcaption>Drift-diffusion with SRH; Shockley is shown only as a low-injection reference</figcaption>
-            </figure>
           </div>
 
           <output id="cursorReadout" class="cursor-readout" aria-live="polite">Move the pointer over a plot to inspect the profile.</output>
@@ -157,6 +159,11 @@
             <input id="biasInput" type="number" min="-1" max="0.8" step="0.025" value="0" aria-describedby="biasHelp">
             <small id="biasHelp" class="field-help">−1 to 0.8 V. Breakdown is absent in reverse bias, while strong high injection limits forward-bias accuracy.</small>
           </label>
+          <label>
+            Device area (µm²)
+            <input id="deviceAreaInput" type="number" min="1" max="1e8" step="1000" value="10000" aria-describedby="deviceAreaHelp">
+            <small id="deviceAreaHelp" class="field-help">Scales terminal current using I = J·A. It does not change the one-dimensional fields.</small>
+          </label>
 
           <details class="advanced-settings">
             <summary>Advanced parameters</summary>
@@ -205,15 +212,15 @@
         </section>
 
         <section class="stage-panel" data-stage-panel="results" hidden>
-          <h3>What to observe</h3>
+          <h3>Electrical behavior first</h3>
           <article id="resultExplanation" class="teaching-card muted-card">
             <span>After convergence</span>
-            <h3>Connect profiles and bands</h3>
-            <p>Potential, field, charge, and carriers must describe the same state rather than results from separate models.</p>
+            <h3>Read the I–V curve, then explain it</h3>
+            <p>Start from current, operating region, and differential resistance; use fields, carriers, and bands to explain their physical origin.</p>
           </article>
           <button id="showElectrostaticsButton" type="button">View electrostatics</button>
           <button id="showCarriersButton" type="button">View carriers and bands</button>
-          <button id="generateJvButton" class="primary-button" type="button" disabled>Generate J–V curve</button>
+          <button id="generateJvButton" class="primary-button" type="button" disabled>Recalculate I–V</button>
           <output id="sweepMessage" class="solver-message" aria-live="polite">Solve an operating point first.</output>
         </section>
 

@@ -418,6 +418,35 @@ sub {
   background: var(--accent);
 }
 
+.circuit-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 16px;
+}
+
+.circuit-metrics div {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-soft);
+}
+
+.circuit-metrics dt {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.circuit-metrics dd {
+  margin: 5px 0 0;
+  font-size: 0.94rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+
 .plot-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -831,6 +860,10 @@ sub {
     grid-template-columns: 1fr;
   }
 
+  .circuit-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .plot-wide {
     grid-column: auto;
   }
@@ -890,7 +923,8 @@ sub {
   }
 
   .input-grid,
-  .export-row {
+  .export-row,
+  .circuit-metrics {
     grid-template-columns: 1fr;
   }
 }
