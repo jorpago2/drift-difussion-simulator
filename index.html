@@ -51,19 +51,19 @@
 
           <div class="input-grid">
             <label>
-              N<sub>A</sub> (cm⁻³)
+              <span class="label-text">N<sub>A</sub> (cm⁻³)</span>
               <input id="acceptorInput" type="number" min="1e14" max="1e18" step="1e15" value="1e16" aria-describedby="acceptorHelp">
               <small id="acceptorHelp" class="field-help">P-side acceptor density, 10¹⁴–10¹⁸ cm⁻³.</small>
             </label>
             <label>
-              N<sub>D</sub> (cm⁻³)
+              <span class="label-text">N<sub>D</sub> (cm⁻³)</span>
               <input id="donorInput" type="number" min="1e14" max="1e18" step="1e15" value="1e16" aria-describedby="donorHelp">
               <small id="donorHelp" class="field-help">N-side donor density, 10¹⁴–10¹⁸ cm⁻³.</small>
             </label>
           </div>
 
           <label>
-            Applied voltage V<sub>D</sub> = V<sub>A</sub> − V<sub>C</sub> (V)
+            <span class="label-text">Applied voltage V<sub>D</sub> = V<sub>A</sub> − V<sub>C</sub> (V)</span>
             <input id="biasInput" type="number" min="-1" max="0.8" step="0.025" value="0" aria-describedby="biasHelp">
             <small id="biasHelp" class="field-help">Positive is forward bias. Breakdown is not included for negative bias.</small>
           </label>
@@ -97,12 +97,12 @@
                 <small id="cellsHelp" class="field-help">The junction remains centered on a node.</small>
               </label>
               <label>
-                τ<sub>n</sub> (s)
+                <span class="label-text">τ<sub>n</sub> (s)</span>
                 <input id="electronLifetimeInput" type="number" min="1e-12" max="1e-3" step="1e-9" value="1e-8" aria-describedby="electronLifetimeHelp">
                 <small id="electronLifetimeHelp" class="field-help">Electron SRH lifetime, 10⁻¹²–10⁻³ s.</small>
               </label>
               <label>
-                τ<sub>p</sub> (s)
+                <span class="label-text">τ<sub>p</sub> (s)</span>
                 <input id="holeLifetimeInput" type="number" min="1e-12" max="1e-3" step="1e-9" value="1e-8" aria-describedby="holeLifetimeHelp">
                 <small id="holeLifetimeHelp" class="field-help">Hole SRH lifetime, 10⁻¹²–10⁻³ s.</small>
               </label>

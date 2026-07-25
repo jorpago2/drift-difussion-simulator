@@ -120,7 +120,16 @@ select {
 }
 
 sub {
+  position: relative;
+  bottom: -0.22em;
+  font-size: 0.75em;
   line-height: 0;
+  vertical-align: baseline;
+}
+
+.label-text {
+  display: inline;
+  line-height: 1.25;
 }
 
 .topbar {

@@ -36,24 +36,24 @@
         <form id="bjtForm">
           <div class="input-grid">
             <label>
-              V<sub>BE</sub> (V)
+              <span class="label-text">V<sub>BE</sub> (V)</span>
               <input id="bjtVbeInput" type="number" min="-0.2" max="0.75" step="0.025" value="0.55">
             </label>
             <label>
-              V<sub>CE</sub> (V)
+              <span class="label-text">V<sub>CE</sub> (V)</span>
               <input id="bjtVceInput" type="number" min="-0.2" max="5" step="0.05" value="0.8">
             </label>
           </div>
           <label>
-            Emitter N<sub>D</sub> (cm⁻³)
+            <span class="label-text">Emitter N<sub>D</sub> (cm⁻³)</span>
             <input id="bjtEmitterDopingInput" type="number" min="1e14" max="5e17" step="any" value="8e15">
           </label>
           <label>
-            Base N<sub>A</sub> (cm⁻³)
+            <span class="label-text">Base N<sub>A</sub> (cm⁻³)</span>
             <input id="bjtBaseDopingInput" type="number" min="1e14" max="5e17" step="any" value="4e15">
           </label>
           <label>
-            Collector N<sub>D</sub> (cm⁻³)
+            <span class="label-text">Collector N<sub>D</sub> (cm⁻³)</span>
             <input id="bjtCollectorDopingInput" type="number" min="1e14" max="5e17" step="any" value="1e15">
           </label>
           <details class="advanced-settings">
@@ -66,8 +66,8 @@
               <label>Device depth (µm)<input id="bjtDepthInput" type="number" min="1" max="1e5" step="any" value="100"></label>
               <label>x nodes<input id="bjtNxInput" type="number" min="81" max="501" step="2" value="161"></label>
               <label>y nodes<input id="bjtNyInput" type="number" min="21" max="121" step="2" value="33"></label>
-              <label>τ<sub>n</sub> (s)<input id="bjtElectronLifetimeInput" type="number" min="1e-12" max="1e-3" step="any" value="1e-9"></label>
-              <label>τ<sub>p</sub> (s)<input id="bjtHoleLifetimeInput" type="number" min="1e-12" max="1e-3" step="any" value="1e-9"></label>
+              <label><span class="label-text">τ<sub>n</sub> (s)</span><input id="bjtElectronLifetimeInput" type="number" min="1e-12" max="1e-3" step="any" value="1e-9"></label>
+              <label><span class="label-text">τ<sub>p</sub> (s)</span><input id="bjtHoleLifetimeInput" type="number" min="1e-12" max="1e-3" step="any" value="1e-9"></label>
             </div>
           </details>
           <div id="bjtPreflight" class="message-box" data-state="ready"></div>
