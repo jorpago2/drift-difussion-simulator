@@ -803,11 +803,11 @@ export function validatePnConfig(input = {}) {
 
   for (const [name, [min, max]] of Object.entries(PN_LIMITS)) {
     const value = config[name];
-    if (!Number.isFinite(value)) errors.push(`${name} debe ser un numero finito.`);
-    else if (value < min || value > max) errors.push(`${name} debe estar entre ${min} y ${max}.`);
+    if (!Number.isFinite(value)) errors.push(`${name} must be a finite number.`);
+    else if (value < min || value > max) errors.push(`${name} must be between ${min} and ${max}.`);
   }
   if (!Number.isInteger(config.cells) || config.cells % 2 === 0) {
-    errors.push("cells debe ser un entero impar.");
+    errors.push("cells must be an odd integer.");
   }
 
   for (const name of [
@@ -821,9 +821,9 @@ export function validatePnConfig(input = {}) {
     "residualTolerance",
     "currentTolerance",
   ]) {
-    if (!Number.isFinite(config[name]) || config[name] <= 0) errors.push(`${name} debe ser positivo y finito.`);
+    if (!Number.isFinite(config[name]) || config[name] <= 0) errors.push(`${name} must be positive and finite.`);
   }
-  if (!Number.isInteger(config.maxIterations)) errors.push("maxIterations debe ser un entero.");
+  if (!Number.isInteger(config.maxIterations)) errors.push("maxIterations must be an integer.");
 
   let derived = null;
   if (!errors.length) {
@@ -861,19 +861,19 @@ export function validatePnConfig(input = {}) {
 
     const smallestDebyeM = Math.min(acceptorDebyeLengthM, donorDebyeLengthM);
     if (dxM > smallestDebyeM / 3) {
-      warnings.push("La malla usa menos de tres celdas por la menor longitud de Debye.");
+      warnings.push("The mesh uses fewer than three cells across the shortest Debye length.");
     }
     if (depletionWidthM > 0 && dxM > depletionWidthM / 20) {
-      warnings.push("La region de agotamiento estimada tiene menos de veinte celdas.");
+      warnings.push("The estimated depletion region spans fewer than twenty cells.");
     }
     if (config.biasV > 0.9 * lowInjectionLimitV) {
-      warnings.push("La polarizacion se aproxima o supera el limite estimado de baja inyeccion.");
+      warnings.push("The applied bias approaches or exceeds the estimated low-injection limit.");
     }
     if (config.biasV < 0) {
-      warnings.push("El modelo no incluye avalancha ni tunel; la inversa solo describe drift-diffusion clasico.");
+      warnings.push("The model omits avalanche and tunneling; reverse bias describes classical drift-diffusion only.");
     }
     if (Math.max(config.acceptorCm3, config.donorCm3) > 5e17) {
-      warnings.push("A dopaje alto pueden importar degeneracion y estrechamiento de banda, no incluidos.");
+      warnings.push("Degeneracy and bandgap narrowing may matter at high doping and are not included.");
     }
   }
 
@@ -911,7 +911,7 @@ export function sweepPnJunction(input = {}, voltages = null) {
   const unique = [...new Set(requested.map(Number))].sort((a, b) => a - b);
   for (const voltage of unique) {
     if (!Number.isFinite(voltage) || voltage < PN_LIMITS.biasV[0] || voltage > PN_LIMITS.biasV[1]) {
-      throw new RangeError(`Tension de barrido no valida: ${voltage}.`);
+      throw new RangeError(`Invalid sweep voltage: ${voltage}.`);
     }
   }
 
@@ -967,7 +967,7 @@ export function shockleyReferenceCurrentDensity(input = {}, voltage = null) {
 }
 
 export function serializePnProfileCsv(result) {
-  if (!result?.diagnostics?.converged) throw new Error("Solo se exportan resultados convergidos.");
+  if (!result?.diagnostics?.converged) throw new Error("Only converged results can be exported.");
   const lines = [
     `# model=1D Poisson-continuity Scharfetter-Gummel SRH`,
     `# bias_V=${result.config.biasV}`,
@@ -998,7 +998,7 @@ export function serializePnProfileCsv(result) {
 }
 
 export function serializePnSweepCsv(sweep) {
-  if (!sweep?.converged) throw new Error("Solo se exportan barridos convergidos.");
+  if (!sweep?.converged) throw new Error("Only converged sweeps can be exported.");
   const lines = [
     "# model=1D Poisson-continuity Scharfetter-Gummel SRH",
     "voltage_V,J_A_cm-2,J_Shockley_A_cm-2",
@@ -1125,7 +1125,7 @@ function solvePnBiasPoint(config, previousState, biasV) {
     const holeCandidate = solvePnHole(config, state, potentialCandidate, electronCandidate, oldHole);
 
     if (!positiveFiniteArray(electronCandidate) || !positiveFiniteArray(holeCandidate) || !finiteArray(potentialCandidate)) {
-      state.metrics = failedPnMetrics("El solver produjo NaN, infinito o densidad no positiva.");
+      state.metrics = failedPnMetrics("The solver produced NaN, infinity, or a non-positive density.");
       break;
     }
 
@@ -1159,9 +1159,9 @@ function solvePnBiasPoint(config, previousState, biasV) {
     if (iteration % 8 === 0 && score < 1e-3 && damping < 1) damping = Math.min(1, damping * 1.25);
   }
 
-  if (!state.metrics) state.metrics = failedPnMetrics("No se pudo evaluar el estado numerico.");
+  if (!state.metrics) state.metrics = failedPnMetrics("The numerical state could not be evaluated.");
   if (!state.converged && !state.metrics.failureReason) {
-    state.metrics.failureReason = `No convergio en ${config.maxIterations} iteraciones.`;
+    state.metrics.failureReason = `Did not converge within ${config.maxIterations} iterations.`;
   }
   return state;
 }
@@ -1528,7 +1528,7 @@ function finalizePnResult(config, state, baseWarnings) {
   metrics.totalIterations = state.totalIterations;
   metrics.damping = state.damping;
   const warnings = [...new Set([...baseWarnings, ...validation.warnings])];
-  if (!state.converged) warnings.push(metrics.failureReason || "Resultado no convergido.");
+  if (!state.converged) warnings.push(metrics.failureReason || "Result did not converge.");
   if (Math.max(...electronM3, ...holeM3) > 1e25) {
     warnings.push("La densidad supera 1e19 cm^-3; la estadistica no degenerada puede dejar de ser valida.");
   }

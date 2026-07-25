@@ -10,38 +10,38 @@ import {
 const LESSONS = Object.freeze({
   equilibrium: {
     biasV: 0,
-    kicker: "Equilibrio térmico",
-    title: "Predice la unión antes de resolver",
-    prediction: "Antes de resolver, anticipa hacia dónde apunta el campo interno y en qué lado se extiende más la región de agotamiento.",
-    question: "¿Qué establece el equilibrio?",
-    detail: "La difusión inicial deja carga descubierta, genera un campo interno y curva las bandas hasta alinear el nivel de Fermi.",
-    result: "Comprueba que el nivel de Fermi es plano, la corriente total es nula y la caída electrostática coincide con el potencial incorporado.",
+    kicker: "Thermal equilibrium",
+    title: "Predict the junction before solving",
+    prediction: "Before solving, predict the direction of the built-in field and which side has the wider depletion region.",
+    question: "What establishes equilibrium?",
+    detail: "Initial diffusion leaves uncovered charge, creates a built-in field, and bends the bands until the Fermi level is aligned.",
+    result: "Verify that the Fermi level is flat, the total current is zero, and the electrostatic drop matches the built-in potential.",
   },
   forward: {
     biasV: 0.6,
-    kicker: "Polarización directa",
-    title: "Observa cómo disminuye la barrera",
-    prediction: "Predice qué ocurre con la región de agotamiento y qué portadores se inyectan al aplicar tensión positiva al ánodo.",
-    question: "¿Por qué aumenta la corriente?",
-    detail: "La tensión directa reduce la barrera, estrecha el agotamiento y eleva exponencialmente la inyección de minoritarios.",
-    result: "Relaciona la menor curvatura de bandas con el aumento de portadores minoritarios, recombinación SRH y densidad de corriente.",
+    kicker: "Forward bias",
+    title: "Observe how the barrier decreases",
+    prediction: "Predict how the depletion region changes and which carriers are injected when a positive voltage is applied to the anode.",
+    question: "Why does the current increase?",
+    detail: "Forward bias lowers the barrier, narrows the depletion region, and exponentially increases minority-carrier injection.",
+    result: "Relate the reduced band bending to increased minority carriers, SRH recombination, and current density.",
   },
   reverse: {
     biasV: -0.5,
-    kicker: "Polarización inversa",
-    title: "Explora el ensanchamiento del agotamiento",
-    prediction: "Predice cómo cambian la anchura de agotamiento, el campo máximo y la generación SRH bajo polarización inversa.",
-    question: "¿Qué no representa este modelo?",
-    detail: "La inversa aumenta la barrera y ensancha el agotamiento. No se incluyen avalancha ni túnel, por lo que no puede predecir ruptura.",
-    result: "Comprueba el aumento del campo y la generación neta en agotamiento, sin interpretar la curva como modelo de ruptura.",
+    kicker: "Reverse bias",
+    title: "Explore depletion-region widening",
+    prediction: "Predict how the depletion width, peak field, and SRH generation change under reverse bias.",
+    question: "What does this model omit?",
+    detail: "Reverse bias raises the barrier and widens the depletion region. Avalanche and tunneling are omitted, so breakdown cannot be predicted.",
+    result: "Verify the increased field and net generation in the depletion region without interpreting the curve as a breakdown model.",
   },
 });
 
 const STAGES = Object.freeze({
-  device: ["Paso 1 de 4", "Dispositivo"],
-  solve: ["Paso 2 de 4", "Resolver"],
-  results: ["Paso 3 de 4", "Resultados"],
-  validate: ["Paso 4 de 4", "Validar"],
+  device: ["Step 1 of 4", "Device"],
+  solve: ["Step 2 of 4", "Solve"],
+  results: ["Step 3 of 4", "Results"],
+  validate: ["Step 4 of 4", "Validate"],
 });
 
 const dom = Object.fromEntries([
@@ -85,7 +85,7 @@ selectStage("device");
 
 function requireElement(id) {
   const element = document.getElementById(id);
-  if (!element) throw new Error(`Falta el elemento requerido #${id}.`);
+  if (!element) throw new Error(`Required element #${id} is missing.`);
   return element;
 }
 
@@ -130,7 +130,7 @@ function bindEvents() {
   ]) {
     canvas.addEventListener("pointermove", updateCursorReadout);
     canvas.addEventListener("pointerleave", () => {
-      dom.cursorReadout.textContent = "Mueve el cursor sobre una gráfica para inspeccionar el perfil.";
+      dom.cursorReadout.textContent = "Move the pointer over a plot to inspect the profile.";
     });
   }
 }
@@ -213,10 +213,10 @@ function updatePreflight() {
     const widthPercent = clamp(100 * derived.depletionWidthM / derived.lengthM, 5, 65);
     dom.depletionZone.style.width = `${widthPercent}%`;
     renderMetricList(dom.derivedMetrics, [
-      ["Potencial incorporado estimado", `${formatFixed(derived.builtInPotentialV, 3)} V`],
-      ["Agotamiento estimado", `${formatScientific(derived.depletionWidthM * 1e6)} µm`],
-      ["Paso espacial", `${formatScientific(derived.dxM * 1e9)} nm`],
-      ["Menor longitud de Debye", `${formatScientific(Math.min(derived.acceptorDebyeLengthM, derived.donorDebyeLengthM) * 1e9)} nm`],
+      ["Estimated built-in potential", `${formatFixed(derived.builtInPotentialV, 3)} V`],
+      ["Estimated depletion width", `${formatScientific(derived.depletionWidthM * 1e6)} µm`],
+      ["Spatial step", `${formatScientific(derived.dxM * 1e9)} nm`],
+      ["Shortest Debye length", `${formatScientific(Math.min(derived.acceptorDebyeLengthM, derived.donorDebyeLengthM) * 1e9)} nm`],
     ]);
   } else {
     dom.depletionZone.style.width = "18%";
@@ -228,13 +228,13 @@ function updatePreflight() {
     setMessage(dom.preflightDetails, errors.join(" "), "error");
     dom.solveButton.disabled = true;
   } else if (warnings.length) {
-    const text = `Configuración válida con ${warnings.length} advertencia${warnings.length === 1 ? "" : "s"}.`;
+    const text = `Valid configuration with ${warnings.length} warning${warnings.length === 1 ? "" : "s"}.`;
     setMessage(dom.preflightSummary, text, "warning");
     setMessage(dom.preflightDetails, `${text} ${warnings.join(" ")}`, "warning");
     dom.solveButton.disabled = solving;
   } else {
-    setMessage(dom.preflightSummary, "Configuración válida. Abre «Resolver» para calcular el estado físico.", "ready");
-    setMessage(dom.preflightDetails, "Preflight superado: parámetros finitos, rangos físicos y malla adecuada.", "ready");
+    setMessage(dom.preflightSummary, "Valid configuration. Open “Solve” to calculate the physical state.", "ready");
+    setMessage(dom.preflightDetails, "Preflight passed: finite parameters, physical ranges, and adequate mesh.", "ready");
     dom.solveButton.disabled = solving;
   }
 }
@@ -247,11 +247,11 @@ function invalidateResults() {
   dom.generateJvButton.disabled = true;
   dom.jvFigure.hidden = true;
   dom.jvEmpty.hidden = false;
-  dom.sweepMessage.textContent = "Resuelve primero un punto de operación.";
+  dom.sweepMessage.textContent = "Solve an operating point first.";
   dom.validationMetrics.replaceChildren();
   dom.warningList.replaceChildren();
-  setMessage(dom.validationBanner, "Sin resultado para validar.", "idle");
-  updateGlobalStatus("Sin resolver", "idle");
+  setMessage(dom.validationBanner, "No result to validate.", "idle");
+  updateGlobalStatus("Not solved", "idle");
   updateExportState();
 }
 
@@ -265,8 +265,8 @@ async function solveCurrentConfiguration() {
 
   solving = true;
   dom.solveButton.disabled = true;
-  updateGlobalStatus("Resolviendo…", "solving");
-  setMessage(dom.solverMessage, "Resolviendo equilibrio, continuación de tensión y residuos…", "warning");
+  updateGlobalStatus("Solving…", "solving");
+  setMessage(dom.solverMessage, "Solving equilibrium, voltage continuation, and residuals…", "warning");
   await nextPaint();
 
   try {
@@ -275,24 +275,24 @@ async function solveCurrentConfiguration() {
     currentSweep = null;
     if (!result.diagnostics.converged) {
       dom.resultsArea.hidden = true;
-      updateGlobalStatus("No convergido", "failed");
-      setMessage(dom.solverMessage, result.diagnostics.failureReason || "El solver no convergió.", "error");
+      updateGlobalStatus("Not converged", "failed");
+      setMessage(dom.solverMessage, result.diagnostics.failureReason || "The solver did not converge.", "error");
     } else {
       dom.resultsArea.hidden = false;
       dom.deviceOverview.hidden = true;
-      dom.workspaceTitle.textContent = "Solución drift-diffusion autoconsistente";
+      dom.workspaceTitle.textContent = "Self-consistent drift-diffusion solution";
       dom.generateJvButton.disabled = false;
       dom.jvFigure.hidden = true;
       dom.jvEmpty.hidden = false;
-      dom.sweepMessage.textContent = "Listo para resolver 67 puntos entre −1,00 y 0,65 V.";
+      dom.sweepMessage.textContent = "Ready to solve 67 points from −1.00 to 0.65 V.";
       renderResult(result);
       renderValidation(result);
       selectView("electrostatics");
       selectStage("results");
-      updateGlobalStatus("Convergido", "converged");
+      updateGlobalStatus("Converged", "converged");
       setMessage(
         dom.solverMessage,
-        `Convergió en ${result.diagnostics.totalIterations} iteraciones acumuladas; conservación de corriente ${formatScientific(result.diagnostics.currentContinuityError)}.`,
+        `Converged in ${result.diagnostics.totalIterations} cumulative iterations; current-conservation error ${formatScientific(result.diagnostics.currentContinuityError)}.`,
         "ready",
       );
     }
@@ -331,18 +331,18 @@ function renderResult(result) {
   drawLineChart(dom.carrierCanvas, {
     x: xUm,
     xLabel: "x (µm)",
-    yLabel: "Concentración (cm⁻³)",
+    yLabel: "Concentration (cm⁻³)",
     transform: logTransform(),
     series: [
       { label: "n", values: Float64Array.from(result.electronM3, (value) => value / 1e6), color: "#2262a5" },
       { label: "p", values: Float64Array.from(result.holeM3, (value) => value / 1e6), color: "#b12f49" },
-      { label: "|dopaje|", values: Float64Array.from(result.dopingM3, (value) => Math.abs(value) / 1e6), color: "#6a7780", dash: [6, 4] },
+      { label: "|doping|", values: Float64Array.from(result.dopingM3, (value) => Math.abs(value) / 1e6), color: "#6a7780", dash: [6, 4] },
     ],
   });
   drawLineChart(dom.bandCanvas, {
     x: xUm,
     xLabel: "x (µm)",
-    yLabel: "Energía relativa (eV)",
+    yLabel: "Relative energy (eV)",
     series: [
       { label: "Ec", values: result.conductionBandEv, color: "#2262a5" },
       { label: "Ei", values: result.intrinsicBandEv, color: "#72858c", dash: [5, 4] },
@@ -361,8 +361,8 @@ async function generateJvSweep() {
   solving = true;
   dom.generateJvButton.disabled = true;
   dom.jvInlineButton.disabled = true;
-  updateGlobalStatus("Barrido J–V…", "solving");
-  setMessage(dom.sweepMessage, "Preparando equilibrio para el barrido…", "warning");
+  updateGlobalStatus("J–V sweep…", "solving");
+  setMessage(dom.sweepMessage, "Preparing equilibrium for the sweep…", "warning");
 
   try {
     const baseConfig = { ...readConfig(), biasV: 0 };
@@ -381,7 +381,7 @@ async function generateJvSweep() {
         previous = solvePnJunction1D({ ...baseConfig, biasV: voltage }, previous);
         results.set(voltage, previous);
         solved += 1;
-        setMessage(dom.sweepMessage, `Resolviendo J–V: ${solved}/67 puntos…`, "warning");
+        setMessage(dom.sweepMessage, `Solving J–V: ${solved}/67 points…`, "warning");
         await nextPaint();
         if (!previous.diagnostics.converged) break;
       }
@@ -405,18 +405,18 @@ async function generateJvSweep() {
       warnings: currentResult.warnings,
     };
     if (!currentSweep.converged) {
-      throw new Error("El barrido se detuvo porque al menos un punto no convergió.");
+      throw new Error("The sweep stopped because at least one point did not converge.");
     }
     renderJv(currentSweep);
     dom.jvEmpty.hidden = true;
     dom.jvFigure.hidden = false;
     selectView("jv");
-    updateGlobalStatus("J–V convergida", "converged");
-    setMessage(dom.sweepMessage, "67 puntos convergidos entre −1,00 y 0,65 V.", "ready");
+    updateGlobalStatus("J–V converged", "converged");
+    setMessage(dom.sweepMessage, "67 points converged from −1.00 to 0.65 V.", "ready");
     if (dom.controlPanel.open) dom.controlPanel.close();
   } catch (error) {
     currentSweep = null;
-    updateGlobalStatus("Barrido fallido", "failed");
+    updateGlobalStatus("Sweep failed", "failed");
     setMessage(dom.sweepMessage, error instanceof Error ? error.message : String(error), "error");
   } finally {
     solving = false;
@@ -449,26 +449,26 @@ function renderValidation(result) {
   const potentialBarrierV = result.potentialV.at(-1) - result.potentialV[0];
   const expectedBarrierV = result.derived.builtInPotentialV - result.config.biasV;
   renderMetricList(dom.validationMetrics, [
-    ["Estado", result.diagnostics.converged ? "Convergido" : "No convergido"],
-    ["Residual de Poisson", formatScientific(result.diagnostics.poissonResidual)],
-    ["Residual de electrones", formatScientific(result.diagnostics.electronResidual)],
-    ["Residual de huecos", formatScientific(result.diagnostics.holeResidual)],
-    ["No uniformidad de J", formatPercent(result.diagnostics.currentContinuityError)],
-    ["J media", `${formatScientific(result.diagnostics.meanCurrentDensityAm2 / 1e4)} A/cm²`],
-    ["Barrera simulada / esperada", `${formatFixed(potentialBarrierV, 4)} / ${formatFixed(expectedBarrierV, 4)} V`],
-    ["Malla", `${result.config.cells} nodos; Δx = ${formatScientific(result.derived.dxM * 1e9)} nm`],
+    ["Status", result.diagnostics.converged ? "Converged" : "Not converged"],
+    ["Poisson residual", formatScientific(result.diagnostics.poissonResidual)],
+    ["Electron residual", formatScientific(result.diagnostics.electronResidual)],
+    ["Hole residual", formatScientific(result.diagnostics.holeResidual)],
+    ["J nonuniformity", formatPercent(result.diagnostics.currentContinuityError)],
+    ["Mean J", `${formatScientific(result.diagnostics.meanCurrentDensityAm2 / 1e4)} A/cm²`],
+    ["Simulated / expected barrier", `${formatFixed(potentialBarrierV, 4)} / ${formatFixed(expectedBarrierV, 4)} V`],
+    ["Mesh", `${result.config.cells} nodes; Δx = ${formatScientific(result.derived.dxM * 1e9)} nm`],
   ]);
   setMessage(
     dom.validationBanner,
     result.diagnostics.converged
-      ? "PASS: ecuaciones, positividad y conservación satisfacen los umbrales de la v1."
-      : "FAIL: no utilices este resultado como solución física.",
+      ? "PASS: equations, positivity, and conservation satisfy the v1 thresholds."
+      : "FAIL: do not use this result as a physical solution.",
     result.diagnostics.converged ? "pass" : "error",
   );
   const limitations = [
     ...result.warnings,
-    "Sin avalancha ni túnel: la polarización inversa no predice ruptura.",
-    "Boltzmann y movilidad constante: no es válido como TCAD general a alta densidad o campo.",
+    "No avalanche or tunneling: reverse bias does not predict breakdown.",
+    "Boltzmann statistics and constant mobility: this is not a general TCAD model at high density or field.",
   ];
   replaceList(dom.warningList, [...new Set(limitations)]);
 }
@@ -518,7 +518,7 @@ function exportCsv() {
   if (!currentResult?.diagnostics.converged) return;
   const isSweep = activeView === "jv";
   const csv = isSweep ? serializePnSweepCsv(currentSweep) : serializePnProfileCsv(currentResult);
-  downloadBlob(csv, "text/csv;charset=utf-8", isSweep ? "union-pn-jv.csv" : "union-pn-perfil.csv");
+  downloadBlob(csv, "text/csv;charset=utf-8", isSweep ? "pn-junction-jv.csv" : "pn-junction-profile.csv");
 }
 
 function exportPng() {
@@ -526,7 +526,7 @@ function exportPng() {
   const canvas = activeView === "jv" ? dom.jvCanvas :
     (activeView === "carriers" ? dom.carrierCanvas : dom.potentialCanvas);
   canvas.toBlob((blob) => {
-    if (blob) downloadBlob(blob, "image/png", `union-pn-${activeView}.png`);
+    if (blob) downloadBlob(blob, "image/png", `pn-junction-${activeView}.png`);
   }, "image/png");
 }
 
