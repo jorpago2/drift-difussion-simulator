@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520">
+  <title>Sectioned glass-passivated axial rectifier assembly</title>
+  <desc>Deterministic schematic based on Vishay GP, RGP, and EGP SUPERECTIFIER construction: plated copper leads, molybdenum slugs, solid braze, silicon die, opaque glass encapsulation, and flame-retardant molding. Dimensions are illustrative.</desc>
+  <metadata>Source: https://www.vishay.com/docs/88870/crossect.pdf — representative construction, not a generic drawing of every DO-41 diode.</metadata>
+  <defs>
+    <linearGradient id="epoxy" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#263238"/>
+      <stop offset="1" stop-color="#11191c"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eef3f4"/>
+      <stop offset="0.5" stop-color="#9aabb0"/>
+      <stop offset="1" stop-color="#53666c"/>
+    </linearGradient>
+    <pattern id="glassHatch" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+      <rect width="12" height="12" fill="#63767b"/>
+      <rect width="3" height="12" fill="#7f9195"/>
+    </pattern>
+    <style>
+      .outline{stroke:#10262d;stroke-width:4;stroke-linejoin:round}
+      .marker{fill:#087e8b;stroke:#fff;stroke-width:4}
+      .number{fill:#fff;font:800 18px system-ui,sans-serif;text-anchor:middle;dominant-baseline:central}
+    </style>
+  </defs>
+
+  <rect width="1200" height="520" fill="#fbfaf7"/>
+
+  <!-- Coaxial plated-copper terminals -->
+  <rect x="25" y="240" width="330" height="42" rx="20" fill="url(#metal)" class="outline"/>
+  <rect x="845" y="240" width="330" height="42" rx="20" fill="url(#metal)" class="outline"/>
+
+  <!-- Molded axial body; the central window is a true section, not transparency. -->
+  <rect x="280" y="125" width="640" height="270" rx="118" fill="url(#epoxy)" class="outline"/>
+  <rect x="835" y="126" width="54" height="268" fill="#c7d0d2" stroke="#75888d" stroke-width="3"/>
+  <path d="M355 158h430q55 0 55 55v96q0 55-55 55H355q-42 0-42-42V200q0-42 42-42z" fill="#f4f6f5" stroke="#10262d" stroke-width="5"/>
+
+  <!-- Opaque glass completely surrounds the brazed stack. -->
+  <rect x="377" y="187" width="392" height="148" rx="58" fill="url(#glassHatch)" class="outline"/>
+
+  <!-- Axial brazed stack: lead, moly slug, braze, die, braze, moly slug, lead. -->
+  <path d="M313 241h105v40H313z" fill="url(#metal)" class="outline"/>
+  <path d="M405 211h126q24 0 24 24v52q0 24-24 24H405z" fill="url(#metal)" class="outline"/>
+  <rect x="555" y="218" width="18" height="86" fill="#c79436" stroke="#72531e" stroke-width="3"/>
+  <rect x="573" y="211" width="58" height="100" rx="3" fill="#405d6c" class="outline"/>
+  <line x1="602" y1="216" x2="602" y2="306" stroke="#dce8ec" stroke-width="3" stroke-dasharray="7 6"/>
+  <rect x="631" y="218" width="18" height="86" fill="#c79436" stroke="#72531e" stroke-width="3"/>
+  <path d="M649 211h126v100H649q-24 0-24-24v-52q0-24 24-24z" fill="url(#metal)" class="outline"/>
+  <path d="M762 241h158v40H762z" fill="url(#metal)" class="outline"/>
+
+  <!-- Numbered callouts correspond to the adjacent HTML legend. -->
+  <g><circle cx="862" cy="155" r="17" class="marker"/><text x="862" y="155" class="number">1</text></g>
+  <g><circle cx="325" cy="150" r="17" class="marker"/><text x="325" y="150" class="number">2</text></g>
+  <g><circle cx="1075" cy="261" r="17" class="marker"/><text x="1075" y="261" class="number">3</text></g>
+  <g><circle cx="730" cy="225" r="17" class="marker"/><text x="730" y="225" class="number">4</text></g>
+  <g><circle cx="602" cy="261" r="17" class="marker"/><text x="602" y="261" class="number">5</text></g>
+  <g><circle cx="565" cy="318" r="17" class="marker"/><text x="565" y="318" class="number">6</text></g>
+  <g><circle cx="445" cy="326" r="17" class="marker"/><text x="445" y="326" class="number">7</text></g>
+</svg>

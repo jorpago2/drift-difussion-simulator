@@ -45,34 +45,27 @@
           </div>
           <figure class="component-cutaway">
             <div class="cutaway-stage cutaway-diode">
-              <img src="assets/device-cutaways/diode-do41-cutaway.png" width="1768" height="872" alt="Sectioned axial silicon rectifier showing coaxial leads, molybdenum slugs, brazed silicon die, glass passivation, and epoxy molding">
-              <span class="cutaway-marker marker-1" aria-hidden="true">1</span>
-              <span class="cutaway-marker marker-2" aria-hidden="true">2</span>
-              <span class="cutaway-marker marker-3" aria-hidden="true">3</span>
-              <span class="cutaway-marker marker-4" aria-hidden="true">4</span>
-              <span class="cutaway-marker marker-5" aria-hidden="true">5</span>
-              <span class="cutaway-marker marker-6" aria-hidden="true">6</span>
-              <span class="cutaway-marker marker-7" aria-hidden="true">7</span>
+              <img src="assets/device-cutaways/diode-superectifier-cutaway.svg" width="1200" height="520" alt="Deterministic section of a Vishay GP, RGP, or EGP style axial rectifier showing coaxial leads, molybdenum slugs, solid braze, silicon die, opaque glass, and molding">
             </div>
             <figcaption class="cutaway-caption">
               <div>
-                <p class="section-label">Representative construction</p>
-                <h3>Inside an axial silicon diode</h3>
-                <p class="cutaway-note">Glass-passivated brazed DO-41 construction. The die is enlarged for visibility; doping is not optically visible.</p>
+                <p class="section-label">Documented construction</p>
+                <h3>Inside an axial silicon rectifier</h3>
+                <p class="cutaway-note">Representative of Vishay GP/RGP/EGP SUPERECTIFIER devices, redrawn from the <a href="https://www.vishay.com/docs/88870/crossect.pdf">manufacturer cross-section</a>. Dimensions are illustrative.</p>
               </div>
               <ol class="cutaway-legend">
                 <li><span>1</span><strong>Cathode band</strong></li>
-                <li><span>2</span><strong>Epoxy molding</strong></li>
+                <li><span>2</span><strong>Flame-retardant molding</strong></li>
                 <li><span>3</span><strong>Plated copper lead</strong></li>
                 <li><span>4</span><strong>Molybdenum slug</strong></li>
                 <li><span>5</span><strong>Silicon die</strong></li>
-                <li><span>6</span><strong>Brazed contacts</strong></li>
-                <li><span>7</span><strong>Glass passivation</strong></li>
+                <li><span>6</span><strong>Solid braze</strong></li>
+                <li><span>7</span><strong>Opaque glass encapsulation</strong></li>
               </ol>
-              <p class="model-bridge"><strong>What the solver keeps:</strong> a one-dimensional path through the silicon across the PN junction. The package is omitted and its metal connections become ideal ohmic boundaries.</p>
+              <p class="model-bridge"><strong>Model boundary:</strong> this drawing documents a commercial assembly. The solver below instead uses an idealized abrupt PN junction with user-defined doping; it does not reproduce this rectifier die or package.</p>
             </figcaption>
           </figure>
-          <p class="abstraction-step">Physical component <span aria-hidden="true">→</span> 1D semiconductor model</p>
+          <p class="abstraction-step">Documented package example <span aria-hidden="true">→</span> idealized 1D PN domain</p>
           <div class="device-schematic" role="img" aria-label="Abrupt PN junction with the anode contact on the left and cathode on the right">
             <div class="contact contact-left">Anode</div>
             <div class="region region-p"><strong>P</strong><span id="pDopingLabel">N<sub>A</sub> = 10¹⁶ cm⁻³</span></div>

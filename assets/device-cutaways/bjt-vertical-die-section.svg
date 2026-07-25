@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 520">
+  <title>Enlarged vertical planar NPN die cross-section</title>
+  <desc>N plus emitter diffusion nested in a P base diffusion over an N minus collector epitaxial layer and N plus substrate, with separate top emitter and base contacts and backside collector metallization.</desc>
+  <metadata>Topology follows the vertical discrete BJT fabrication sequence in the Nexperia Bipolar Transistor Application Handbook, pages 46–49: https://assets.nexperia.com/documents/brochure/nexperia_BJT_Handbook_V2_240425_lowres.pdf</metadata>
+  <defs>
+    <pattern id="oxide" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="12" height="12" fill="#e8eff1"/>
+      <rect width="3" height="12" fill="#c8d7da"/>
+    </pattern>
+    <style>
+      .edge{stroke:#10262d;stroke-width:4;stroke-linejoin:round}
+      .regionLabel{font:800 22px system-ui,sans-serif;text-anchor:middle;fill:#17343b}
+      .minorLabel{font:700 16px system-ui,sans-serif;text-anchor:middle;fill:#536a71}
+      .marker{fill:#087e8b;stroke:#fff;stroke-width:4}
+      .number{fill:#fff;font:800 18px system-ui,sans-serif;text-anchor:middle;dominant-baseline:central}
+    </style>
+  </defs>
+  <rect width="760" height="520" fill="#fbfaf7"/>
+
+  <!-- Semiconductor body: vertical collector path. -->
+  <rect x="95" y="205" width="570" height="202" fill="#d7eef2" class="edge"/>
+  <rect x="95" y="407" width="570" height="54" fill="#8fcbd4" class="edge"/>
+  <rect x="95" y="461" width="570" height="24" fill="#c79436" class="edge"/>
+
+  <!-- P base is a surface diffusion into the N- collector; N+ emitter is nested inside it. -->
+  <path d="M190 205h380v72q0 54-54 54H244q-54 0-54-54z" fill="#f2c7bd" class="edge"/>
+  <path d="M282 205h196v45q0 36-36 36H318q-36 0-36-36z" fill="#77c4d0" class="edge"/>
+
+  <!-- Oxide/passivation with explicit contact openings. -->
+  <path d="M95 176h187v29H95zm383 0h187v29H478zm-139 0h82v29h-82z" fill="url(#oxide)" stroke="#71858b" stroke-width="3"/>
+  <rect x="304" y="142" width="128" height="34" rx="4" fill="#aab8bc" class="edge"/>
+  <path d="M492 142h118v34H492v29h-42v-63z" fill="#aab8bc" class="edge"/>
+
+  <!-- Junction boundaries and labels are schematic; dimensions are deliberately not to scale. -->
+  <path d="M190 277q0 54 54 54h272q54 0 54-54" fill="none" stroke="#9b3c31" stroke-width="4" stroke-dasharray="8 7"/>
+  <path d="M282 250q0 36 36 36h124q36 0 36-36" fill="none" stroke="#086778" stroke-width="4" stroke-dasharray="8 7"/>
+  <text x="380" y="247" class="regionLabel">N+ emitter</text>
+  <text x="535" y="307" class="regionLabel">P base</text>
+  <text x="380" y="380" class="regionLabel">N− collector epitaxy</text>
+  <text x="380" y="443" class="regionLabel">N+ substrate</text>
+  <text x="380" y="506" class="minorLabel">backside collector metal</text>
+
+  <g><circle cx="380" cy="218" r="17" class="marker"/><text x="380" y="218" class="number">5</text></g>
+  <g><circle cx="548" cy="270" r="17" class="marker"/><text x="548" y="270" class="number">6</text></g>
+  <g><circle cx="622" cy="370" r="17" class="marker"/><text x="622" y="370" class="number">7</text></g>
+  <g><circle cx="622" cy="473" r="17" class="marker"/><text x="622" y="473" class="number">8</text></g>
+</svg>

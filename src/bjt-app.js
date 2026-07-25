@@ -7,7 +7,7 @@ import {
 import { createNiceScale, formatChartTick } from "./plot-utils.js";
 
 const ids = [
-  "bjtGlobalStatus", "bjtForm", "bjtVbeInput", "bjtVceInput", "bjtEmitterDopingInput",
+  "bjtGlobalStatus", "bjtControls", "bjtForm", "bjtVbeInput", "bjtVceInput", "bjtEmitterDopingInput",
   "bjtBaseDopingInput", "bjtCollectorDopingInput", "bjtLengthInput", "bjtHeightInput",
   "bjtEmitterWidthInput", "bjtBaseWidthInput", "bjtDepthInput", "bjtNxInput", "bjtNyInput",
   "bjtElectronLifetimeInput", "bjtHoleLifetimeInput", "bjtPreflight", "bjtDerivedMetrics",
@@ -28,6 +28,7 @@ let currentFamily = null;
 let activeView = "output";
 let busy = false;
 let dirty = false;
+const compactControlsMedia = window.matchMedia("(max-width: 920px)");
 
 dom.bjtForm.addEventListener("submit", solveOperatingPoint);
 dom.bjtSweepButton.addEventListener("click", solveOutputFamily);
@@ -51,6 +52,7 @@ window.addEventListener("resize", debounce(() => {
   drawMaps(currentResult);
   if (currentFamily) drawOutputFamily(currentFamily);
 }, 120));
+compactControlsMedia.addEventListener("change", syncControlsDisclosure);
 
 worker.addEventListener("message", ({ data }) => {
   busy = false;
@@ -103,8 +105,13 @@ worker.addEventListener("message", ({ data }) => {
   }
 });
 
+syncControlsDisclosure();
 updatePreflight();
 selectView("output");
+
+function syncControlsDisclosure() {
+  dom.bjtControls.open = !compactControlsMedia.matches;
+}
 
 function readConfig() {
   return {
