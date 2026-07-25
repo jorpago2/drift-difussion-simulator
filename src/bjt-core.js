@@ -216,7 +216,12 @@ export function solveNpnBjt2D(input = {}, previousSolution = null) {
   return finalizeResult(config, state, validation.warnings);
 }
 
-export function sweepNpnOutput(input = {}, collectorVoltages = null, previousSolution = null) {
+export function sweepNpnOutput(
+  input = {},
+  collectorVoltages = null,
+  previousSolution = null,
+  solver = solveNpnBjt2D,
+) {
   const validation = validateNpnConfig(input);
   if (validation.errors.length) throw new RangeError(validation.errors.join(" "));
   const requested = collectorVoltages ?? Array.from(
@@ -232,14 +237,14 @@ export function sweepNpnOutput(input = {}, collectorVoltages = null, previousSol
     }
   }
 
-  let previous = solveNpnBjt2D({
+  let previous = solver({
     ...validation.config,
     baseEmitterVoltageV: validation.config.baseEmitterVoltageV,
     collectorEmitterVoltageV: voltages[0],
   }, previousSolution);
   const results = new Map([[voltages[0], previous]]);
   for (const voltage of voltages.slice(1)) {
-    previous = solveNpnBjt2D({
+    previous = solver({
       ...validation.config,
       baseEmitterVoltageV: validation.config.baseEmitterVoltageV,
       collectorEmitterVoltageV: voltage,
@@ -266,7 +271,12 @@ export function sweepNpnOutput(input = {}, collectorVoltages = null, previousSol
   };
 }
 
-export function sweepNpnOutputFamily(input = {}, baseVoltages = null, collectorVoltages = null) {
+export function sweepNpnOutputFamily(
+  input = {},
+  baseVoltages = null,
+  collectorVoltages = null,
+  solver = solveNpnBjt2D,
+) {
   const validation = validateNpnConfig(input);
   if (validation.errors.length) throw new RangeError(validation.errors.join(" "));
   const requestedBase = baseVoltages ?? [
@@ -281,12 +291,61 @@ export function sweepNpnOutputFamily(input = {}, baseVoltages = null, collectorV
       { ...validation.config, baseEmitterVoltageV },
       collectorVoltages,
       previousAtZero,
+      solver,
     );
     curves.push({ baseEmitterVoltageV, ...sweep });
     previousAtZero = sweep.points[0]?.result ?? null;
     if (!sweep.converged) break;
   }
   return { config: validation.config, curves, converged: curves.every((curve) => curve.converged) };
+}
+
+export function canReuseNpnResult(result, config) {
+  if (!result?.diagnostics?.converged || result.nx !== config.nx || result.ny !== config.ny) {
+    return false;
+  }
+  for (const name of [
+    "lengthUm", "heightUm", "emitterWidthUm", "baseWidthUm", "emitterDopingCm3",
+    "baseDopingCm3", "collectorDopingCm3", "temperatureK", "intrinsicDensityCm3",
+    "relativePermittivity", "electronMobilityM2Vs", "holeMobilityM2Vs",
+    "electronLifetimeS", "holeLifetimeS",
+  ]) {
+    if (result.config[name] !== config[name]) return false;
+  }
+  return true;
+}
+
+export function finalizeNpnKernelState(input, kernelState) {
+  const validation = validateNpnConfig(input);
+  if (validation.errors.length) throw new RangeError(validation.errors.join(" "));
+  const { config } = validation;
+  const geometry = createGeometry(config);
+  const requiredArrays = ["potential", "electron", "hole"];
+  for (const name of requiredArrays) {
+    const values = kernelState[name];
+    if (!values || values.length !== geometry.size || !finiteArray(values)) {
+      throw new Error(`The numerical backend returned an invalid ${name} array.`);
+    }
+  }
+  for (const density of [kernelState.electron, kernelState.hole]) {
+    for (const value of density) {
+      if (value <= 0) throw new Error("The numerical backend returned a non-positive density.");
+    }
+  }
+  const state = {
+    ...geometry,
+    potential: Float64Array.from(kernelState.potential),
+    electron: Float64Array.from(kernelState.electron),
+    hole: Float64Array.from(kernelState.hole),
+    baseEmitterVoltageV: kernelState.baseEmitterVoltageV,
+    collectorEmitterVoltageV: kernelState.collectorEmitterVoltageV,
+    converged: Boolean(kernelState.converged),
+    iterations: kernelState.iterations,
+    totalIterations: kernelState.totalIterations,
+    damping: kernelState.damping,
+    metrics: kernelState.metrics,
+  };
+  return finalizeResult(config, state, validation.warnings);
 }
 
 export function serializeNpnProfileCsv(result) {
@@ -881,6 +940,7 @@ function finalizeResult(config, state, baseWarnings) {
   metrics.iterations = state.iterations;
   metrics.totalIterations = state.totalIterations;
   metrics.damping = state.damping;
+  metrics.backend = metrics.backend ?? "JavaScript";
   const terminalCurrents = {};
   for (const [name, current] of Object.entries(metrics.terminalCurrents ?? {
     emitter: { electronAm: NaN, holeAm: NaN, totalAm: NaN },
@@ -1252,15 +1312,7 @@ function metricsConverged(config, metrics) {
 }
 
 function reusableState(result, config) {
-  if (!result?.diagnostics?.converged || result.nx !== config.nx || result.ny !== config.ny) return null;
-  for (const name of [
-    "lengthUm", "heightUm", "emitterWidthUm", "baseWidthUm", "emitterDopingCm3",
-    "baseDopingCm3", "collectorDopingCm3", "temperatureK", "intrinsicDensityCm3",
-    "relativePermittivity", "electronMobilityM2Vs", "holeMobilityM2Vs",
-    "electronLifetimeS", "holeLifetimeS",
-  ]) {
-    if (result.config[name] !== config[name]) return null;
-  }
+  if (!canReuseNpnResult(result, config)) return null;
   return {
     ...createGeometry(config),
     potential: Float64Array.from(result.normalizedPotential),

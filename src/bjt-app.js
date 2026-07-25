@@ -74,7 +74,9 @@ worker.addEventListener("message", ({ data }) => {
     setStatus("NPN converged", "converged");
     setMessage(
       dom.bjtSolverMessage,
-      `Converged after ${currentResult.diagnostics.totalIterations} cumulative Gummel iterations.`,
+      `Converged with ${currentResult.diagnostics.backend} after ` +
+      `${currentResult.diagnostics.totalIterations} cumulative Gummel iterations ` +
+      `(${formatFixed(currentResult.diagnostics.elapsedMs ?? 0, 1)} ms kernel time).`,
       "ready",
     );
     updateExportState();
@@ -91,7 +93,12 @@ worker.addEventListener("message", ({ data }) => {
     dom.bjtOutputFigure.hidden = false;
     drawOutputFamily(currentFamily);
     setStatus("Output family converged", "converged");
-    setMessage(dom.bjtSolverMessage, "All output-characteristic points converged.", "ready");
+    setMessage(
+      dom.bjtSolverMessage,
+      `All output-characteristic points converged with ${currentFamily.backend} ` +
+      `(${formatFixed(currentFamily.elapsedMs ?? 0, 1)} ms cumulative kernel time).`,
+      "ready",
+    );
     updateExportState();
   }
 });
@@ -185,6 +192,9 @@ function renderOperatingPoint(result) {
     ["Device depth", `${formatScientific(result.config.deviceDepthUm)} µm`],
   ]);
   renderMetricList(dom.bjtValidationMetrics, [
+    ["Compute backend", result.diagnostics.backend],
+    ["Kernel time", `${formatFixed(result.diagnostics.elapsedMs ?? 0, 1)} ms`],
+    ["PCG iterations", formatFixed(result.diagnostics.linearIterations ?? 0, 0)],
     ["Poisson residual", formatScientific(result.diagnostics.poissonResidual)],
     ["Electron residual", formatScientific(result.diagnostics.electronResidual)],
     ["Hole residual", formatScientific(result.diagnostics.holeResidual)],

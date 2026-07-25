@@ -12,7 +12,8 @@ converged solution.
 
 The NPN laboratory is a full three-terminal 2D Poisson–continuity calculation,
 not a compact model or a pair of independent junctions. The old generic 2D, MOS,
-and WASM paths remain experimental and are not used by either public laboratory.
+and legacy Poisson-only WASM paths remain experimental. The NPN numerical kernel
+uses its own C/WebAssembly implementation.
 
 On desktop viewports, controls are docked at the right and can be collapsed;
 on smaller screens they open as a modal panel. Plots use a high-density canvas
@@ -39,7 +40,12 @@ cores:
 npm test
 ```
 
-No WASM compilation or package installation is required.
+The compiled NPN WASM asset is committed, so no build step is required to run
+the site. Developers with WASI SDK or compatible Clang can rebuild it with:
+
+```powershell
+npm run build:bjt-wasm
+```
 
 ## Physical model
 
@@ -122,13 +128,17 @@ V_E = 0,  V_BE = V_B - V_E,  V_CE = V_C - V_E
 I_E = I_C + I_B  (reported positive out of the emitter).
 ```
 
-`src/bjt-core.js` solves 2D Poisson and both stationary continuity equations on
-a node-centered Cartesian control-volume mesh. Face fluxes use
+`native/bjt-core/bjt-core.c` solves 2D Poisson and both stationary continuity
+equations in WebAssembly on a node-centered Cartesian control-volume mesh.
+`src/bjt-core.js` remains the independent JavaScript reference implementation
+and owns validation, result construction, and exports. Face fluxes use
 Scharfetter–Gummel discretization; SRH recombination, statistics, and material
 assumptions match the PN model. Gummel continuation first establishes
 equilibrium, then advances VCE and VBE in steps no larger than 0.1 V. Each
 nonlinear update uses matrix-free preconditioned conjugate gradients and fails
 explicitly on loss of positivity, linear-solver failure, or iteration exhaustion.
+The worker selects WASM by default and reports an explicit JavaScript fallback
+if the binary cannot be loaded.
 
 The NPN result includes potential, electric field, charge, electron and hole
 density, SRH recombination, and electron, hole, and total current-density vector
@@ -213,6 +223,10 @@ all three residuals, KCL and separate carrier balances, positivity, 41 × 9 /
 81 × 17 / 161 × 33 mesh refinement, ordering of the output curves, current-field
 arrays, and CSV dimensions. Between the two finest meshes, collector current,
 base current, and the sampled potential field must each differ by less than 2%.
+
+`scripts/bjt-wasm-self-check.mjs` compares the C/WASM and JavaScript solvers at
+the same biased operating point, checks normalized potential and terminal-current
+parity, and verifies continuation from a previously converged WASM state.
 
 CSV files contain model and area metadata plus both terminal-current and
 current-density columns with units in their headers. PNG export captures the
