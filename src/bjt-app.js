@@ -5,7 +5,13 @@ import {
   serializeNpnSweepCsv,
   validateNpnConfig,
 } from "./bjt-core.js";
-import { createNiceScale, formatChartTick } from "./plot-utils.js";
+import {
+  createNiceScale,
+  drawScientificText,
+  formatChartTick,
+  measureScientificText,
+  setScientificText,
+} from "./plot-utils.js";
 
 const ids = [
   "bjtGlobalStatus", "bjtControls", "bjtForm", "bjtVbeInput", "bjtVceInput", "bjtEmitterDopingInput",
@@ -137,7 +143,7 @@ function readConfig() {
 function updatePreflight() {
   const validation = validateNpnConfig(readConfig());
   const { errors, warnings, derived, config } = validation;
-  dom.bjtBiasBadge.textContent = `VBE = ${formatFixed(config.baseEmitterVoltageV, 2)} V · VCE = ${formatFixed(config.collectorEmitterVoltageV, 2)} V`;
+  setScientificText(dom.bjtBiasBadge, `V_BE = ${formatFixed(config.baseEmitterVoltageV, 2)} V · V_CE = ${formatFixed(config.collectorEmitterVoltageV, 2)} V`);
   if (errors.length) setMessage(dom.bjtPreflight, errors.join(" "), "error");
   else if (warnings.length) setMessage(dom.bjtPreflight, warnings.join(" "), "warning");
   else setMessage(dom.bjtPreflight, "Preflight passed: geometry, contacts, model ranges, and mesh scales are consistent.", "ready");
@@ -171,7 +177,7 @@ function solveOutputFamily() {
   if (busy || !currentResult?.diagnostics.converged || dirty) return;
   busy = true;
   setControlsEnabled(false);
-  setStatus("Calculating IC–VCE…", "solving");
+  setStatus("Calculating output family…", "solving");
   setMessage(
     dom.bjtSolverMessage,
     "Solving three base-voltage curves; each point must pass the coupled residual and terminal-balance checks.",
@@ -193,10 +199,10 @@ function renderOperatingPoint(result) {
       : "Forward active";
   renderMetricList(dom.bjtCircuitMetrics, [
     ["Operating region", region],
-    ["Collector current IC", `${formatScientific(collectorInto * 1e3)} mA`],
-    ["Base current IB", `${formatScientific(baseInto * 1e6)} µA`],
-    ["Emitter current IE", `${formatScientific(emitterOut * 1e3)} mA`],
-    ["Current gain β = IC/IB", Number.isFinite(beta) ? formatFixed(beta, 2) : "Not defined"],
+    ["Collector current I_C", `${formatScientific(collectorInto * 1e3)} mA`],
+    ["Base current I_B", `${formatScientific(baseInto * 1e6)} µA`],
+    ["Emitter current I_E", `${formatScientific(emitterOut * 1e3)} mA`],
+    ["Current gain β = I_C/I_B", Number.isFinite(beta) ? formatFixed(beta, 2) : "Not defined"],
     ["Device depth", `${formatScientific(result.config.deviceDepthUm)} µm`],
   ]);
   renderMetricList(dom.bjtValidationMetrics, [
@@ -451,18 +457,18 @@ function drawLineChart(canvas, specification) {
   context.fillStyle = "#20343b";
   context.font = "700 12px Inter, system-ui, sans-serif";
   context.textAlign = "center";
-  context.fillText(specification.xLabel, pad.left + plotWidth / 2, height - 8);
+  drawScientificText(context, specification.xLabel, pad.left + plotWidth / 2, height - 8);
   context.save();
   context.translate(17, pad.top + plotHeight / 2);
   context.rotate(-Math.PI / 2);
-  context.fillText(specification.yLabel, 0, 0);
+  drawScientificText(context, specification.yLabel, 0, 0);
   context.restore();
   let legendX = pad.left;
   let legendY = 22;
   context.font = "700 11px Inter, system-ui, sans-serif";
   context.textAlign = "left";
   for (const series of specification.series.filter((item) => item.showInLegend !== false)) {
-    const required = 34 + context.measureText(series.label).width;
+    const required = 34 + measureScientificText(context, series.label);
     if (legendX + required > width - 10) {
       legendX = pad.left;
       legendY += 18;
@@ -473,7 +479,7 @@ function drawLineChart(canvas, specification) {
     drawLine(context, legendX, legendY, legendX + 20, legendY);
     context.setLineDash([]);
     context.fillStyle = "#40555c";
-    context.fillText(series.label, legendX + 26, legendY + 4);
+    drawScientificText(context, series.label, legendX + 26, legendY + 4);
     legendX += required + 12;
   }
 }
@@ -544,8 +550,8 @@ function renderMetricList(container, entries) {
     const row = document.createElement("div");
     const dt = document.createElement("dt");
     const dd = document.createElement("dd");
-    dt.textContent = term;
-    dd.textContent = definition;
+    setScientificText(dt, term);
+    setScientificText(dd, definition);
     row.append(dt, dd);
     fragment.append(row);
   }

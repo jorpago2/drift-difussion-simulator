@@ -37,6 +37,72 @@ export function formatChartTick(value, step = 0) {
   return value.toFixed(Math.min(decimals, 6)).replace(/(\.\d*?[1-9])0+$/, "$1").replace(/\.0+$/, "");
 }
 
+export function setScientificText(element, text) {
+  const fragment = element.ownerDocument.createDocumentFragment();
+  for (const segment of parseScientificText(text)) {
+    if (segment.subscript) {
+      const subscript = element.ownerDocument.createElement("sub");
+      subscript.textContent = segment.text;
+      fragment.append(subscript);
+    } else {
+      fragment.append(element.ownerDocument.createTextNode(segment.text));
+    }
+  }
+  element.replaceChildren(fragment);
+}
+
+export function drawScientificText(context, text, x, y) {
+  const segments = parseScientificText(text);
+  if (segments.length === 1) {
+    context.fillText(text, x, y);
+    return context.measureText(text).width;
+  }
+
+  const mainFont = context.font;
+  const subscriptFont = mainFont.replace(/(\d+(?:\.\d+)?)px/, (_, size) => `${Number(size) * 0.75}px`);
+  const widths = segments.map((segment) => {
+    context.font = segment.subscript ? subscriptFont : mainFont;
+    return context.measureText(segment.text).width;
+  });
+  const totalWidth = widths.reduce((sum, width) => sum + width, 0);
+  let cursorX = context.textAlign === "center" ? x - totalWidth / 2 : context.textAlign === "right" ? x - totalWidth : x;
+
+  context.save();
+  context.textAlign = "left";
+  for (let index = 0; index < segments.length; index += 1) {
+    const segment = segments[index];
+    context.font = segment.subscript ? subscriptFont : mainFont;
+    context.fillText(segment.text, cursorX, y + (segment.subscript ? 3 : 0));
+    cursorX += widths[index];
+  }
+  context.restore();
+  context.font = mainFont;
+  return totalWidth;
+}
+
+export function measureScientificText(context, text) {
+  const mainFont = context.font;
+  const subscriptFont = mainFont.replace(/(\d+(?:\.\d+)?)px/, (_, size) => `${Number(size) * 0.75}px`);
+  const width = parseScientificText(text).reduce((sum, segment) => {
+    context.font = segment.subscript ? subscriptFont : mainFont;
+    return sum + context.measureText(segment.text).width;
+  }, 0);
+  context.font = mainFont;
+  return width;
+}
+
+function parseScientificText(text) {
+  const segments = [];
+  let cursor = 0;
+  for (const match of text.matchAll(/_([A-Za-z0-9]+)/g)) {
+    if (match.index > cursor) segments.push({ text: text.slice(cursor, match.index), subscript: false });
+    segments.push({ text: match[1], subscript: true });
+    cursor = match.index + match[0].length;
+  }
+  if (cursor < text.length) segments.push({ text: text.slice(cursor), subscript: false });
+  return segments.length ? segments : [{ text, subscript: false }];
+}
+
 function niceStep(rawStep) {
   const exponent = Math.floor(Math.log10(rawStep));
   const magnitude = 10 ** exponent;

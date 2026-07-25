@@ -6,7 +6,13 @@ import {
   solvePnJunction1D,
   validatePnConfig,
 } from "./ddm-core.js";
-import { createNiceScale, formatChartTick } from "./plot-utils.js";
+import {
+  createNiceScale,
+  drawScientificText,
+  formatChartTick,
+  measureScientificText,
+  setScientificText,
+} from "./plot-utils.js";
 
 const LESSONS = Object.freeze({
   equilibrium: {
@@ -215,9 +221,9 @@ function readConfig() {
 function updatePreflight() {
   const validation = validatePnConfig(readConfig());
   const { config, errors, warnings, derived } = validation;
-  dom.biasBadge.textContent = `V_D = ${formatFixed(config.biasV, 3)} V`;
-  dom.pDopingLabel.textContent = `N_A = ${formatScientific(config.acceptorCm3)} cm⁻³`;
-  dom.nDopingLabel.textContent = `N_D = ${formatScientific(config.donorCm3)} cm⁻³`;
+  setScientificText(dom.biasBadge, `V_D = ${formatFixed(config.biasV, 3)} V`);
+  setScientificText(dom.pDopingLabel, `N_A = ${formatScientific(config.acceptorCm3)} cm⁻³`);
+  setScientificText(dom.nDopingLabel, `N_D = ${formatScientific(config.donorCm3)} cm⁻³`);
 
   if (derived) {
     const widthPercent = clamp(100 * derived.depletionWidthM / derived.lengthM, 5, 65);
@@ -365,11 +371,11 @@ function renderResult(result) {
     xLabel: "x (µm)",
     yLabel: "Relative energy (eV)",
     series: [
-      { label: "Ec", values: result.conductionBandEv, color: "#2262a5" },
-      { label: "Ei", values: result.intrinsicBandEv, color: "#72858c", dash: [5, 4] },
-      { label: "Ev", values: result.valenceBandEv, color: "#b12f49" },
-      { label: "Fn", values: result.electronQuasiFermiEv, color: "#0a8876", dash: [8, 3] },
-      { label: "Fp", values: result.holeQuasiFermiEv, color: "#ca7b00", dash: [8, 3] },
+      { label: "E_c", values: result.conductionBandEv, color: "#2262a5" },
+      { label: "E_i", values: result.intrinsicBandEv, color: "#72858c", dash: [5, 4] },
+      { label: "E_v", values: result.valenceBandEv, color: "#b12f49" },
+      { label: "F_n", values: result.electronQuasiFermiEv, color: "#0a8876", dash: [8, 3] },
+      { label: "F_p", values: result.holeQuasiFermiEv, color: "#ca7b00", dash: [8, 3] },
     ],
   });
   for (const canvas of [dom.potentialCanvas, dom.fieldCanvas, dom.chargeCanvas, dom.carrierCanvas, dom.bandCanvas]) {
@@ -536,8 +542,8 @@ function renderMetricList(container, entries) {
     const row = document.createElement("div");
     const dt = document.createElement("dt");
     const dd = document.createElement("dd");
-    dt.textContent = term;
-    dd.textContent = definition;
+    setScientificText(dt, term);
+    setScientificText(dd, definition);
     row.append(dt, dd);
     fragment.append(row);
   }
@@ -683,11 +689,11 @@ function drawLineChart(canvas, specification) {
   context.textAlign = "center";
   context.fillStyle = "#20343b";
   context.font = "700 12px Inter, system-ui, sans-serif";
-  context.fillText(specification.xLabel, pad.left + plotWidth / 2, height - 8);
+  drawScientificText(context, specification.xLabel, pad.left + plotWidth / 2, height - 8);
   context.save();
   context.translate(17, pad.top + plotHeight / 2);
   context.rotate(-Math.PI / 2);
-  context.fillText(specification.yLabel, 0, 0);
+  drawScientificText(context, specification.yLabel, 0, 0);
   context.restore();
 
   let legendX = pad.left;
@@ -700,8 +706,8 @@ function drawLineChart(canvas, specification) {
     drawLine(context, legendX, 20, legendX + 22, 20);
     context.setLineDash([]);
     context.fillStyle = "#40555c";
-    context.fillText(series.label, legendX + 28, 24);
-    legendX += 42 + context.measureText(series.label).width;
+    drawScientificText(context, series.label, legendX + 28, 24);
+    legendX += 42 + measureScientificText(context, series.label);
   }
 }
 
@@ -736,7 +742,7 @@ function updateCursorReadout(event) {
     const point = currentSweep?.points[index];
     if (point) {
       const currentMa = point.currentDensityAm2 * currentSweep.config.deviceAreaUm2 * 1e-9;
-      dom.cursorReadout.textContent = `V_D=${formatFixed(point.voltageV, 3)} V | I_D=${formatScientific(currentMa)} mA | J=${formatScientific(point.currentDensityAm2 / 1e4)} A/cm²`;
+      setScientificText(dom.cursorReadout, `V_D=${formatFixed(point.voltageV, 3)} V | I_D=${formatScientific(currentMa)} mA | J=${formatScientific(point.currentDensityAm2 / 1e4)} A/cm²`);
     }
     return;
   }
