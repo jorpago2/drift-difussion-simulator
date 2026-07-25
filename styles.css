@@ -206,32 +206,6 @@ sub {
   padding: 18px 24px 28px;
 }
 
-.workflow-nav {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 14px;
-  padding: 7px;
-  border: 1px solid var(--border);
-  border-radius: 13px;
-  background: rgb(255 255 255 / 0.78);
-  box-shadow: 0 6px 20px rgb(25 55 63 / 0.06);
-}
-
-.workflow-nav button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border-color: transparent;
-  background: transparent;
-}
-
-.workflow-nav button:hover {
-  border-color: var(--border);
-}
-
-.workflow-nav span,
 .stage-tabs span {
   display: inline-grid;
   place-items: center;
@@ -824,10 +798,6 @@ sub {
     padding: 12px;
   }
 
-  .workflow-nav {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .workspace {
     min-height: auto;
     padding: 15px;
@@ -894,10 +864,6 @@ sub {
 
   .icon-button span:last-child {
     display: none;
-  }
-
-  .workflow-nav button {
-    font-size: 0.74rem;
   }
 
   .device-schematic {

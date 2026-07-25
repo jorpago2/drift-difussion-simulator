@@ -59,7 +59,6 @@ const dom = Object.fromEntries([
 
 const stageButtons = [...document.querySelectorAll("[data-stage]")];
 const stagePanels = [...document.querySelectorAll("[data-stage-panel]")];
-const openStageButtons = [...document.querySelectorAll("[data-open-stage]")];
 const viewTabs = [...document.querySelectorAll("[data-view-tab]")];
 const dockedPanelMedia = window.matchMedia("(min-width: 1180px)");
 const configInputs = [
@@ -110,9 +109,6 @@ function bindEvents() {
     syncPanelMode();
   });
 
-  for (const button of openStageButtons) {
-    button.addEventListener("click", () => openPanel(button.dataset.openStage));
-  }
   for (const button of stageButtons) {
     button.addEventListener("click", () => selectStage(button.dataset.stage));
   }
