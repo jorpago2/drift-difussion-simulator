@@ -862,6 +862,14 @@ sub {
     grid-template-columns: 1fr;
   }
 
+  .plot-card {
+    padding: 10px;
+  }
+
+  .plot-card canvas {
+    height: clamp(300px, 82vw, 360px);
+  }
+
   .circuit-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -922,6 +930,10 @@ sub {
 
   .panel-scroll {
     padding: 15px;
+  }
+
+  .plot-card {
+    padding: 8px;
   }
 
   .input-grid,

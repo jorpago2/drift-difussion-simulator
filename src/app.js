@@ -61,6 +61,14 @@ const dom = Object.fromEntries([
 const stageButtons = [...document.querySelectorAll("[data-stage]")];
 const stagePanels = [...document.querySelectorAll("[data-stage-panel]")];
 const viewTabs = [...document.querySelectorAll("[data-view-tab]")];
+const plotCanvases = [
+  dom.potentialCanvas,
+  dom.fieldCanvas,
+  dom.chargeCanvas,
+  dom.carrierCanvas,
+  dom.bandCanvas,
+  dom.jvCanvas,
+];
 const dockedPanelMedia = window.matchMedia("(min-width: 1180px)");
 const configInputs = [
   dom.acceptorInput,
@@ -73,6 +81,7 @@ const configInputs = [
   dom.holeLifetimeInput,
 ];
 const chartRegistry = new Map();
+const chartResizeObserver = new ResizeObserver(scheduleChartRedraw);
 
 let activeStage = "device";
 let activeView = "jv";
@@ -80,6 +89,7 @@ let currentResult = null;
 let currentSweep = null;
 let solving = false;
 let desktopPanelDismissed = false;
+let chartResizeFrame = 0;
 
 bindEvents();
 applyLesson("equilibrium", false);
@@ -110,6 +120,7 @@ function bindEvents() {
     if (dom.controlPanel.open) dom.controlPanel.close();
     syncPanelMode();
   });
+  window.addEventListener("resize", scheduleChartRedraw);
 
   for (const button of stageButtons) {
     button.addEventListener("click", () => selectStage(button.dataset.stage));
@@ -133,14 +144,8 @@ function bindEvents() {
   dom.exportCsvButton.addEventListener("click", exportCsv);
   dom.exportPngButton.addEventListener("click", exportPng);
 
-  for (const canvas of [
-    dom.potentialCanvas,
-    dom.fieldCanvas,
-    dom.chargeCanvas,
-    dom.carrierCanvas,
-    dom.bandCanvas,
-    dom.jvCanvas,
-  ]) {
+  for (const canvas of plotCanvases) {
+    chartResizeObserver.observe(canvas);
     canvas.addEventListener("pointermove", updateCursorReadout);
     canvas.addEventListener("pointerleave", () => {
       dom.cursorReadout.textContent = "Move the pointer over a plot to inspect the profile.";
@@ -189,7 +194,25 @@ function selectView(view) {
   dom.electrostaticsView.hidden = view !== "electrostatics";
   dom.carriersView.hidden = view !== "carriers";
   dom.jvView.hidden = view !== "jv";
+  redrawActiveView();
   updateExportState();
+}
+
+function scheduleChartRedraw() {
+  if (chartResizeFrame || !currentResult?.diagnostics.converged) return;
+  chartResizeFrame = requestAnimationFrame(() => {
+    chartResizeFrame = 0;
+    redrawActiveView();
+  });
+}
+
+function redrawActiveView() {
+  if (!currentResult?.diagnostics.converged) return;
+  if (activeView === "jv") {
+    if (currentSweep?.converged) renderJv(currentSweep);
+  } else {
+    renderResult(currentResult);
+  }
 }
 
 function showResultView(view) {
@@ -608,7 +631,10 @@ function downloadBlob(content, type, filename) {
 
 function drawLineChart(canvas, specification) {
   const { context, width, height } = prepareCanvas(canvas);
-  const pad = { left: 86, right: 18, top: 48, bottom: 58 };
+  const compact = width < 520;
+  const pad = compact
+    ? { left: 58, right: 10, top: 44, bottom: 50 }
+    : { left: 86, right: 18, top: 48, bottom: 58 };
   const plotWidth = width - pad.left - pad.right;
   const plotHeight = height - pad.top - pad.bottom;
   const transform = specification.transform ?? linearTransform();
@@ -628,13 +654,16 @@ function drawLineChart(canvas, specification) {
   context.font = "600 11px Inter, system-ui, sans-serif";
   context.fillStyle = "#52676e";
 
-  for (const tick of xScale.ticks) {
+  const xLabelStride = compact ? 2 : 1;
+  for (const [index, tick] of xScale.ticks.entries()) {
     const x = mapX(tick);
     context.strokeStyle = tick === 0 ? "#b8c7cb" : "#e8eef0";
     context.lineWidth = tick === 0 ? 1.2 : 1;
     drawLine(context, x, pad.top, x, pad.top + plotHeight);
     context.textAlign = "center";
-    context.fillText(formatChartTick(tick, xScale.step), x, pad.top + plotHeight + 21);
+    if (index % xLabelStride === 0) {
+      context.fillText(formatChartTick(tick, xScale.step), x, pad.top + plotHeight + 19);
+    }
   }
   for (const tick of yScale.ticks) {
     const y = mapY(tick);
@@ -685,7 +714,7 @@ function drawLineChart(canvas, specification) {
   context.textAlign = "center";
   context.fillStyle = "#20343b";
   context.font = "700 12px Inter, system-ui, sans-serif";
-  context.fillText(specification.xLabel, pad.left + plotWidth / 2, height - 10);
+  context.fillText(specification.xLabel, pad.left + plotWidth / 2, height - 8);
   context.save();
   context.translate(17, pad.top + plotHeight / 2);
   context.rotate(-Math.PI / 2);
@@ -708,21 +737,21 @@ function drawLineChart(canvas, specification) {
 }
 
 function prepareCanvas(canvas) {
-  const logicalWidth = Number(canvas.dataset.logicalWidth || canvas.getAttribute("width"));
-  const logicalHeight = Number(canvas.dataset.logicalHeight || canvas.getAttribute("height"));
-  canvas.dataset.logicalWidth = String(logicalWidth);
-  canvas.dataset.logicalHeight = String(logicalHeight);
-  const displayScale = canvas.clientWidth > 0 ? canvas.clientWidth / logicalWidth : 1;
+  const fallbackWidth = Number(canvas.dataset.logicalWidth || canvas.getAttribute("width"));
+  const fallbackHeight = Number(canvas.dataset.logicalHeight || canvas.getAttribute("height"));
+  canvas.dataset.logicalWidth = String(fallbackWidth);
+  canvas.dataset.logicalHeight = String(fallbackHeight);
+  const logicalWidth = canvas.clientWidth || fallbackWidth;
+  const logicalHeight = canvas.clientHeight || fallbackHeight;
   const pixelRatio = Math.min(window.devicePixelRatio || 1, 3);
-  const backingScale = Math.max(pixelRatio, displayScale * pixelRatio);
-  const backingWidth = Math.round(logicalWidth * backingScale);
-  const backingHeight = Math.round(logicalHeight * backingScale);
+  const backingWidth = Math.round(logicalWidth * pixelRatio);
+  const backingHeight = Math.round(logicalHeight * pixelRatio);
   if (canvas.width !== backingWidth || canvas.height !== backingHeight) {
     canvas.width = backingWidth;
     canvas.height = backingHeight;
   }
   const context = canvas.getContext("2d");
-  context.setTransform(backingScale, 0, 0, backingScale, 0, 0);
+  context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
   return { context, width: logicalWidth, height: logicalHeight };
 }
 
