@@ -27,8 +27,97 @@
       </div>
     </header>
 
-    <main class="lab-shell">
-      <section class="workspace" aria-label="Results area">
+    <main class="pn-shell">
+      <details id="controlPanel" class="pn-controls" open>
+        <summary class="pn-controls-toggle">
+          <span>Device controls</span>
+          <small>Experiment, bias, and solver</small>
+        </summary>
+        <div class="pn-controls-content">
+          <header class="pn-controls-heading">
+            <span class="eyebrow">Define one operating point</span>
+            <h2>Configure the junction</h2>
+            <p>Choose a physical situation, make a prediction, and then solve the coupled equations.</p>
+          </header>
+
+          <label>
+            Guided experiment
+            <select id="lessonSelect">
+              <option value="equilibrium">Equilibrium · built-in field</option>
+              <option value="forward">Forward bias · carrier injection</option>
+              <option value="reverse">Reverse bias · depletion widening</option>
+            </select>
+          </label>
+
+          <div class="input-grid">
+            <label>
+              NA (cm⁻³)
+              <input id="acceptorInput" type="number" min="1e14" max="1e18" step="1e15" value="1e16" aria-describedby="acceptorHelp">
+              <small id="acceptorHelp" class="field-help">P-side acceptor density, 10¹⁴–10¹⁸ cm⁻³.</small>
+            </label>
+            <label>
+              ND (cm⁻³)
+              <input id="donorInput" type="number" min="1e14" max="1e18" step="1e15" value="1e16" aria-describedby="donorHelp">
+              <small id="donorHelp" class="field-help">N-side donor density, 10¹⁴–10¹⁸ cm⁻³.</small>
+            </label>
+          </div>
+
+          <label>
+            Applied voltage VD = VA − VC (V)
+            <input id="biasInput" type="number" min="-1" max="0.8" step="0.025" value="0" aria-describedby="biasHelp">
+            <small id="biasHelp" class="field-help">Positive is forward bias. Breakdown is not included for negative bias.</small>
+          </label>
+
+          <label>
+            Device area (µm²)
+            <input id="deviceAreaInput" type="number" min="1" max="1e8" step="1000" value="10000" aria-describedby="deviceAreaHelp">
+            <small id="deviceAreaHelp" class="field-help">Converts current density to terminal current through I = J·A.</small>
+          </label>
+
+          <article class="teaching-card prediction-card">
+            <span>Predict before solving</span>
+            <h3 id="predictionTitle">What establishes equilibrium?</h3>
+            <p id="predictionDetail">Initial diffusion leaves uncovered charge, creates a built-in field, and bends the bands until the Fermi level is aligned.</p>
+          </article>
+
+          <button id="solveButton" class="primary-button large-button" type="button">Solve current bias</button>
+          <output id="solverMessage" class="solver-message" aria-live="polite">Ready to solve the selected operating point.</output>
+
+          <details class="advanced-settings">
+            <summary>Numerics and recombination</summary>
+            <div class="input-grid">
+              <label>
+                Length (µm)
+                <input id="lengthInput" type="number" min="1" max="20" step="0.5" value="4" aria-describedby="lengthHelp">
+                <small id="lengthHelp" class="field-help">Must leave neutral material around the junction.</small>
+              </label>
+              <label>
+                Odd node count
+                <input id="cellsInput" type="number" min="101" max="2001" step="2" value="801" aria-describedby="cellsHelp">
+                <small id="cellsHelp" class="field-help">The junction remains centered on a node.</small>
+              </label>
+              <label>
+                τn (s)
+                <input id="electronLifetimeInput" type="number" min="1e-12" max="1e-3" step="1e-9" value="1e-8" aria-describedby="electronLifetimeHelp">
+                <small id="electronLifetimeHelp" class="field-help">Electron SRH lifetime, 10⁻¹²–10⁻³ s.</small>
+              </label>
+              <label>
+                τp (s)
+                <input id="holeLifetimeInput" type="number" min="1e-12" max="1e-3" step="1e-9" value="1e-8" aria-describedby="holeLifetimeHelp">
+                <small id="holeLifetimeHelp" class="field-help">Hole SRH lifetime, 10⁻¹²–10⁻³ s.</small>
+              </label>
+            </div>
+          </details>
+
+          <details class="preflight-disclosure">
+            <summary>Preflight and derived scales</summary>
+            <div id="preflightDetails" class="message-box" data-state="ready"></div>
+            <dl id="derivedMetrics" class="metric-list"></dl>
+          </details>
+        </div>
+      </details>
+
+      <section class="pn-workspace" aria-label="PN junction laboratory">
         <div class="workspace-heading">
           <div>
             <span id="lessonKicker" class="eyebrow">Thermal equilibrium</span>
@@ -37,42 +126,12 @@
           <output id="biasBadge" class="bias-badge">V<sub>D</sub> = 0.00 V</output>
         </div>
 
-        <section id="deviceOverview" class="device-overview" aria-labelledby="deviceOverviewTitle">
+        <section id="deviceOverview" class="pn-device-overview" aria-labelledby="deviceOverviewTitle">
           <div class="device-copy">
-            <p id="deviceOverviewTitle" class="section-label">1D structure</p>
-            <h3>P-type silicon | N-type silicon</h3>
+            <p id="deviceOverviewTitle" class="section-label">Question to answer</p>
             <p id="predictionText">Before solving, predict the direction of the built-in field and which side has the wider depletion region.</p>
           </div>
-          <figure class="component-cutaway">
-            <div class="cutaway-stage cutaway-diode">
-              <img src="assets/device-cutaways/diode-axial-cutaway-realistic.png" width="1774" height="887" alt="Realistic section of a Vishay GP, RGP, or EGP style axial rectifier showing coaxial copper leads, molybdenum slugs, solid braze, silicon die, opaque glass, and molding">
-              <span class="cutaway-marker marker-1" aria-hidden="true">1</span>
-              <span class="cutaway-marker marker-2" aria-hidden="true">2</span>
-              <span class="cutaway-marker marker-3" aria-hidden="true">3</span>
-              <span class="cutaway-marker marker-4" aria-hidden="true">4</span>
-              <span class="cutaway-marker marker-5" aria-hidden="true">5</span>
-              <span class="cutaway-marker marker-6" aria-hidden="true">6</span>
-              <span class="cutaway-marker marker-7" aria-hidden="true">7</span>
-            </div>
-            <figcaption class="cutaway-caption">
-              <div>
-                <p class="section-label">Documented construction</p>
-                <h3>Inside an axial silicon rectifier</h3>
-                <p class="cutaway-note">Realistic reconstruction of the <a href="https://www.vishay.com/docs/88870/crossect.pdf">documented Vishay GP/RGP/EGP cross-section</a>. Materials and topology are representative; dimensions are illustrative.</p>
-              </div>
-              <ol class="cutaway-legend">
-                <li><span>1</span><strong>Cathode band</strong></li>
-                <li><span>2</span><strong>Flame-retardant molding</strong></li>
-                <li><span>3</span><strong>Plated copper lead</strong></li>
-                <li><span>4</span><strong>Molybdenum slug</strong></li>
-                <li><span>5</span><strong>Silicon die</strong></li>
-                <li><span>6</span><strong>Solid braze</strong></li>
-                <li><span>7</span><strong>Opaque glass encapsulation</strong></li>
-              </ol>
-              <p class="model-bridge"><strong>Model boundary:</strong> this drawing documents a commercial assembly. The solver below instead uses an idealized abrupt PN junction with user-defined doping; it does not reproduce this rectifier die or package.</p>
-            </figcaption>
-          </figure>
-          <p class="abstraction-step">Documented package example <span aria-hidden="true">→</span> idealized 1D PN domain</p>
+
           <div class="device-schematic" role="img" aria-label="Abrupt PN junction with the anode contact on the left and cathode on the right">
             <div class="contact contact-left">Anode</div>
             <div class="region region-p"><strong>P</strong><span id="pDopingLabel">N<sub>A</sub> = 10¹⁶ cm⁻³</span></div>
@@ -80,49 +139,97 @@
             <div class="region region-n"><strong>N</strong><span id="nDopingLabel">N<sub>D</sub> = 10¹⁶ cm⁻³</span></div>
             <div class="contact contact-right">Cathode</div>
           </div>
-          <div id="preflightSummary" class="preflight-summary" data-state="ready">Valid configuration. Open “Solve” to calculate the physical state.</div>
+
+          <div id="preflightSummary" class="preflight-summary" data-state="ready">Configuration ready. Solve the selected bias to test your prediction.</div>
+
+          <details class="physical-device-context">
+            <summary>
+              <span>Connect the model to a real rectifier</span>
+              <small>Package construction and model boundary</small>
+            </summary>
+            <figure class="component-cutaway">
+              <div class="cutaway-stage cutaway-diode">
+                <img src="assets/device-cutaways/diode-axial-cutaway-realistic.png" width="1774" height="887" alt="Realistic section of a Vishay GP, RGP, or EGP style axial rectifier showing coaxial copper leads, molybdenum slugs, solid braze, silicon die, opaque glass, and molding">
+                <span class="cutaway-marker marker-1" aria-hidden="true">1</span>
+                <span class="cutaway-marker marker-2" aria-hidden="true">2</span>
+                <span class="cutaway-marker marker-3" aria-hidden="true">3</span>
+                <span class="cutaway-marker marker-4" aria-hidden="true">4</span>
+                <span class="cutaway-marker marker-5" aria-hidden="true">5</span>
+                <span class="cutaway-marker marker-6" aria-hidden="true">6</span>
+                <span class="cutaway-marker marker-7" aria-hidden="true">7</span>
+              </div>
+              <figcaption class="cutaway-caption">
+                <div>
+                  <p class="section-label">Documented construction</p>
+                  <h3>Inside an axial silicon rectifier</h3>
+                  <p class="cutaway-note">Realistic reconstruction of the <a href="https://www.vishay.com/docs/88870/crossect.pdf">documented Vishay GP/RGP/EGP cross-section</a>. Dimensions are illustrative.</p>
+                </div>
+                <ol class="cutaway-legend">
+                  <li><span>1</span><strong>Cathode band</strong></li>
+                  <li><span>2</span><strong>Molded body</strong></li>
+                  <li><span>3</span><strong>Copper lead</strong></li>
+                  <li><span>4</span><strong>Molybdenum slug</strong></li>
+                  <li><span>5</span><strong>Silicon die</strong></li>
+                  <li><span>6</span><strong>Solid braze</strong></li>
+                  <li><span>7</span><strong>Opaque glass</strong></li>
+                </ol>
+                <p class="model-bridge"><strong>Model boundary:</strong> the solver represents an idealized abrupt PN junction, not this package or its proprietary die geometry.</p>
+              </figcaption>
+            </figure>
+          </details>
         </section>
 
         <section id="resultsArea" class="results-area" hidden aria-labelledby="resultsTitle">
           <div class="results-toolbar">
             <div>
-              <p class="section-label">Converged solution</p>
-              <h2 id="resultsTitle">Diode I–V characteristic</h2>
+              <p class="section-label">Converged physical state</p>
+              <h2 id="resultsTitle">Electrical response first</h2>
             </div>
             <div class="view-tabs" role="tablist" aria-label="Result views">
-              <button id="jvTab" type="button" role="tab" aria-selected="true" aria-controls="jvView" data-view-tab="jv">I–V characteristic</button>
-              <button id="electrostaticsTab" type="button" role="tab" aria-selected="false" aria-controls="electrostaticsView" data-view-tab="electrostatics">Electrostatics</button>
+              <button id="jvTab" type="button" role="tab" aria-selected="true" aria-controls="jvView" data-view-tab="jv">I–V curve</button>
+              <button id="electrostaticsTab" type="button" role="tab" aria-selected="false" aria-controls="electrostaticsView" data-view-tab="electrostatics">Barrier and field</button>
               <button id="carriersTab" type="button" role="tab" aria-selected="false" aria-controls="carriersView" data-view-tab="carriers">Carriers and bands</button>
+              <button id="validationTab" type="button" role="tab" aria-selected="false" aria-controls="validationView" data-view-tab="validation">Validate</button>
             </div>
           </div>
 
           <dl id="circuitMetrics" class="circuit-metrics" aria-label="Diode operating-point metrics"></dl>
 
+          <article id="resultExplanation" class="teaching-card result-explanation">
+            <span>Explain the result</span>
+            <h3>Read the I–V curve, then inspect the internal physics</h3>
+            <p>Start from current and operating region; use the barrier, carriers, and bands to explain their physical origin.</p>
+          </article>
+
           <div id="jvView" class="result-view" role="tabpanel" aria-labelledby="jvTab">
             <div id="jvEmpty" class="jv-empty">
-              <h3>Calculating the I–V characteristic</h3>
-              <p>The operating point is followed by 67 self-consistent states from −1.00 to 0.65 V.</p>
-              <button id="jvInlineButton" class="primary-button" type="button">Recalculate I–V</button>
+              <h3>Building the complete I–V curve</h3>
+              <p>Each of the 67 voltage points must converge independently before the curve is presented as valid.</p>
+              <button id="jvInlineButton" class="primary-button" type="button">Calculate I–V</button>
             </div>
             <figure id="jvFigure" class="plot-card plot-wide" hidden>
               <canvas id="jvCanvas" width="960" height="430" aria-label="Diode current versus voltage"></canvas>
-              <figcaption>Terminal current for the defined area; the analytical curve includes finite-base correction and is limited to low injection</figcaption>
+              <figcaption>Solid: drift–diffusion with SRH. Dashed: finite-base analytical reference in its low-injection range.</figcaption>
             </figure>
+            <div class="result-action-row">
+              <button id="generateJvButton" type="button" disabled>Recalculate I–V</button>
+              <output id="sweepMessage" class="solver-message" aria-live="polite">Solve an operating point first.</output>
+            </div>
           </div>
 
           <div id="electrostaticsView" class="result-view" role="tabpanel" aria-labelledby="electrostaticsTab" hidden>
             <div class="plot-grid">
               <figure class="plot-card plot-wide">
                 <canvas id="potentialCanvas" width="960" height="330" aria-label="Electrostatic potential profile"></canvas>
-                <figcaption>Electrostatic potential ψ(x)</figcaption>
+                <figcaption>Electrostatic potential ψ(x): read the junction barrier from the contact-to-contact drop.</figcaption>
               </figure>
               <figure class="plot-card">
                 <canvas id="fieldCanvas" width="640" height="300" aria-label="Electric-field profile"></canvas>
-                <figcaption>Electric field E(x)</figcaption>
+                <figcaption>Electric field E(x): direction and peak field inside the depletion region.</figcaption>
               </figure>
               <figure class="plot-card">
                 <canvas id="chargeCanvas" width="640" height="300" aria-label="Charge-density profile"></canvas>
-                <figcaption>Charge density ρ(x)</figcaption>
+                <figcaption>Charge density ρ(x): exposed ionized dopants that sustain the field.</figcaption>
               </figure>
             </div>
           </div>
@@ -131,147 +238,35 @@
             <div class="plot-grid">
               <figure class="plot-card plot-wide">
                 <canvas id="carrierCanvas" width="960" height="350" aria-label="Electron, hole, and doping profiles"></canvas>
-                <figcaption>Carriers and doping, logarithmic scale</figcaption>
+                <figcaption>Carrier densities and doping on a logarithmic scale.</figcaption>
               </figure>
               <figure class="plot-card plot-wide">
                 <canvas id="bandCanvas" width="960" height="350" aria-label="Band diagram and quasi-Fermi levels"></canvas>
-                <figcaption>Relative bands and quasi-Fermi levels</figcaption>
+                <figcaption>Band edges and quasi-Fermi levels: connect barrier bending to carrier transport.</figcaption>
               </figure>
             </div>
           </div>
 
+          <div id="validationView" class="result-view validation-view" role="tabpanel" aria-labelledby="validationTab" hidden>
+            <div id="validationBanner" class="message-box" data-state="idle">No result to validate.</div>
+            <dl id="validationMetrics" class="metric-list validation-metrics"></dl>
+            <div>
+              <h3>Warnings and model limits</h3>
+              <ul id="warningList" class="warning-list"></ul>
+            </div>
+          </div>
+
+          <div class="export-row result-exports">
+            <button id="exportCsvButton" type="button" disabled>Export active data as CSV</button>
+            <button id="exportPngButton" type="button" disabled>Export active figure as PNG</button>
+          </div>
           <output id="cursorReadout" class="cursor-readout" aria-live="polite">Move the pointer over a plot to inspect the profile.</output>
         </section>
+
+        <aside class="model-note">
+          <strong>Bounded model:</strong> 1D silicon, Boltzmann statistics, constant mobility, and SRH. Avalanche, tunneling, degeneracy, Auger, and bandgap narrowing are not included.
+        </aside>
       </section>
-
-      <aside class="model-note">
-        <strong>Bounded model:</strong> 1D silicon, Boltzmann statistics, constant mobility, and SRH. Avalanche, tunneling, degeneracy, Auger, and bandgap narrowing are not included.
-      </aside>
     </main>
-
-    <dialog id="controlPanel" class="control-panel" aria-labelledby="panelTitle">
-      <div class="panel-header">
-        <div>
-          <span id="stageKicker" class="eyebrow">Step 1 of 4</span>
-          <h2 id="panelTitle">Device</h2>
-        </div>
-        <button id="closePanelButton" class="close-button" type="button" aria-label="Close controls">×</button>
-      </div>
-
-      <nav class="stage-tabs" aria-label="Configuration stages">
-        <button type="button" data-stage="device" aria-current="step"><span>1</span> Device</button>
-        <button type="button" data-stage="solve"><span>2</span> Solve</button>
-        <button type="button" data-stage="results"><span>3</span> Results</button>
-        <button type="button" data-stage="validate"><span>4</span> Validate</button>
-      </nav>
-
-      <div class="panel-scroll">
-        <section class="stage-panel" data-stage-panel="device">
-          <h3>Guided experiment</h3>
-          <label>
-            Scenario
-            <select id="lessonSelect">
-              <option value="equilibrium">Thermal equilibrium</option>
-              <option value="forward">Forward bias</option>
-              <option value="reverse">Reverse bias</option>
-            </select>
-          </label>
-          <div class="input-grid">
-            <label>
-              NA (cm⁻³)
-              <input id="acceptorInput" type="number" min="1e14" max="1e18" step="1e15" value="1e16" aria-describedby="acceptorHelp">
-              <small id="acceptorHelp" class="field-help">10¹⁴–10¹⁸ cm⁻³. The upper range may require degeneracy and doping-dependent mobility corrections.</small>
-            </label>
-            <label>
-              ND (cm⁻³)
-              <input id="donorInput" type="number" min="1e14" max="1e18" step="1e15" value="1e16" aria-describedby="donorHelp">
-              <small id="donorHelp" class="field-help">10¹⁴–10¹⁸ cm⁻³. This bounded range keeps the nondegenerate silicon model useful.</small>
-            </label>
-          </div>
-          <label>
-            VD = VA − VC (V)
-            <input id="biasInput" type="number" min="-1" max="0.8" step="0.025" value="0" aria-describedby="biasHelp">
-            <small id="biasHelp" class="field-help">−1 to 0.8 V. Breakdown is absent in reverse bias, while strong high injection limits forward-bias accuracy.</small>
-          </label>
-          <label>
-            Device area (µm²)
-            <input id="deviceAreaInput" type="number" min="1" max="1e8" step="1000" value="10000" aria-describedby="deviceAreaHelp">
-            <small id="deviceAreaHelp" class="field-help">Scales terminal current using I = J·A. It does not change the one-dimensional fields.</small>
-          </label>
-
-          <details class="advanced-settings">
-            <summary>Advanced parameters</summary>
-            <div class="input-grid">
-              <label>
-                Length (µm)
-                <input id="lengthInput" type="number" min="1" max="20" step="0.5" value="4" aria-describedby="lengthHelp">
-                <small id="lengthHelp" class="field-help">1–20 µm. The domain should include neutral material on both sides of the depletion region.</small>
-              </label>
-              <label>
-                Odd node count
-                <input id="cellsInput" type="number" min="101" max="2001" step="2" value="801" aria-describedby="cellsHelp">
-                <small id="cellsHelp" class="field-help">101–2001 nodes. An odd count places the abrupt junction at the center; preflight checks the actual resolution.</small>
-              </label>
-              <label>
-                τn (s)
-                <input id="electronLifetimeInput" type="number" min="1e-12" max="1e-3" step="1e-9" value="1e-8" aria-describedby="electronLifetimeHelp">
-                <small id="electronLifetimeHelp" class="field-help">10⁻¹²–10⁻³ s. Electron lifetime controls the SRH recombination rate and diffusion length.</small>
-              </label>
-              <label>
-                τp (s)
-                <input id="holeLifetimeInput" type="number" min="1e-12" max="1e-3" step="1e-9" value="1e-8" aria-describedby="holeLifetimeHelp">
-                <small id="holeLifetimeHelp" class="field-help">10⁻¹²–10⁻³ s. Hole lifetime controls the SRH recombination rate and diffusion length.</small>
-              </label>
-            </div>
-          </details>
-
-          <details class="limit-guide">
-            <summary>Why are these parameters limited?</summary>
-            <p>Hard limits reject numerically unsafe or unsupported inputs. Passing them does not guarantee model validity: mesh, injection level, and omitted physics are assessed separately by preflight warnings and post-solve diagnostics.</p>
-          </details>
-
-          <article class="teaching-card">
-            <span>Before solving</span>
-            <h3 id="predictionTitle">What establishes equilibrium?</h3>
-            <p id="predictionDetail">Initial diffusion leaves uncovered charge, creates a built-in field, and bends the bands until the Fermi level is aligned.</p>
-          </article>
-        </section>
-
-        <section class="stage-panel" data-stage-panel="solve" hidden>
-          <h3>Physical and numerical preflight</h3>
-          <div id="preflightDetails" class="message-box" data-state="ready"></div>
-          <dl id="derivedMetrics" class="metric-list"></dl>
-          <button id="solveButton" class="primary-button large-button" type="button">Solve PN junction</button>
-          <output id="solverMessage" class="solver-message" aria-live="polite">The solver has not been run yet.</output>
-        </section>
-
-        <section class="stage-panel" data-stage-panel="results" hidden>
-          <h3>Electrical behavior first</h3>
-          <article id="resultExplanation" class="teaching-card muted-card">
-            <span>After convergence</span>
-            <h3>Read the I–V curve, then explain it</h3>
-            <p>Start from current, operating region, and differential resistance; use fields, carriers, and bands to explain their physical origin.</p>
-          </article>
-          <button id="showElectrostaticsButton" type="button">View electrostatics</button>
-          <button id="showCarriersButton" type="button">View carriers and bands</button>
-          <button id="generateJvButton" class="primary-button" type="button" disabled>Recalculate I–V</button>
-          <output id="sweepMessage" class="solver-message" aria-live="polite">Solve an operating point first.</output>
-        </section>
-
-        <section class="stage-panel" data-stage-panel="validate" hidden>
-          <h3>Result confidence</h3>
-          <div id="validationBanner" class="message-box" data-state="idle">No result to validate.</div>
-          <dl id="validationMetrics" class="metric-list"></dl>
-          <div>
-            <h3>Warnings and limitations</h3>
-            <ul id="warningList" class="warning-list"></ul>
-          </div>
-          <div class="export-row">
-            <button id="exportCsvButton" type="button" disabled>Export CSV</button>
-            <button id="exportPngButton" type="button" disabled>Export PNG</button>
-          </div>
-        </section>
-      </div>
-    </dialog>
   </body>
 </html>

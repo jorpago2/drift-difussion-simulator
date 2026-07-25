@@ -38,28 +38,19 @@ const LESSONS = Object.freeze({
   },
 });
 
-const STAGES = Object.freeze({
-  device: ["Step 1 of 4", "Device"],
-  solve: ["Step 2 of 4", "Solve"],
-  results: ["Step 3 of 4", "Results"],
-  validate: ["Step 4 of 4", "Validate"],
-});
-
 const dom = Object.fromEntries([
-  "globalStatus", "openPanelButton", "closePanelButton", "controlPanel", "stageKicker", "panelTitle",
+  "globalStatus", "openPanelButton", "controlPanel",
   "lessonKicker", "workspaceTitle", "biasBadge", "predictionText", "pDopingLabel", "nDopingLabel",
   "depletionZone", "preflightSummary", "resultsArea", "lessonSelect", "acceptorInput", "donorInput",
   "deviceOverview", "deviceAreaInput", "circuitMetrics",
   "biasInput", "lengthInput", "cellsInput", "electronLifetimeInput", "holeLifetimeInput", "predictionTitle",
   "predictionDetail", "preflightDetails", "derivedMetrics", "solveButton", "solverMessage", "resultExplanation",
-  "showElectrostaticsButton", "showCarriersButton", "generateJvButton", "jvInlineButton", "sweepMessage",
+  "generateJvButton", "jvInlineButton", "sweepMessage",
   "validationBanner", "validationMetrics", "warningList", "exportCsvButton", "exportPngButton", "cursorReadout",
   "potentialCanvas", "fieldCanvas", "chargeCanvas", "carrierCanvas", "bandCanvas", "jvCanvas", "jvEmpty",
-  "jvFigure", "electrostaticsView", "carriersView", "jvView",
+  "jvFigure", "electrostaticsView", "carriersView", "validationView", "jvView",
 ].map((id) => [id, requireElement(id)]));
 
-const stageButtons = [...document.querySelectorAll("[data-stage]")];
-const stagePanels = [...document.querySelectorAll("[data-stage-panel]")];
 const viewTabs = [...document.querySelectorAll("[data-view-tab]")];
 const plotCanvases = [
   dom.potentialCanvas,
@@ -69,7 +60,7 @@ const plotCanvases = [
   dom.bandCanvas,
   dom.jvCanvas,
 ];
-const dockedPanelMedia = window.matchMedia("(min-width: 1180px)");
+const dockedPanelMedia = window.matchMedia("(min-width: 981px)");
 const configInputs = [
   dom.acceptorInput,
   dom.donorInput,
@@ -83,18 +74,15 @@ const configInputs = [
 const chartRegistry = new Map();
 const chartResizeObserver = new ResizeObserver(scheduleChartRedraw);
 
-let activeStage = "device";
 let activeView = "jv";
 let currentResult = null;
 let currentSweep = null;
 let solving = false;
-let desktopPanelDismissed = false;
 let chartResizeFrame = 0;
 
 bindEvents();
 applyLesson("equilibrium", false);
 updatePreflight();
-selectStage("device");
 syncPanelMode();
 
 function requireElement(id) {
@@ -105,28 +93,17 @@ function requireElement(id) {
 
 function bindEvents() {
   dom.openPanelButton.addEventListener("click", () => {
-    if (dom.controlPanel.open) closePanel(true);
-    else openPanel(activeStage);
+    dom.controlPanel.open = true;
+    dom.controlPanel.scrollIntoView({ behavior: "smooth", block: "start" });
   });
-  dom.closePanelButton.addEventListener("click", () => closePanel(true));
-  dom.controlPanel.addEventListener("close", () => {
-    document.body.classList.remove("controls-docked");
-    dom.openPanelButton.setAttribute("aria-expanded", "false");
-    window.scrollTo({ left: 0, top: window.scrollY });
-  });
-  dom.controlPanel.addEventListener("cancel", () => dom.openPanelButton.setAttribute("aria-expanded", "false"));
-  dockedPanelMedia.addEventListener("change", () => {
-    desktopPanelDismissed = false;
-    if (dom.controlPanel.open) dom.controlPanel.close();
-    syncPanelMode();
-  });
+  dom.controlPanel.addEventListener("toggle", () =>
+    dom.openPanelButton.setAttribute("aria-expanded", String(dom.controlPanel.open)));
+  dockedPanelMedia.addEventListener("change", syncPanelMode);
   window.addEventListener("resize", scheduleChartRedraw);
 
-  for (const button of stageButtons) {
-    button.addEventListener("click", () => selectStage(button.dataset.stage));
-  }
   for (const button of viewTabs) {
     button.addEventListener("click", () => selectView(button.dataset.viewTab));
+    button.addEventListener("keydown", navigateResultTabs);
   }
 
   dom.lessonSelect.addEventListener("change", () => applyLesson(dom.lessonSelect.value, true));
@@ -139,8 +116,6 @@ function bindEvents() {
   dom.solveButton.addEventListener("click", solveCurrentConfiguration);
   dom.generateJvButton.addEventListener("click", generateJvSweep);
   dom.jvInlineButton.addEventListener("click", generateJvSweep);
-  dom.showElectrostaticsButton.addEventListener("click", () => showResultView("electrostatics"));
-  dom.showCarriersButton.addEventListener("click", () => showResultView("carriers"));
   dom.exportCsvButton.addEventListener("click", exportCsv);
   dom.exportPngButton.addEventListener("click", exportPng);
 
@@ -153,49 +128,36 @@ function bindEvents() {
   }
 }
 
-function openPanel(stage) {
-  selectStage(stage);
-  desktopPanelDismissed = false;
-  if (!dom.controlPanel.open) {
-    if (dockedPanelMedia.matches) dom.controlPanel.show();
-    else dom.controlPanel.showModal();
-  }
-  document.body.classList.toggle("controls-docked", dockedPanelMedia.matches);
-  dom.openPanelButton.setAttribute("aria-expanded", "true");
-}
-
-function closePanel(userInitiated) {
-  if (userInitiated && dockedPanelMedia.matches) desktopPanelDismissed = true;
-  if (dom.controlPanel.open) dom.controlPanel.close();
-}
-
 function syncPanelMode() {
-  if (dockedPanelMedia.matches && !desktopPanelDismissed) openPanel(activeStage);
-  else document.body.classList.remove("controls-docked");
-}
-
-function selectStage(stage) {
-  if (!STAGES[stage]) return;
-  activeStage = stage;
-  const [kicker, title] = STAGES[stage];
-  dom.stageKicker.textContent = kicker;
-  dom.panelTitle.textContent = title;
-  for (const button of stageButtons) {
-    if (button.dataset.stage === stage) button.setAttribute("aria-current", "step");
-    else button.removeAttribute("aria-current");
-  }
-  for (const panel of stagePanels) panel.hidden = panel.dataset.stagePanel !== stage;
+  dom.controlPanel.open = dockedPanelMedia.matches;
+  dom.openPanelButton.setAttribute("aria-expanded", String(dom.controlPanel.open));
 }
 
 function selectView(view) {
   if (!currentResult?.diagnostics.converged) return;
   activeView = view;
-  for (const button of viewTabs) button.setAttribute("aria-selected", String(button.dataset.viewTab === view));
+  for (const button of viewTabs) {
+    const selected = button.dataset.viewTab === view;
+    button.setAttribute("aria-selected", String(selected));
+    button.tabIndex = selected ? 0 : -1;
+  }
   dom.electrostaticsView.hidden = view !== "electrostatics";
   dom.carriersView.hidden = view !== "carriers";
+  dom.validationView.hidden = view !== "validation";
   dom.jvView.hidden = view !== "jv";
+  dom.cursorReadout.hidden = view === "validation";
   redrawActiveView();
   updateExportState();
+}
+
+function navigateResultTabs(event) {
+  if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+  const current = viewTabs.indexOf(event.currentTarget);
+  const next = event.key === "Home" ? 0 : event.key === "End" ? viewTabs.length - 1 :
+    (current + (event.key === "ArrowRight" ? 1 : -1) + viewTabs.length) % viewTabs.length;
+  event.preventDefault();
+  viewTabs[next].focus();
+  selectView(viewTabs[next].dataset.viewTab);
 }
 
 function scheduleChartRedraw() {
@@ -213,12 +175,6 @@ function redrawActiveView() {
   } else {
     renderResult(currentResult);
   }
-}
-
-function showResultView(view) {
-  selectView(view);
-  if (dom.controlPanel.open && !dockedPanelMedia.matches) closePanel(false);
-  dom.resultsArea.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function applyLesson(name, invalidate) {
@@ -285,7 +241,7 @@ function updatePreflight() {
     setMessage(dom.preflightDetails, `${text} ${warnings.join(" ")}`, "warning");
     dom.solveButton.disabled = solving;
   } else {
-    setMessage(dom.preflightSummary, "Valid configuration. Open “Solve” to calculate the physical state.", "ready");
+    setMessage(dom.preflightSummary, "Configuration ready. Solve the selected bias to test your prediction.", "ready");
     setMessage(dom.preflightDetails, "Preflight passed: finite parameters, physical ranges, and adequate mesh.", "ready");
     dom.solveButton.disabled = solving;
   }
@@ -334,7 +290,8 @@ async function solveCurrentConfiguration() {
     } else {
       dom.resultsArea.hidden = false;
       dom.deviceOverview.hidden = true;
-      dom.workspaceTitle.textContent = "Self-consistent drift-diffusion solution";
+      const lesson = LESSONS[dom.lessonSelect.value] ?? LESSONS.equilibrium;
+      dom.workspaceTitle.textContent = `${lesson.kicker} operating point`;
       dom.generateJvButton.disabled = false;
       dom.jvFigure.hidden = true;
       dom.jvEmpty.hidden = false;
@@ -343,13 +300,14 @@ async function solveCurrentConfiguration() {
       renderValidation(result);
       renderCircuitMetrics(result, null);
       selectView("jv");
-      selectStage("results");
       updateGlobalStatus("Converged", "converged");
       setMessage(
         dom.solverMessage,
         `Converged in ${result.diagnostics.totalIterations} cumulative iterations; current-conservation error ${formatScientific(result.diagnostics.currentContinuityError)}.`,
         "ready",
       );
+      if (!dockedPanelMedia.matches) dom.controlPanel.open = false;
+      dom.resultsArea.scrollIntoView({ behavior: "smooth", block: "start" });
       generateSweep = true;
     }
   } catch (error) {
@@ -472,7 +430,7 @@ async function generateJvSweep() {
     selectView("jv");
     updateGlobalStatus("I–V converged", "converged");
     setMessage(dom.sweepMessage, "67 points converged from −1.00 to 0.65 V.", "ready");
-    if (dom.controlPanel.open && !dockedPanelMedia.matches) closePanel(false);
+    if (!dockedPanelMedia.matches) dom.controlPanel.open = false;
   } catch (error) {
     currentSweep = null;
     updateGlobalStatus("Sweep failed", "failed");
@@ -604,7 +562,8 @@ function updateExportState() {
   const resultReady = currentResult?.diagnostics.converged === true;
   const sweepRequired = activeView === "jv";
   dom.exportCsvButton.disabled = !resultReady || (sweepRequired && !currentSweep?.converged);
-  dom.exportPngButton.disabled = !resultReady || (sweepRequired && !currentSweep?.converged);
+  dom.exportPngButton.disabled = activeView === "validation" || !resultReady ||
+    (sweepRequired && !currentSweep?.converged);
 }
 
 function exportCsv() {
@@ -615,7 +574,7 @@ function exportCsv() {
 }
 
 function exportPng() {
-  if (!currentResult?.diagnostics.converged) return;
+  if (!currentResult?.diagnostics.converged || activeView === "validation") return;
   const canvas = activeView === "jv" ? dom.jvCanvas :
     (activeView === "carriers" ? dom.carrierCanvas : dom.potentialCanvas);
   canvas.toBlob((blob) => {
