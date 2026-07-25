@@ -1,0 +1,13 @@
+{
+  "name": "drift-diffusion-simulator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Validated browser laboratory for a self-consistent 1D PN junction.",
+  "scripts": {
+    "start": "node scripts/serve-static.mjs",
+    "serve": "node scripts/serve-static.mjs",
+    "test": "node scripts/self-check.mjs",
+    "build:wasm": "powershell -ExecutionPolicy Bypass -File scripts/build-wasm.ps1"
+  }
+}

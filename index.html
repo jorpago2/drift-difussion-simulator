@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Laboratorio docente de unión PN con drift-diffusion 1D, Scharfetter-Gummel y recombinación SRH.">
+    <title>Laboratorio de unión PN 1D</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="module" src="src/app.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="eyebrow">Semiconductor device physics</span>
+        <h1>Laboratorio de unión PN</h1>
+      </div>
+      <div class="topbar-actions">
+        <output id="globalStatus" class="status-chip" data-state="idle" aria-live="polite">Sin resolver</output>
+        <button id="openPanelButton" class="icon-button" type="button" aria-expanded="false" aria-controls="controlPanel">
+          <span aria-hidden="true">☰</span>
+          <span>Controles</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="lab-shell">
+      <nav class="workflow-nav" aria-label="Flujo del laboratorio">
+        <button type="button" data-open-stage="device"><span>1</span> Dispositivo</button>
+        <button type="button" data-open-stage="solve"><span>2</span> Resolver</button>
+        <button type="button" data-open-stage="results"><span>3</span> Resultados</button>
+        <button type="button" data-open-stage="validate"><span>4</span> Validar</button>
+      </nav>
+
+      <section class="workspace" aria-label="Área de resultados">
+        <div class="workspace-heading">
+          <div>
+            <span id="lessonKicker" class="eyebrow">Equilibrio térmico</span>
+            <h2 id="workspaceTitle">Predice la unión antes de resolver</h2>
+          </div>
+          <output id="biasBadge" class="bias-badge">V<sub>D</sub> = 0,00 V</output>
+        </div>
+
+        <section id="deviceOverview" class="device-overview" aria-labelledby="deviceOverviewTitle">
+          <div class="device-copy">
+            <p id="deviceOverviewTitle" class="section-label">Estructura 1D</p>
+            <h3>Silicio P | Silicio N</h3>
+            <p id="predictionText">Antes de resolver, anticipa hacia dónde apunta el campo interno y en qué lado se extiende más la región de agotamiento.</p>
+          </div>
+          <div class="device-schematic" role="img" aria-label="Esquema de una unión PN abrupta con contacto de ánodo a la izquierda y cátodo a la derecha">
+            <div class="contact contact-left">Ánodo</div>
+            <div class="region region-p"><strong>P</strong><span id="pDopingLabel">N<sub>A</sub> = 10¹⁶ cm⁻³</span></div>
+            <div id="depletionZone" class="depletion-zone"><span>agotamiento estimado</span></div>
+            <div class="region region-n"><strong>N</strong><span id="nDopingLabel">N<sub>D</sub> = 10¹⁶ cm⁻³</span></div>
+            <div class="contact contact-right">Cátodo</div>
+          </div>
+          <div id="preflightSummary" class="preflight-summary" data-state="ready">Configuración válida. Abre «Resolver» para calcular el estado físico.</div>
+        </section>
+
+        <section id="resultsArea" class="results-area" hidden aria-labelledby="resultsTitle">
+          <div class="results-toolbar">
+            <div>
+              <p class="section-label">Solución convergida</p>
+              <h2 id="resultsTitle">Perfiles autoconsistentes</h2>
+            </div>
+            <div class="view-tabs" role="tablist" aria-label="Vistas de resultados">
+              <button id="electrostaticsTab" type="button" role="tab" aria-selected="true" aria-controls="electrostaticsView" data-view-tab="electrostatics">Electrostática</button>
+              <button id="carriersTab" type="button" role="tab" aria-selected="false" aria-controls="carriersView" data-view-tab="carriers">Portadores y bandas</button>
+              <button id="jvTab" type="button" role="tab" aria-selected="false" aria-controls="jvView" data-view-tab="jv">J–V</button>
+            </div>
+          </div>
+
+          <div id="electrostaticsView" class="result-view" role="tabpanel" aria-labelledby="electrostaticsTab">
+            <div class="plot-grid">
+              <figure class="plot-card plot-wide">
+                <canvas id="potentialCanvas" width="960" height="330" aria-label="Perfil de potencial electrostático"></canvas>
+                <figcaption>Potencial electrostático ψ(x)</figcaption>
+              </figure>
+              <figure class="plot-card">
+                <canvas id="fieldCanvas" width="640" height="300" aria-label="Perfil de campo eléctrico"></canvas>
+                <figcaption>Campo eléctrico E(x)</figcaption>
+              </figure>
+              <figure class="plot-card">
+                <canvas id="chargeCanvas" width="640" height="300" aria-label="Perfil de densidad de carga"></canvas>
+                <figcaption>Densidad de carga ρ(x)</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div id="carriersView" class="result-view" role="tabpanel" aria-labelledby="carriersTab" hidden>
+            <div class="plot-grid">
+              <figure class="plot-card plot-wide">
+                <canvas id="carrierCanvas" width="960" height="350" aria-label="Perfiles de electrones, huecos y dopaje"></canvas>
+                <figcaption>Portadores y dopaje, escala logarítmica</figcaption>
+              </figure>
+              <figure class="plot-card plot-wide">
+                <canvas id="bandCanvas" width="960" height="350" aria-label="Diagrama de bandas y cuasi-niveles de Fermi"></canvas>
+                <figcaption>Bandas relativas y cuasi-niveles de Fermi</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div id="jvView" class="result-view" role="tabpanel" aria-labelledby="jvTab" hidden>
+            <div id="jvEmpty" class="jv-empty">
+              <h3>El barrido todavía no se ha calculado</h3>
+              <p>La curva se obtiene resolviendo 67 estados autoconsistentes entre −1,00 y 0,65 V.</p>
+              <button id="jvInlineButton" class="primary-button" type="button">Generar curva J–V</button>
+            </div>
+            <figure id="jvFigure" class="plot-card plot-wide" hidden>
+              <canvas id="jvCanvas" width="960" height="430" aria-label="Curva densidad de corriente frente a tensión"></canvas>
+              <figcaption>Drift-diffusion con SRH; Shockley se muestra solo como referencia de baja inyección</figcaption>
+            </figure>
+          </div>
+
+          <output id="cursorReadout" class="cursor-readout" aria-live="polite">Mueve el cursor sobre una gráfica para inspeccionar el perfil.</output>
+        </section>
+      </section>
+
+      <aside class="model-note">
+        <strong>Modelo acotado:</strong> Si 1D, Boltzmann, movilidad constante y SRH. No incluye avalancha, túnel, degeneración, Auger ni estrechamiento de banda.
+      </aside>
+    </main>
+
+    <dialog id="controlPanel" class="control-panel" aria-labelledby="panelTitle">
+      <div class="panel-header">
+        <div>
+          <span id="stageKicker" class="eyebrow">Paso 1 de 4</span>
+          <h2 id="panelTitle">Dispositivo</h2>
+        </div>
+        <button id="closePanelButton" class="close-button" type="button" aria-label="Cerrar controles">×</button>
+      </div>
+
+      <nav class="stage-tabs" aria-label="Etapas de configuración">
+        <button type="button" data-stage="device" aria-current="step"><span>1</span> Dispositivo</button>
+        <button type="button" data-stage="solve"><span>2</span> Resolver</button>
+        <button type="button" data-stage="results"><span>3</span> Resultados</button>
+        <button type="button" data-stage="validate"><span>4</span> Validar</button>
+      </nav>
+
+      <div class="panel-scroll">
+        <section class="stage-panel" data-stage-panel="device">
+          <h3>Experimento guiado</h3>
+          <label>
+            Escenario
+            <select id="lessonSelect">
+              <option value="equilibrium">Equilibrio térmico</option>
+              <option value="forward">Polarización directa</option>
+              <option value="reverse">Polarización inversa</option>
+            </select>
+          </label>
+          <div class="input-grid">
+            <label>
+              NA (cm⁻³)
+              <input id="acceptorInput" type="number" min="1e14" max="1e18" step="1e15" value="1e16">
+            </label>
+            <label>
+              ND (cm⁻³)
+              <input id="donorInput" type="number" min="1e14" max="1e18" step="1e15" value="1e16">
+            </label>
+          </div>
+          <label>
+            VD = VA − VC (V)
+            <input id="biasInput" type="number" min="-1" max="0.8" step="0.025" value="0">
+          </label>
+
+          <details class="advanced-settings">
+            <summary>Parámetros avanzados</summary>
+            <div class="input-grid">
+              <label>
+                Longitud (µm)
+                <input id="lengthInput" type="number" min="1" max="20" step="0.5" value="4">
+              </label>
+              <label>
+                Nodos impares
+                <input id="cellsInput" type="number" min="101" max="2001" step="2" value="401">
+              </label>
+              <label>
+                τn (s)
+                <input id="electronLifetimeInput" type="number" min="1e-12" max="1e-3" step="1e-9" value="1e-8">
+              </label>
+              <label>
+                τp (s)
+                <input id="holeLifetimeInput" type="number" min="1e-12" max="1e-3" step="1e-9" value="1e-8">
+              </label>
+            </div>
+          </details>
+
+          <article class="teaching-card">
+            <span>Antes de resolver</span>
+            <h3 id="predictionTitle">¿Qué establece el equilibrio?</h3>
+            <p id="predictionDetail">La difusión inicial deja carga descubierta, genera un campo interno y curva las bandas hasta alinear el nivel de Fermi.</p>
+          </article>
+        </section>
+
+        <section class="stage-panel" data-stage-panel="solve" hidden>
+          <h3>Preflight físico y numérico</h3>
+          <div id="preflightDetails" class="message-box" data-state="ready"></div>
+          <dl id="derivedMetrics" class="metric-list"></dl>
+          <button id="solveButton" class="primary-button large-button" type="button">Resolver unión PN</button>
+          <output id="solverMessage" class="solver-message" aria-live="polite">Aún no se ha ejecutado el solver.</output>
+        </section>
+
+        <section class="stage-panel" data-stage-panel="results" hidden>
+          <h3>Qué observar</h3>
+          <article id="resultExplanation" class="teaching-card muted-card">
+            <span>Después de converger</span>
+            <h3>Relaciona perfiles y bandas</h3>
+            <p>El potencial, el campo, la carga y los portadores deben explicar el mismo estado, no resultados de modelos separados.</p>
+          </article>
+          <button id="showElectrostaticsButton" type="button">Ver electrostática</button>
+          <button id="showCarriersButton" type="button">Ver portadores y bandas</button>
+          <button id="generateJvButton" class="primary-button" type="button" disabled>Generar curva J–V</button>
+          <output id="sweepMessage" class="solver-message" aria-live="polite">Resuelve primero un punto de operación.</output>
+        </section>
+
+        <section class="stage-panel" data-stage-panel="validate" hidden>
+          <h3>Confianza del resultado</h3>
+          <div id="validationBanner" class="message-box" data-state="idle">Sin resultado para validar.</div>
+          <dl id="validationMetrics" class="metric-list"></dl>
+          <div>
+            <h3>Advertencias y límites</h3>
+            <ul id="warningList" class="warning-list"></ul>
+          </div>
+          <div class="export-row">
+            <button id="exportCsvButton" type="button" disabled>Exportar CSV</button>
+            <button id="exportPngButton" type="button" disabled>Exportar PNG</button>
+          </div>
+        </section>
+      </div>
+    </dialog>
+  </body>
+</html>
