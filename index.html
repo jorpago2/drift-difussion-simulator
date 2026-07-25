@@ -150,16 +150,19 @@
           <div class="input-grid">
             <label>
               NA (cm⁻³)
-              <input id="acceptorInput" type="number" min="1e14" max="1e18" step="1e15" value="1e16">
+              <input id="acceptorInput" type="number" min="1e14" max="1e18" step="1e15" value="1e16" aria-describedby="acceptorHelp">
+              <small id="acceptorHelp" class="field-help">10¹⁴–10¹⁸ cm⁻³. The upper range may require degeneracy and doping-dependent mobility corrections.</small>
             </label>
             <label>
               ND (cm⁻³)
-              <input id="donorInput" type="number" min="1e14" max="1e18" step="1e15" value="1e16">
+              <input id="donorInput" type="number" min="1e14" max="1e18" step="1e15" value="1e16" aria-describedby="donorHelp">
+              <small id="donorHelp" class="field-help">10¹⁴–10¹⁸ cm⁻³. This bounded range keeps the nondegenerate silicon model useful.</small>
             </label>
           </div>
           <label>
             VD = VA − VC (V)
-            <input id="biasInput" type="number" min="-1" max="0.8" step="0.025" value="0">
+            <input id="biasInput" type="number" min="-1" max="0.8" step="0.025" value="0" aria-describedby="biasHelp">
+            <small id="biasHelp" class="field-help">−1 to 0.8 V. Breakdown is absent in reverse bias, while strong high injection limits forward-bias accuracy.</small>
           </label>
 
           <details class="advanced-settings">
@@ -167,21 +170,30 @@
             <div class="input-grid">
               <label>
                 Length (µm)
-                <input id="lengthInput" type="number" min="1" max="20" step="0.5" value="4">
+                <input id="lengthInput" type="number" min="1" max="20" step="0.5" value="4" aria-describedby="lengthHelp">
+                <small id="lengthHelp" class="field-help">1–20 µm. The domain should include neutral material on both sides of the depletion region.</small>
               </label>
               <label>
                 Odd node count
-                <input id="cellsInput" type="number" min="101" max="2001" step="2" value="401">
+                <input id="cellsInput" type="number" min="101" max="2001" step="2" value="401" aria-describedby="cellsHelp">
+                <small id="cellsHelp" class="field-help">101–2001 nodes. An odd count places the abrupt junction at the center; preflight checks the actual resolution.</small>
               </label>
               <label>
                 τn (s)
-                <input id="electronLifetimeInput" type="number" min="1e-12" max="1e-3" step="1e-9" value="1e-8">
+                <input id="electronLifetimeInput" type="number" min="1e-12" max="1e-3" step="1e-9" value="1e-8" aria-describedby="electronLifetimeHelp">
+                <small id="electronLifetimeHelp" class="field-help">10⁻¹²–10⁻³ s. Electron lifetime controls the SRH recombination rate and diffusion length.</small>
               </label>
               <label>
                 τp (s)
-                <input id="holeLifetimeInput" type="number" min="1e-12" max="1e-3" step="1e-9" value="1e-8">
+                <input id="holeLifetimeInput" type="number" min="1e-12" max="1e-3" step="1e-9" value="1e-8" aria-describedby="holeLifetimeHelp">
+                <small id="holeLifetimeHelp" class="field-help">10⁻¹²–10⁻³ s. Hole lifetime controls the SRH recombination rate and diffusion length.</small>
               </label>
             </div>
+          </details>
+
+          <details class="limit-guide">
+            <summary>Why are these parameters limited?</summary>
+            <p>Hard limits reject numerically unsafe or unsupported inputs. Passing them does not guarantee model validity: mesh, injection level, and omitted physics are assessed separately by preflight warnings and post-solve diagnostics.</p>
           </details>
 
           <article class="teaching-card">

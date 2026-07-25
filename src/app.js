@@ -61,6 +61,7 @@ const stageButtons = [...document.querySelectorAll("[data-stage]")];
 const stagePanels = [...document.querySelectorAll("[data-stage-panel]")];
 const openStageButtons = [...document.querySelectorAll("[data-open-stage]")];
 const viewTabs = [...document.querySelectorAll("[data-view-tab]")];
+const dockedPanelMedia = window.matchMedia("(min-width: 1180px)");
 const configInputs = [
   dom.acceptorInput,
   dom.donorInput,
@@ -77,11 +78,13 @@ let activeView = "electrostatics";
 let currentResult = null;
 let currentSweep = null;
 let solving = false;
+let desktopPanelDismissed = false;
 
 bindEvents();
 applyLesson("equilibrium", false);
 updatePreflight();
 selectStage("device");
+syncPanelMode();
 
 function requireElement(id) {
   const element = document.getElementById(id);
@@ -90,10 +93,22 @@ function requireElement(id) {
 }
 
 function bindEvents() {
-  dom.openPanelButton.addEventListener("click", () => openPanel(activeStage));
-  dom.closePanelButton.addEventListener("click", () => dom.controlPanel.close());
-  dom.controlPanel.addEventListener("close", () => dom.openPanelButton.setAttribute("aria-expanded", "false"));
+  dom.openPanelButton.addEventListener("click", () => {
+    if (dom.controlPanel.open) closePanel(true);
+    else openPanel(activeStage);
+  });
+  dom.closePanelButton.addEventListener("click", () => closePanel(true));
+  dom.controlPanel.addEventListener("close", () => {
+    document.body.classList.remove("controls-docked");
+    dom.openPanelButton.setAttribute("aria-expanded", "false");
+    window.scrollTo({ left: 0, top: window.scrollY });
+  });
   dom.controlPanel.addEventListener("cancel", () => dom.openPanelButton.setAttribute("aria-expanded", "false"));
+  dockedPanelMedia.addEventListener("change", () => {
+    desktopPanelDismissed = false;
+    if (dom.controlPanel.open) dom.controlPanel.close();
+    syncPanelMode();
+  });
 
   for (const button of openStageButtons) {
     button.addEventListener("click", () => openPanel(button.dataset.openStage));
@@ -137,8 +152,23 @@ function bindEvents() {
 
 function openPanel(stage) {
   selectStage(stage);
-  if (!dom.controlPanel.open) dom.controlPanel.showModal();
+  desktopPanelDismissed = false;
+  if (!dom.controlPanel.open) {
+    if (dockedPanelMedia.matches) dom.controlPanel.show();
+    else dom.controlPanel.showModal();
+  }
+  document.body.classList.toggle("controls-docked", dockedPanelMedia.matches);
   dom.openPanelButton.setAttribute("aria-expanded", "true");
+}
+
+function closePanel(userInitiated) {
+  if (userInitiated && dockedPanelMedia.matches) desktopPanelDismissed = true;
+  if (dom.controlPanel.open) dom.controlPanel.close();
+}
+
+function syncPanelMode() {
+  if (dockedPanelMedia.matches && !desktopPanelDismissed) openPanel(activeStage);
+  else document.body.classList.remove("controls-docked");
 }
 
 function selectStage(stage) {
@@ -166,7 +196,7 @@ function selectView(view) {
 
 function showResultView(view) {
   selectView(view);
-  if (dom.controlPanel.open) dom.controlPanel.close();
+  if (dom.controlPanel.open && !dockedPanelMedia.matches) closePanel(false);
   dom.resultsArea.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -413,7 +443,7 @@ async function generateJvSweep() {
     selectView("jv");
     updateGlobalStatus("J–V converged", "converged");
     setMessage(dom.sweepMessage, "67 points converged from −1.00 to 0.65 V.", "ready");
-    if (dom.controlPanel.open) dom.controlPanel.close();
+    if (dom.controlPanel.open && !dockedPanelMedia.matches) closePanel(false);
   } catch (error) {
     currentSweep = null;
     updateGlobalStatus("Sweep failed", "failed");
@@ -541,8 +571,7 @@ function downloadBlob(content, type, filename) {
 }
 
 function drawLineChart(canvas, specification) {
-  const context = canvas.getContext("2d");
-  const { width, height } = canvas;
+  const { context, width, height } = prepareCanvas(canvas);
   const pad = { left: 74, right: 22, top: 46, bottom: 52 };
   const plotWidth = width - pad.left - pad.right;
   const plotHeight = height - pad.top - pad.bottom;
@@ -638,6 +667,25 @@ function drawLineChart(canvas, specification) {
     context.fillText(series.label, legendX + 28, 24);
     legendX += 42 + context.measureText(series.label).width;
   }
+}
+
+function prepareCanvas(canvas) {
+  const logicalWidth = Number(canvas.dataset.logicalWidth || canvas.getAttribute("width"));
+  const logicalHeight = Number(canvas.dataset.logicalHeight || canvas.getAttribute("height"));
+  canvas.dataset.logicalWidth = String(logicalWidth);
+  canvas.dataset.logicalHeight = String(logicalHeight);
+  const displayScale = canvas.clientWidth > 0 ? canvas.clientWidth / logicalWidth : 1;
+  const pixelRatio = Math.min(window.devicePixelRatio || 1, 3);
+  const backingScale = Math.max(pixelRatio, displayScale * pixelRatio);
+  const backingWidth = Math.round(logicalWidth * backingScale);
+  const backingHeight = Math.round(logicalHeight * backingScale);
+  if (canvas.width !== backingWidth || canvas.height !== backingHeight) {
+    canvas.width = backingWidth;
+    canvas.height = backingHeight;
+  }
+  const context = canvas.getContext("2d");
+  context.setTransform(backingScale, 0, 0, backingScale, 0, 0);
+  return { context, width: logicalWidth, height: logicalHeight };
 }
 
 function updateCursorReadout(event) {

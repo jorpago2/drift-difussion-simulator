@@ -10,6 +10,10 @@ The main application uses only the 1D PN model. The previous 2D, MOS, NPN, and
 WASM implementations remain in the repository as experimental code, outside
 the public v1 workflow and validation scope.
 
+On desktop viewports, controls are docked at the right and can be collapsed;
+on smaller screens they open as a modal panel. Plots use a high-density canvas
+backing store so curves and labels remain sharp on HiDPI displays.
+
 ## Run
 
 A recent Node.js version is required only to serve the ES modules and run the
@@ -104,7 +108,9 @@ Inputs are restricted to:
 The preflight warns when the spatial step does not adequately resolve the
 shortest Debye length or estimated depletion width. A warning does not imply
 convergence; the four diagnostics above determine whether a result may be
-displayed and exported.
+displayed and exported. Each editable field explains why its hard range exists;
+passing a hard range is necessary but does not by itself establish model
+validity.
 
 ## Interpretation and validation
 
