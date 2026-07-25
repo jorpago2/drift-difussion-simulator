@@ -300,6 +300,46 @@ export function sweepNpnOutputFamily(
   return { config: validation.config, curves, converged: curves.every((curve) => curve.converged) };
 }
 
+export function idealNpnTransportCurrentA(
+  input = {},
+  baseEmitterVoltageV = null,
+  collectorEmitterVoltageV = null,
+) {
+  const config = {
+    ...input,
+    baseEmitterVoltageV: baseEmitterVoltageV ?? input.baseEmitterVoltageV ?? DEFAULT_NPN_CONFIG.baseEmitterVoltageV,
+    collectorEmitterVoltageV: collectorEmitterVoltageV ?? input.collectorEmitterVoltageV ?? DEFAULT_NPN_CONFIG.collectorEmitterVoltageV,
+  };
+  const validation = validateNpnConfig(config);
+  if (validation.errors.length) throw new RangeError(validation.errors.join(" "));
+  const { config: normalized, derived } = validation;
+  const thermalVoltageV = derived.thermalVoltageV;
+  const baseCollectorVoltageV = normalized.baseEmitterVoltageV - normalized.collectorEmitterVoltageV;
+  const equilibriumMinorityM3 = derived.intrinsicM3 ** 2 / derived.baseM3;
+  const maximumMinorityM3 = equilibriumMinorityM3 * Math.max(
+    expSafe(normalized.baseEmitterVoltageV / thermalVoltageV),
+    expSafe(baseCollectorVoltageV / thermalVoltageV),
+  );
+  const neutralBaseWidthM = derived.baseWidthM - derived.emitterBaseDepletionInBaseM -
+    derived.baseCollectorDepletionInBaseM;
+  if (maximumMinorityM3 >= 0.1 * derived.baseM3 || neutralBaseWidthM <= 0) return NaN;
+
+  const electronDiffusionM2s = normalized.electronMobilityM2Vs * thermalVoltageV;
+  const electronDiffusionLengthM = Math.sqrt(electronDiffusionM2s * normalized.electronLifetimeS);
+  const normalizedBaseWidth = neutralBaseWidthM / electronDiffusionLengthM;
+  const inverseSinh = normalizedBaseWidth < 1e-5
+    ? 1 / normalizedBaseWidth - normalizedBaseWidth / 6
+    : normalizedBaseWidth > 20
+      ? 2 * Math.exp(-normalizedBaseWidth)
+      : 1 / Math.sinh(normalizedBaseWidth);
+  const crossSectionM2 = derived.heightM * derived.depthM;
+  const transportSaturationA = Q * crossSectionM2 * electronDiffusionM2s *
+    derived.intrinsicM3 ** 2 * inverseSinh /
+    (derived.baseM3 * electronDiffusionLengthM);
+  return transportSaturationA * expSafe(normalized.baseEmitterVoltageV / thermalVoltageV) *
+    -Math.expm1(-normalized.collectorEmitterVoltageV / thermalVoltageV);
+}
+
 export function canReuseNpnResult(result, config) {
   if (!result?.diagnostics?.converged || result.nx !== config.nx || result.ny !== config.ny) {
     return false;

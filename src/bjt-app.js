@@ -1,5 +1,6 @@
 import {
   DEFAULT_NPN_CONFIG,
+  idealNpnTransportCurrentA,
   serializeNpnProfileCsv,
   serializeNpnSweepCsv,
   validateNpnConfig,
@@ -288,16 +289,33 @@ function navigateResultTabs(event) {
 function drawOutputFamily(family) {
   const colors = ["#7b61a8", "#ca7b00", "#087e8b", "#c4483f"];
   const x = Float64Array.from(family.curves[0].points, (point) => point.collectorEmitterVoltageV);
+  const series = [];
+  family.curves.forEach((curve, index) => {
+    const color = colors[index % colors.length];
+    series.push({
+      label: `V_BE = ${formatFixed(curve.baseEmitterVoltageV, 2)} V`,
+      color,
+      values: Float64Array.from(curve.points, (point) => point.collectorCurrentA * 1e3),
+    });
+    series.push({
+      label: "Ideal 1D transport",
+      color,
+      dash: [7, 4],
+      showInLegend: false,
+      values: Float64Array.from(curve.points, (point) =>
+        idealNpnTransportCurrentA(
+          family.config,
+          curve.baseEmitterVoltageV,
+          point.collectorEmitterVoltageV,
+        ) * 1e3),
+    });
+  });
   drawLineChart(dom.bjtOutputCanvas, {
     x,
     xLabel: "V_CE (V)",
     yLabel: "I_C (mA)",
     includeZero: true,
-    series: family.curves.map((curve, index) => ({
-      label: `V_BE = ${formatFixed(curve.baseEmitterVoltageV, 2)} V`,
-      color: colors[index % colors.length],
-      values: Float64Array.from(curve.points, (point) => point.collectorCurrentA * 1e3),
-    })),
+    series,
   });
 }
 
@@ -410,16 +428,26 @@ function drawLineChart(canvas, specification) {
   for (const series of specification.series) {
     context.strokeStyle = series.color;
     context.lineWidth = 2.6;
+    context.setLineDash(series.dash ?? []);
     context.beginPath();
+    let drawing = false;
     for (let index = 0; index < specification.x.length; index += 1) {
-      const xPosition = mapX(specification.x[index]);
-      const yPosition = mapY(series.values[index]);
-      if (index === 0) context.moveTo(xPosition, yPosition);
+      const xValue = specification.x[index];
+      const yValue = series.values[index];
+      if (!Number.isFinite(xValue) || !Number.isFinite(yValue)) {
+        drawing = false;
+        continue;
+      }
+      const xPosition = mapX(xValue);
+      const yPosition = mapY(yValue);
+      if (!drawing) context.moveTo(xPosition, yPosition);
       else context.lineTo(xPosition, yPosition);
+      drawing = true;
     }
     context.stroke();
   }
   context.restore();
+  context.setLineDash([]);
   context.fillStyle = "#20343b";
   context.font = "700 12px Inter, system-ui, sans-serif";
   context.textAlign = "center";
@@ -433,7 +461,7 @@ function drawLineChart(canvas, specification) {
   let legendY = 22;
   context.font = "700 11px Inter, system-ui, sans-serif";
   context.textAlign = "left";
-  for (const series of specification.series) {
+  for (const series of specification.series.filter((item) => item.showInLegend !== false)) {
     const required = 34 + context.measureText(series.label).width;
     if (legendX + required > width - 10) {
       legendX = pad.left;
@@ -441,7 +469,9 @@ function drawLineChart(canvas, specification) {
     }
     context.strokeStyle = series.color;
     context.lineWidth = 3;
+    context.setLineDash(series.dash ?? []);
     drawLine(context, legendX, legendY, legendX + 20, legendY);
+    context.setLineDash([]);
     context.fillStyle = "#40555c";
     context.fillText(series.label, legendX + 26, legendY + 4);
     legendX += required + 12;

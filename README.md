@@ -168,12 +168,21 @@ not a fitted parameter. The IC–VCE family contains three VBE curves and nine
 fully converged VCE points per curve. A default browser sweep can take several
 minutes.
 
+Each IC–VCE curve also includes a dashed, parameter-derived 1D low-injection
+transport reference. It uses the minority-electron diffusion solution in the
+neutral base, including finite diffusion length and depletion-width modulation.
+It is not fitted to the 2D result and is omitted when the injected minority
+density exceeds 10% of the base doping or the estimated neutral base vanishes.
+The reference excludes base recombination, multidimensional current crowding,
+high-field effects, and contact resistance.
+
 The NPN public API is:
 
 - `validateNpnConfig(config)`
 - `solveNpnBjt2D(config, previousSolution?)`
 - `sweepNpnOutput(config, collectorVoltages?, previousSolution?)`
 - `sweepNpnOutputFamily(config, baseVoltages?, collectorVoltages?)`
+- `idealNpnTransportCurrentA(config, VBE?, VCE?)`
 - `serializeNpnProfileCsv(result)` and `serializeNpnSweepCsv(sweep)`
 
 ## Parameters and warnings

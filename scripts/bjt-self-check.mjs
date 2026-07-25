@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   DEFAULT_NPN_CONFIG,
+  idealNpnTransportCurrentA,
   serializeNpnProfileCsv,
   serializeNpnSweepCsv,
   solveNpnBjt2D,
@@ -17,6 +18,15 @@ assert.throws(() => solveNpnBjt2D({ nx: 80 }), RangeError);
 assert.throws(() => solveNpnBjt2D({ ny: 8 }), RangeError);
 assert.throws(() => solveNpnBjt2D({ emitterWidthUm: 1.4, baseWidthUm: 0.5 }), RangeError);
 assert.throws(() => sweepNpnOutputFamily(DEFAULT_NPN_CONFIG, [0.5], []), RangeError);
+
+assert.equal(idealNpnTransportCurrentA(DEFAULT_NPN_CONFIG, 0.55, 0), 0);
+const idealLowVce = idealNpnTransportCurrentA(DEFAULT_NPN_CONFIG, 0.55, 0.05);
+const idealActive = idealNpnTransportCurrentA(DEFAULT_NPN_CONFIG, 0.55, 0.8);
+assert.ok(Number.isFinite(idealLowVce) && idealLowVce > 0);
+assert.ok(Number.isFinite(idealActive) && idealActive > idealLowVce);
+assert.ok(Number.isFinite(idealNpnTransportCurrentA({ nx: 41, ny: 9 }, 0.55, 0.8)));
+assert.ok(idealNpnTransportCurrentA(DEFAULT_NPN_CONFIG, 0.58, 0.8) > idealActive);
+assert.ok(Number.isNaN(idealNpnTransportCurrentA(DEFAULT_NPN_CONFIG, 0.75, 0.8)));
 
 const common = {
   lengthUm: 2,
