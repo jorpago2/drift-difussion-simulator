@@ -311,18 +311,19 @@ sub {
 .cutaway-diode .marker-1 { left: 32%; top: 36%; }
 .cutaway-diode .marker-2 { left: 43%; top: 31%; }
 .cutaway-diode .marker-3 { left: 88%; top: 54%; }
-.cutaway-diode .marker-4 { left: 72%; top: 53%; }
-.cutaway-diode .marker-5 { left: 58%; top: 49%; }
-.cutaway-diode .marker-6 { left: 58%; top: 57%; }
-.cutaway-diode .marker-7 { left: 58%; top: 64%; }
+.cutaway-diode .marker-4 { left: 63%; top: 50%; }
+.cutaway-diode .marker-5 { left: 56%; top: 49%; }
+.cutaway-diode .marker-6 { left: 53%; top: 51%; }
+.cutaway-diode .marker-7 { left: 48%; top: 42%; }
 
 .cutaway-bjt .marker-1 { left: 35%; top: 22%; }
 .cutaway-bjt .marker-2 { left: 52%; top: 85%; }
 .cutaway-bjt .marker-3 { left: 61%; top: 23%; }
 .cutaway-bjt .marker-4 { left: 47%; top: 34%; }
-.cutaway-bjt .marker-5 { left: 52%; top: 42%; }
+.cutaway-bjt .marker-5 { left: 52%; top: 43%; }
 .cutaway-bjt .marker-6 { left: 52%; top: 48%; }
 .cutaway-bjt .marker-7 { left: 52%; top: 55%; }
+.cutaway-bjt .marker-8 { left: 52%; top: 59%; }
 
 .cutaway-caption {
   display: grid;

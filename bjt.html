@@ -85,7 +85,7 @@
         <section id="bjtOverview" class="bjt-overview">
           <figure class="component-cutaway">
             <div class="cutaway-stage cutaway-bjt">
-              <img src="assets/device-cutaways/bjt-to92-cutaway.png" width="1536" height="1024" alt="Sectioned TO-92 NPN transistor showing three leads, lead frame, bond wires, die attach, and an idealized vertical NPN silicon die">
+              <img src="assets/device-cutaways/bjt-to92-cutaway.png" width="1536" height="1024" alt="Sectioned TO-92 NPN transistor showing three leads, a collector die paddle, two bond wires, and a planar vertical NPN silicon die">
               <span class="cutaway-marker marker-1" aria-hidden="true">1</span>
               <span class="cutaway-marker marker-2" aria-hidden="true">2</span>
               <span class="cutaway-marker marker-3" aria-hidden="true">3</span>
@@ -93,23 +93,25 @@
               <span class="cutaway-marker marker-5" aria-hidden="true">5</span>
               <span class="cutaway-marker marker-6" aria-hidden="true">6</span>
               <span class="cutaway-marker marker-7" aria-hidden="true">7</span>
+              <span class="cutaway-marker marker-8" aria-hidden="true">8</span>
             </div>
             <figcaption class="cutaway-caption">
               <div>
-                <p class="section-label">Real component</p>
+                <p class="section-label">Representative construction</p>
                 <h3>Inside a discrete NPN transistor</h3>
-                <p class="cutaway-note">Schematic TO-92 cutaway; geometry and layer thicknesses are not to scale. Pin order varies by part.</p>
+                <p class="cutaway-note">Planar vertical NPN in a TO-92 package. Doping colors and die dimensions are enlarged; pin order varies by part.</p>
               </div>
               <ol class="cutaway-legend">
                 <li><span>1</span><strong>Molded package</strong></li>
                 <li><span>2</span><strong>External leads</strong></li>
                 <li><span>3</span><strong>Lead frame</strong></li>
-                <li><span>4</span><strong>Bond wire</strong></li>
-                <li><span>5</span><strong>N emitter</strong></li>
-                <li><span>6</span><strong>Thin P base</strong></li>
+                <li><span>4</span><strong>Two bond wires</strong></li>
+                <li><span>5</span><strong>N+ emitter diffusion</strong></li>
+                <li><span>6</span><strong>P base diffusion</strong></li>
                 <li><span>7</span><strong>N collector</strong></li>
+                <li><span>8</span><strong>Backside collector attach</strong></li>
               </ol>
-              <p class="model-bridge"><strong>What the solver changes:</strong> a packaged BJT is commonly vertical, but this teaching model unfolds emitter, base, and collector laterally in 2D so both junctions and carrier transport remain visible.</p>
+              <p class="model-bridge"><strong>Electrical path:</strong> base and emitter use top pads and two bond wires; the collector reaches its lead through the metallized die backside and paddle. The solver unfolds this vertical device laterally in 2D.</p>
             </figcaption>
           </figure>
           <p class="abstraction-step">Physical component <span aria-hidden="true">→</span> lateral 2D teaching model</p>
