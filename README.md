@@ -76,7 +76,7 @@ levels are relative energies with an arbitrary zero.
 - `sweepPnJunction(config, voltages?)` generates the numerical I–V sweep from
   the internally computed current density and the defined area.
 - `shockleyReferenceCurrentDensity(config, voltage)` provides an independent
-  low-injection analytical reference.
+  low-injection diode reference with finite-base `coth(W/L)` corrections.
 
 Equilibrium is solved first using Poisson–Boltzmann. Each requested voltage is
 reached by continuation with steps no larger than 25 mV. Gummel iteration uses
@@ -89,7 +89,15 @@ Poisson residual       < 1e-8
 electron residual      < 1e-8
 hole residual          < 1e-8
 current nonuniformity  < 1e-3
+electron SRH balance  < 1e-3
+hole SRH balance      < 1e-3
 ```
+
+Current conservation uses both a relative error and an absolute floating-point
+safeguard near zero current; small currents are never assigned an artificial
+zero error. The integrated checks independently verify
+`Jn(right) - Jn(left) = q integral(R dx)` and
+`Jp(right) - Jp(left) = -q integral(R dx)`.
 
 Core quantities use SI units. The one-dimensional solver returns current density
 in A/m². A separately defined device area (10,000 µm² by default) converts it to
@@ -101,7 +109,7 @@ device-level comparison.
 
 Defaults: 300 K, εr = 11.7, ni = 10¹⁰ cm⁻³, Eg = 1.12 eV,
 μn = 1350 cm²/(V·s), μp = 480 cm²/(V·s), NA = ND = 10¹⁶ cm⁻³,
-4 µm length, τn = τp = 10 ns, and 401 nodes.
+4 µm length, τn = τp = 10 ns, and 801 nodes.
 
 Inputs are restricted to:
 
@@ -116,7 +124,7 @@ Inputs are restricted to:
 
 The preflight warns when the spatial step does not adequately resolve the
 shortest Debye length or estimated depletion width. A warning does not imply
-convergence; the four diagnostics above determine whether a result may be
+convergence; the residual and conservation diagnostics above determine whether a result may be
 displayed and exported. Each editable field explains why its hard range exists;
 passing a hard range is necessary but does not by itself establish model
 validity.
@@ -125,14 +133,16 @@ validity.
 
 The **Validate** stage compares the built-in potential against
 `V_T ln(NA ND / ni²)`, checks spatial current conservation, reports all three
-residuals, and summarizes mesh adequacy. The Shockley curve is deliberately
-independent of the solver and appears only in the low-injection range; agreement
-with it is not a convergence criterion.
+residuals, and summarizes mesh adequacy. The analytical diode curve is
+deliberately independent of the solver, includes finite-base correction, and
+appears only in the low-injection range; agreement with it is not a convergence
+criterion.
 
 `scripts/self-check.mjs` verifies the Bernoulli function, neutrality, mass
 action, built-in potential, equilibrium current and SRH, convergence at −0.5,
 0, 0.3, and 0.6 V, current-density sign and monotonicity, current conservation,
-201/401/801-node refinement, invalid-input rejection, and CSV serialization.
+integrated SRH balance, near-equilibrium bias points, 201/401/801-node
+refinement, invalid-input rejection, and CSV serialization.
 The refinement criterion requires less than 2% difference between the 401- and
 801-node meshes.
 

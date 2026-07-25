@@ -72,7 +72,7 @@
             </div>
             <figure id="jvFigure" class="plot-card plot-wide" hidden>
               <canvas id="jvCanvas" width="960" height="430" aria-label="Diode current versus voltage"></canvas>
-              <figcaption>Terminal current for the defined area; Shockley is a low-injection reference only</figcaption>
+              <figcaption>Terminal current for the defined area; the analytical curve includes finite-base correction and is limited to low injection</figcaption>
             </figure>
           </div>
 
@@ -175,7 +175,7 @@
               </label>
               <label>
                 Odd node count
-                <input id="cellsInput" type="number" min="101" max="2001" step="2" value="401" aria-describedby="cellsHelp">
+                <input id="cellsInput" type="number" min="101" max="2001" step="2" value="801" aria-describedby="cellsHelp">
                 <small id="cellsHelp" class="field-help">101–2001 nodes. An odd count places the abrupt junction at the center; preflight checks the actual resolution.</small>
               </label>
               <label>

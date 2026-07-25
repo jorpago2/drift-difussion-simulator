@@ -449,7 +449,8 @@ async function generateJvSweep() {
       return {
         voltageV: voltage,
         currentDensityAm2: result?.diagnostics.meanCurrentDensityAm2 ?? NaN,
-        shockleyCurrentDensityAm2: voltage <= equilibrium.derived.lowInjectionLimitV
+        shockleyCurrentDensityAm2: voltage <= equilibrium.derived.lowInjectionLimitV &&
+          equilibrium.derived.finiteBaseReferenceValid
           ? shockleyReferenceCurrentDensity(baseConfig, voltage)
           : null,
         converged: result?.diagnostics.converged ?? false,
@@ -498,7 +499,7 @@ function renderJv(sweep) {
     includeZero: true,
     series: [
       { label: "DD + SRH", values: current, color: "#087e8b" },
-      { label: "Shockley", values: reference, color: "#ca7b00", dash: [7, 4] },
+      { label: "Finite-base diode", values: reference, color: "#ca7b00", dash: [7, 4] },
     ],
   });
   chartRegistry.set(dom.jvCanvas, { type: "sweep", x: voltage });
@@ -543,6 +544,9 @@ function renderValidation(result) {
     ["Electron residual", formatScientific(result.diagnostics.electronResidual)],
     ["Hole residual", formatScientific(result.diagnostics.holeResidual)],
     ["J nonuniformity", formatPercent(result.diagnostics.currentContinuityError)],
+    ["Absolute J spread", `${formatScientific(result.diagnostics.currentContinuityAbsoluteErrorAm2 / 1e4)} A/cm²`],
+    ["Electron R balance", formatPercent(result.diagnostics.electronBalanceError)],
+    ["Hole R balance", formatPercent(result.diagnostics.holeBalanceError)],
     ["Mean J", `${formatScientific(result.diagnostics.meanCurrentDensityAm2 / 1e4)} A/cm²`],
     ["Simulated / expected barrier", `${formatFixed(potentialBarrierV, 4)} / ${formatFixed(expectedBarrierV, 4)} V`],
     ["Mesh", `${result.config.cells} nodes; Δx = ${formatScientific(result.derived.dxM * 1e9)} nm`],

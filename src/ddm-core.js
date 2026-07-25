@@ -769,7 +769,7 @@ export const DEFAULT_PN_CONFIG = Object.freeze({
   lengthUm: 4,
   deviceAreaUm2: 1e4,
   biasV: 0,
-  cells: 401,
+  cells: 801,
   temperatureK: 300,
   intrinsicDensityCm3: 1e10,
   relativePermittivity: 11.7,
@@ -794,8 +794,6 @@ const PN_LIMITS = Object.freeze({
   holeLifetimeS: [1e-12, 1e-3],
 });
 
-const PN_MIN_DENSITY = 1e-30;
-const PN_MAX_DENSITY = 1e30;
 const PN_CONTINUATION_STEP_V = 0.025;
 
 export function validatePnConfig(input = {}) {
@@ -842,6 +840,13 @@ export function validatePnConfig(input = {}) {
     const depletionWidthM = Math.sqrt(
       (2 * epsilon * depletionVoltageV / Q) * (1 / acceptorM3 + 1 / donorM3),
     );
+    const equilibriumDepletionWidthM = Math.sqrt(
+      (2 * epsilon * builtInPotentialV / Q) * (1 / acceptorM3 + 1 / donorM3),
+    );
+    const pSideDepletionWidthM = equilibriumDepletionWidthM * donorM3 / (acceptorM3 + donorM3);
+    const nSideDepletionWidthM = equilibriumDepletionWidthM * acceptorM3 / (acceptorM3 + donorM3);
+    const pSideQuasiNeutralWidthM = lengthM / 2 - pSideDepletionWidthM;
+    const nSideQuasiNeutralWidthM = lengthM / 2 - nSideDepletionWidthM;
     const acceptorDebyeLengthM = Math.sqrt((epsilon * KB * config.temperatureK) / (Q * Q * acceptorM3));
     const donorDebyeLengthM = Math.sqrt((epsilon * KB * config.temperatureK) / (Q * Q * donorM3));
     const lowInjectionLimitV = vt * Math.log(
@@ -858,6 +863,10 @@ export function validatePnConfig(input = {}) {
       dxM,
       builtInPotentialV,
       depletionWidthM,
+      equilibriumDepletionWidthM,
+      pSideQuasiNeutralWidthM,
+      nSideQuasiNeutralWidthM,
+      finiteBaseReferenceValid: pSideQuasiNeutralWidthM > dxM && nSideQuasiNeutralWidthM > dxM,
       acceptorDebyeLengthM,
       donorDebyeLengthM,
       lowInjectionLimitV,
@@ -869,6 +878,9 @@ export function validatePnConfig(input = {}) {
     }
     if (depletionWidthM > 0 && dxM > depletionWidthM / 20) {
       warnings.push("The estimated depletion region spans fewer than twenty cells.");
+    }
+    if (!derived.finiteBaseReferenceValid) {
+      warnings.push("The depletion estimate leaves no resolved quasi-neutral base; the analytical diode reference is unavailable.");
     }
     if (config.biasV > 0.9 * lowInjectionLimitV) {
       warnings.push("The applied bias approaches or exceeds the estimated low-injection limit.");
@@ -939,7 +951,8 @@ export function sweepPnJunction(input = {}, voltages = null) {
     return {
       voltageV: voltage,
       currentDensityAm2: result?.diagnostics.meanCurrentDensityAm2 ?? NaN,
-      shockleyCurrentDensityAm2: voltage <= validation.derived.lowInjectionLimitV
+      shockleyCurrentDensityAm2: voltage <= validation.derived.lowInjectionLimitV &&
+        validation.derived.finiteBaseReferenceValid
         ? shockleyReferenceCurrentDensity(validation.config, voltage)
         : null,
       converged: result?.diagnostics.converged ?? false,
@@ -963,11 +976,22 @@ export function shockleyReferenceCurrentDensity(input = {}, voltage = null) {
   const holeDiffusionM2S = config.holeMobilityM2Vs * derived.thermalVoltageV;
   const electronLengthM = Math.sqrt(electronDiffusionM2S * config.electronLifetimeS);
   const holeLengthM = Math.sqrt(holeDiffusionM2S * config.holeLifetimeS);
+  if (!derived.finiteBaseReferenceValid) {
+    throw new RangeError("The analytical diode reference requires resolved quasi-neutral regions.");
+  }
   const saturationAm2 = Q * derived.intrinsicM3 * derived.intrinsicM3 * (
-    electronDiffusionM2S / (electronLengthM * derived.acceptorM3) +
-    holeDiffusionM2S / (holeLengthM * derived.donorM3)
+    electronDiffusionM2S * coth(derived.pSideQuasiNeutralWidthM / electronLengthM) /
+      (electronLengthM * derived.acceptorM3) +
+    holeDiffusionM2S * coth(derived.nSideQuasiNeutralWidthM / holeLengthM) /
+      (holeLengthM * derived.donorM3)
   );
   return saturationAm2 * Math.expm1(clampNumber(appliedV / derived.thermalVoltageV, -80, 40));
+}
+
+function coth(value) {
+  if (value > 20) return 1;
+  if (value < 1e-5) return 1 / value + value / 3;
+  return 1 / Math.tanh(value);
 }
 
 export function serializePnProfileCsv(result) {
@@ -1104,11 +1128,7 @@ function createPnState(config, biasV) {
       state.hole[i] = expClamped(-state.potential[i]);
     }
     state.metrics = pnEquationMetrics(config, state);
-    state.converged =
-      state.metrics.poissonResidual < config.residualTolerance &&
-      state.metrics.electronResidual < config.residualTolerance &&
-      state.metrics.holeResidual < config.residualTolerance &&
-      state.metrics.currentContinuityError < config.currentTolerance;
+    state.converged = pnMetricsConverged(config, state.metrics);
   }
   return state;
 }
@@ -1158,12 +1178,7 @@ function solvePnBiasPoint(config, previousState, biasV) {
     state.totalIterations = previousState.totalIterations + iteration;
     state.damping = damping;
     previousScore = score;
-    if (
-      metrics.poissonResidual < config.residualTolerance &&
-      metrics.electronResidual < config.residualTolerance &&
-      metrics.holeResidual < config.residualTolerance &&
-      metrics.currentContinuityError < config.currentTolerance
-    ) {
+    if (pnMetricsConverged(config, metrics)) {
       state.converged = true;
       break;
     }
@@ -1288,11 +1303,7 @@ function solvePnElectron(config, state, potential, electron, hole) {
   const interior = solveTridiagonal(lower, diagonal, upper, rhs);
   const result = Float64Array.from(electron);
   for (let i = 1; i < cells - 1; i += 1) {
-    result[i] = clampNumber(
-      expClamped(potential[i]) * interior[i - 1],
-      PN_MIN_DENSITY,
-      PN_MAX_DENSITY,
-    );
+    result[i] = expClamped(potential[i]) * interior[i - 1];
   }
   return result;
 }
@@ -1333,11 +1344,7 @@ function solvePnHole(config, state, potential, electron, hole) {
   const interior = solveTridiagonal(lower, diagonal, upper, rhs);
   const result = Float64Array.from(hole);
   for (let i = 1; i < cells - 1; i += 1) {
-    result[i] = clampNumber(
-      expClamped(-potential[i]) * interior[i - 1],
-      PN_MIN_DENSITY,
-      PN_MAX_DENSITY,
-    );
+    result[i] = expClamped(-potential[i]) * interior[i - 1];
   }
   return result;
 }
@@ -1443,18 +1450,66 @@ function pnEquationMetrics(config, state) {
   const total = currents.total;
   const meanCurrentDensityAm2 = total.reduce((sum, value) => sum + value, 0) / total.length;
   const maxCurrent = Math.max(...total.map(Math.abs));
-  const currentContinuityError = maxCurrent < 1e-2 ? 0 :
-    Math.max(...total.map((value) => Math.abs(value - meanCurrentDensityAm2))) / maxCurrent;
+  const currentContinuityAbsoluteErrorAm2 = Math.max(
+    ...total.map((value) => Math.abs(value - meanCurrentDensityAm2)),
+  );
+  const characteristicCurrentAm2 = Q * derived.intrinsicM3 * derived.thermalVoltageV *
+    (config.electronMobilityM2Vs + config.holeMobilityM2Vs) / derived.lengthM;
+  // Edge-current roundoff accumulates across the mesh when the true current is near zero.
+  const currentContinuityAbsoluteToleranceAm2 = Math.max(
+    1e-12,
+    characteristicCurrentAm2 * config.residualTolerance,
+    4 * characteristicCurrentAm2 * Math.sqrt(Number.EPSILON * cells),
+  );
+  const currentReferenceAm2 = Math.max(
+    maxCurrent,
+    currentContinuityAbsoluteToleranceAm2 / config.currentTolerance,
+  );
+  const currentContinuityError = currentContinuityAbsoluteErrorAm2 / currentReferenceAm2;
+
+  let integratedRecombinationAm2 = 0;
+  for (let i = 1; i < cells - 1; i += 1) {
+    integratedRecombinationAm2 += Q * derived.intrinsicM3 *
+      srhNormalized(state.electron[i], state.hole[i], config) * derived.dxM;
+  }
+  const electronCurrentChangeAm2 = currents.electron.at(-1) - currents.electron[0];
+  const holeCurrentChangeAm2 = currents.hole.at(-1) - currents.hole[0];
+  const balanceReferenceAm2 = Math.max(
+    Math.abs(integratedRecombinationAm2),
+    Math.abs(electronCurrentChangeAm2),
+    Math.abs(holeCurrentChangeAm2),
+    currentContinuityAbsoluteToleranceAm2 / config.currentTolerance,
+  );
+  const electronBalanceError = Math.abs(
+    electronCurrentChangeAm2 - integratedRecombinationAm2,
+  ) / balanceReferenceAm2;
+  const holeBalanceError = Math.abs(
+    holeCurrentChangeAm2 + integratedRecombinationAm2,
+  ) / balanceReferenceAm2;
   return {
     converged: false,
     poissonResidual,
     electronResidual,
     holeResidual,
     currentContinuityError,
+    currentContinuityAbsoluteErrorAm2,
+    currentContinuityAbsoluteToleranceAm2,
+    integratedRecombinationAm2,
+    electronBalanceError,
+    holeBalanceError,
     meanCurrentDensityAm2,
     maxCurrentDensityAm2: maxCurrent,
     failureReason: "",
   };
+}
+
+function pnMetricsConverged(config, metrics) {
+  return metrics.poissonResidual < config.residualTolerance &&
+    metrics.electronResidual < config.residualTolerance &&
+    metrics.holeResidual < config.residualTolerance &&
+    metrics.currentContinuityError < config.currentTolerance &&
+    metrics.electronBalanceError < config.currentTolerance &&
+    metrics.holeBalanceError < config.currentTolerance;
 }
 
 function pnEdgeCurrents(config, state, derived) {
@@ -1541,7 +1596,7 @@ function finalizePnResult(config, state, baseWarnings) {
   const warnings = [...new Set([...baseWarnings, ...validation.warnings])];
   if (!state.converged) warnings.push(metrics.failureReason || "Result did not converge.");
   if (Math.max(...electronM3, ...holeM3) > 1e25) {
-    warnings.push("La densidad supera 1e19 cm^-3; la estadistica no degenerada puede dejar de ser valida.");
+    warnings.push("Carrier density exceeds 1e19 cm^-3; nondegenerate statistics may no longer be valid.");
   }
 
   return {
@@ -1570,9 +1625,9 @@ function finalizePnResult(config, state, baseWarnings) {
     derived: validation.derived,
     warnings,
     assumptions: [
-      "Silicio 1D homogeneo a 300 K y estadistica de Boltzmann.",
-      "Movilidades constantes, ionizacion completa y contactos ohmicos.",
-      "SRH de nivel medio; sin Auger, tunel, avalancha ni estrechamiento de banda.",
+      "Homogeneous 1D silicon with Boltzmann statistics.",
+      "Constant mobilities, complete ionization, and ohmic contacts.",
+      "Midgap SRH; no Auger, tunneling, avalanche, or bandgap narrowing.",
     ],
   };
 }
@@ -1592,6 +1647,11 @@ function failedPnMetrics(reason) {
     electronResidual: Infinity,
     holeResidual: Infinity,
     currentContinuityError: Infinity,
+    currentContinuityAbsoluteErrorAm2: Infinity,
+    currentContinuityAbsoluteToleranceAm2: NaN,
+    integratedRecombinationAm2: NaN,
+    electronBalanceError: Infinity,
+    holeBalanceError: Infinity,
     meanCurrentDensityAm2: NaN,
     maxCurrentDensityAm2: NaN,
     failureReason: reason,

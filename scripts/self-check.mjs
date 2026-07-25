@@ -38,6 +38,7 @@ assert.throws(() => solvePnJunction1D({ deviceAreaUm2: NaN }), RangeError);
 assert.throws(() => solvePnJunction1D({ deviceAreaUm2: 0 }), RangeError);
 assert.equal(validatePnConfig(DEFAULT_PN_CONFIG).errors.length, 0);
 assert.equal(validatePnConfig(DEFAULT_PN_CONFIG).derived.deviceAreaM2, 1e-8);
+assert.equal(DEFAULT_PN_CONFIG.cells, 801);
 
 const equilibrium = solvePnJunction1D({ biasV: 0, cells: 401 });
 assert.ok(equilibrium.diagnostics.converged);
@@ -58,6 +59,8 @@ for (const result of [reverse, moderateForward, strongForward]) {
   assert.ok(result.diagnostics.electronResidual < 1e-8);
   assert.ok(result.diagnostics.holeResidual < 1e-8);
   assert.ok(result.diagnostics.currentContinuityError < 1e-3);
+  assert.ok(result.diagnostics.electronBalanceError < 1e-3);
+  assert.ok(result.diagnostics.holeBalanceError < 1e-3);
 }
 assert.ok(reverse.diagnostics.meanCurrentDensityAm2 < 0);
 assert.ok(moderateForward.diagnostics.meanCurrentDensityAm2 > 0);
@@ -65,13 +68,37 @@ assert.ok(strongForward.diagnostics.meanCurrentDensityAm2 > moderateForward.diag
 assert.ok(Math.min(...reverse.recombinationM3s) < 0);
 assert.ok(Math.max(...moderateForward.recombinationM3s) > 0);
 
+for (const biasV of [-0.01, 0.01]) {
+  const nearEquilibrium = solvePnJunction1D({ biasV, cells: 401 }, equilibrium);
+  assert.ok(nearEquilibrium.diagnostics.converged, nearEquilibrium.diagnostics.failureReason);
+  assert.ok(nearEquilibrium.diagnostics.currentContinuityError < 1e-3);
+  assert.ok(
+    nearEquilibrium.diagnostics.currentContinuityAbsoluteErrorAm2 <=
+    nearEquilibrium.diagnostics.currentContinuityAbsoluteToleranceAm2,
+  );
+  assert.ok(nearEquilibrium.diagnostics.electronBalanceError < 1e-3);
+  assert.ok(nearEquilibrium.diagnostics.holeBalanceError < 1e-3);
+}
+
+const coarse = solvePnJunction1D({ biasV: 0.3, cells: 201 });
 const fine = solvePnJunction1D({ biasV: 0.3, cells: 801 });
+assert.ok(coarse.diagnostics.converged);
 assert.ok(fine.diagnostics.converged);
+const coarseCurrentDifference = relativeDifference(
+  coarse.diagnostics.meanCurrentDensityAm2,
+  moderateForward.diagnostics.meanCurrentDensityAm2,
+);
+const fineCurrentDifference = relativeDifference(
+  fine.diagnostics.meanCurrentDensityAm2,
+  moderateForward.diagnostics.meanCurrentDensityAm2,
+);
+assert.ok(fineCurrentDifference < coarseCurrentDifference);
 assert.ok(relativeDifference(
   fine.diagnostics.meanCurrentDensityAm2,
   moderateForward.diagnostics.meanCurrentDensityAm2,
 ) < 0.02);
 assert.ok(relativeDifference(maxAbs(fine.fieldVm), maxAbs(moderateForward.fieldVm)) < 0.02);
+assert.ok(matchingGridDifference(moderateForward.potentialV, fine.potentialV) < 0.02);
 
 const shockleyLow = shockleyReferenceCurrentDensity(DEFAULT_PN_CONFIG, 0.1);
 const shockleyHigh = shockleyReferenceCurrentDensity(DEFAULT_PN_CONFIG, 0.3);
@@ -103,4 +130,15 @@ function maxAbs(values) {
 
 function relativeDifference(a, b) {
   return Math.abs(a - b) / Math.max(Math.abs(a), Math.abs(b), Number.MIN_VALUE);
+}
+
+function matchingGridDifference(coarseValues, fineValues) {
+  const stride = (fineValues.length - 1) / (coarseValues.length - 1);
+  let difference = 0;
+  let scale = 0;
+  for (let i = 0; i < coarseValues.length; i += 1) {
+    difference = Math.max(difference, Math.abs(coarseValues[i] - fineValues[i * stride]));
+    scale = Math.max(scale, Math.abs(coarseValues[i]), Math.abs(fineValues[i * stride]));
+  }
+  return difference / Math.max(scale, Number.MIN_VALUE);
 }
