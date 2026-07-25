@@ -68,24 +68,26 @@
             <small id="biasHelp" class="field-help">Positive is forward bias. Breakdown is not included for negative bias.</small>
           </label>
 
-          <label>
-            Device area (µm²)
-            <input id="deviceAreaInput" type="number" min="1" max="1e8" step="1000" value="10000" aria-describedby="deviceAreaHelp">
-            <small id="deviceAreaHelp" class="field-help">Converts current density to terminal current through I = J·A.</small>
-          </label>
-
-          <article class="teaching-card prediction-card">
-            <span>Predict before solving</span>
-            <h3 id="predictionTitle">What establishes equilibrium?</h3>
-            <p id="predictionDetail">Initial diffusion leaves uncovered charge, creates a built-in field, and bends the bands until the Fermi level is aligned.</p>
-          </article>
+          <details class="prediction-disclosure">
+            <summary>Prediction guide</summary>
+            <article class="teaching-card prediction-card">
+              <span>Predict before solving</span>
+              <h3 id="predictionTitle">What establishes equilibrium?</h3>
+              <p id="predictionDetail">Initial diffusion leaves uncovered charge, creates a built-in field, and bends the bands until the Fermi level is aligned.</p>
+            </article>
+          </details>
 
           <button id="solveButton" class="primary-button large-button" type="button">Solve current bias</button>
           <output id="solverMessage" class="solver-message" aria-live="polite">Ready to solve the selected operating point.</output>
 
           <details class="advanced-settings">
-            <summary>Numerics and recombination</summary>
+            <summary>Area and numerical model</summary>
             <div class="input-grid">
+              <label>
+                Device area (µm²)
+                <input id="deviceAreaInput" type="number" min="1" max="1e8" step="1000" value="10000" aria-describedby="deviceAreaHelp">
+                <small id="deviceAreaHelp" class="field-help">Converts current density to terminal current through I = J·A.</small>
+              </label>
               <label>
                 Length (µm)
                 <input id="lengthInput" type="number" min="1" max="20" step="0.5" value="4" aria-describedby="lengthHelp">
@@ -140,42 +142,47 @@
             <div class="contact contact-right">Cathode</div>
           </div>
 
-          <div id="preflightSummary" class="preflight-summary" data-state="ready">Configuration ready. Solve the selected bias to test your prediction.</div>
+          <details class="overview-disclosure">
+            <summary>Checks and real-device context</summary>
+            <div class="overview-disclosure-content">
+              <div id="preflightSummary" class="preflight-summary" data-state="ready">Configuration ready. Solve the selected bias to test your prediction.</div>
 
-          <details class="physical-device-context">
-            <summary>
-              <span>Connect the model to a real rectifier</span>
-              <small>Package construction and model boundary</small>
-            </summary>
-            <figure class="component-cutaway">
-              <div class="cutaway-stage cutaway-diode">
-                <img src="assets/device-cutaways/diode-axial-cutaway-realistic.png" width="1774" height="887" alt="Realistic section of a Vishay GP, RGP, or EGP style axial rectifier showing coaxial copper leads, molybdenum slugs, solid braze, silicon die, opaque glass, and molding">
-                <span class="cutaway-marker marker-1" aria-hidden="true">1</span>
-                <span class="cutaway-marker marker-2" aria-hidden="true">2</span>
-                <span class="cutaway-marker marker-3" aria-hidden="true">3</span>
-                <span class="cutaway-marker marker-4" aria-hidden="true">4</span>
-                <span class="cutaway-marker marker-5" aria-hidden="true">5</span>
-                <span class="cutaway-marker marker-6" aria-hidden="true">6</span>
-                <span class="cutaway-marker marker-7" aria-hidden="true">7</span>
-              </div>
-              <figcaption class="cutaway-caption">
-                <div>
-                  <p class="section-label">Documented construction</p>
-                  <h3>Inside an axial silicon rectifier</h3>
-                  <p class="cutaway-note">Realistic reconstruction of the <a href="https://www.vishay.com/docs/88870/crossect.pdf">documented Vishay GP/RGP/EGP cross-section</a>. Dimensions are illustrative.</p>
-                </div>
-                <ol class="cutaway-legend">
-                  <li><span>1</span><strong>Cathode band</strong></li>
-                  <li><span>2</span><strong>Molded body</strong></li>
-                  <li><span>3</span><strong>Copper lead</strong></li>
-                  <li><span>4</span><strong>Molybdenum slug</strong></li>
-                  <li><span>5</span><strong>Silicon die</strong></li>
-                  <li><span>6</span><strong>Solid braze</strong></li>
-                  <li><span>7</span><strong>Opaque glass</strong></li>
-                </ol>
-                <p class="model-bridge"><strong>Model boundary:</strong> the solver represents an idealized abrupt PN junction, not this package or its proprietary die geometry.</p>
-              </figcaption>
-            </figure>
+              <details class="physical-device-context">
+                <summary>
+                  <span>Connect the model to a real rectifier</span>
+                  <small>Package construction and model boundary</small>
+                </summary>
+                <figure class="component-cutaway">
+                  <div class="cutaway-stage cutaway-diode">
+                    <img src="assets/device-cutaways/diode-axial-cutaway-realistic.png" width="1774" height="887" alt="Realistic section of a Vishay GP, RGP, or EGP style axial rectifier showing coaxial copper leads, molybdenum slugs, solid braze, silicon die, opaque glass, and molding">
+                    <span class="cutaway-marker marker-1" aria-hidden="true">1</span>
+                    <span class="cutaway-marker marker-2" aria-hidden="true">2</span>
+                    <span class="cutaway-marker marker-3" aria-hidden="true">3</span>
+                    <span class="cutaway-marker marker-4" aria-hidden="true">4</span>
+                    <span class="cutaway-marker marker-5" aria-hidden="true">5</span>
+                    <span class="cutaway-marker marker-6" aria-hidden="true">6</span>
+                    <span class="cutaway-marker marker-7" aria-hidden="true">7</span>
+                  </div>
+                  <figcaption class="cutaway-caption">
+                    <div>
+                      <p class="section-label">Documented construction</p>
+                      <h3>Inside an axial silicon rectifier</h3>
+                      <p class="cutaway-note">Realistic reconstruction of the <a href="https://www.vishay.com/docs/88870/crossect.pdf">documented Vishay GP/RGP/EGP cross-section</a>. Dimensions are illustrative.</p>
+                    </div>
+                    <ol class="cutaway-legend">
+                      <li><span>1</span><strong>Cathode band</strong></li>
+                      <li><span>2</span><strong>Molded body</strong></li>
+                      <li><span>3</span><strong>Copper lead</strong></li>
+                      <li><span>4</span><strong>Molybdenum slug</strong></li>
+                      <li><span>5</span><strong>Silicon die</strong></li>
+                      <li><span>6</span><strong>Solid braze</strong></li>
+                      <li><span>7</span><strong>Opaque glass</strong></li>
+                    </ol>
+                    <p class="model-bridge"><strong>Model boundary:</strong> the solver represents an idealized abrupt PN junction, not this package or its proprietary die geometry.</p>
+                  </figcaption>
+                </figure>
+              </details>
+            </div>
           </details>
         </section>
 
@@ -265,9 +272,10 @@
           </footer>
         </section>
 
-        <aside class="model-note">
-          <strong>Bounded model:</strong> 1D silicon, Boltzmann statistics, constant mobility, and SRH. Avalanche, tunneling, degeneracy, Auger, and bandgap narrowing are not included.
-        </aside>
+        <details class="model-note">
+          <summary>Model scope and omissions</summary>
+          <p><strong>Bounded model:</strong> 1D silicon, Boltzmann statistics, constant mobility, and SRH. Avalanche, tunneling, degeneracy, Auger, and bandgap narrowing are not included.</p>
+        </details>
       </section>
     </main>
   </body>

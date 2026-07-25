@@ -656,13 +656,26 @@ sub {
 
 .model-note {
   margin-top: 13px;
-  padding: 11px 14px;
   border: 1px solid var(--border);
   border-radius: 10px;
   color: var(--muted);
   background: rgb(255 255 255 / 0.78);
   font-size: 0.78rem;
   line-height: 1.45;
+}
+
+.model-note summary,
+.prediction-disclosure > summary,
+.overview-disclosure > summary {
+  padding: 0.75rem 0.9rem;
+  cursor: pointer;
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.model-note p {
+  margin: 0;
+  padding: 0 0.9rem 0.9rem;
 }
 
 .result-view[hidden] {
@@ -1275,6 +1288,24 @@ sub {
   padding: 0.9rem;
 }
 
+.prediction-disclosure,
+.overview-disclosure {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-soft);
+}
+
+.prediction-disclosure[open] > summary,
+.overview-disclosure[open] > summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.prediction-disclosure .prediction-card {
+  border: 0;
+  border-radius: 0;
+}
+
 .prediction-card h3 {
   font-size: 1rem;
 }
@@ -1298,6 +1329,12 @@ sub {
 
 .preflight-disclosure > :not(summary) {
   margin: 0 0.8rem 0.8rem;
+}
+
+.overview-disclosure-content {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.75rem;
 }
 
 .pn-workspace {
@@ -1573,7 +1610,55 @@ sub {
   }
 }
 
+@media (min-width: 981px) and (max-height: 950px) {
+  .pn-controls {
+    padding: 0.75rem;
+  }
+
+  .pn-controls-content {
+    gap: 0.55rem;
+  }
+
+  .pn-controls .prediction-disclosure > summary,
+  .pn-controls .advanced-settings > summary,
+  .pn-controls .preflight-disclosure > summary {
+    padding: 0.6rem 0.75rem;
+  }
+}
+
 @media (min-width: 981px) and (max-height: 800px) {
+  .pn-controls-content {
+    gap: 0.4rem;
+  }
+
+  .pn-controls-heading p,
+  .pn-controls .field-help {
+    display: none;
+  }
+
+  .pn-controls-heading h2 {
+    margin-bottom: 0;
+    font-size: 1.2rem;
+  }
+
+  .pn-device-overview {
+    gap: 0.65rem;
+    padding-top: 0.65rem;
+  }
+
+  .pn-device-overview .device-copy {
+    padding: 0.7rem 0.85rem;
+  }
+
+  .pn-device-overview .device-copy p {
+    font-size: 0.9rem;
+    line-height: 1.35;
+  }
+
+  .pn-device-overview .device-schematic {
+    min-height: 12rem;
+  }
+
   .showing-results .result-explanation,
   .showing-results .model-note {
     display: none;
