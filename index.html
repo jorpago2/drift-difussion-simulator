@@ -43,6 +43,36 @@
             <h3>P-type silicon | N-type silicon</h3>
             <p id="predictionText">Before solving, predict the direction of the built-in field and which side has the wider depletion region.</p>
           </div>
+          <figure class="component-cutaway">
+            <div class="cutaway-stage cutaway-diode">
+              <img src="assets/device-cutaways/diode-do41-cutaway.png" width="1768" height="872" alt="Sectioned axial silicon diode showing its epoxy body, leads, contacts, and layered semiconductor die">
+              <span class="cutaway-marker marker-1" aria-hidden="true">1</span>
+              <span class="cutaway-marker marker-2" aria-hidden="true">2</span>
+              <span class="cutaway-marker marker-3" aria-hidden="true">3</span>
+              <span class="cutaway-marker marker-4" aria-hidden="true">4</span>
+              <span class="cutaway-marker marker-5" aria-hidden="true">5</span>
+              <span class="cutaway-marker marker-6" aria-hidden="true">6</span>
+              <span class="cutaway-marker marker-7" aria-hidden="true">7</span>
+            </div>
+            <figcaption class="cutaway-caption">
+              <div>
+                <p class="section-label">Real component</p>
+                <h3>Inside an axial silicon diode</h3>
+                <p class="cutaway-note">Schematic cutaway; geometry and layer thicknesses are not to scale.</p>
+              </div>
+              <ol class="cutaway-legend">
+                <li><span>1</span><strong>Cathode band</strong></li>
+                <li><span>2</span><strong>Epoxy package</strong></li>
+                <li><span>3</span><strong>Axial lead</strong></li>
+                <li><span>4</span><strong>Metal contact</strong></li>
+                <li><span>5</span><strong>P region</strong></li>
+                <li><span>6</span><strong>PN junction</strong></li>
+                <li><span>7</span><strong>N region</strong></li>
+              </ol>
+              <p class="model-bridge"><strong>What the solver keeps:</strong> a one-dimensional path through the silicon across the PN junction. The package is omitted and its metal connections become ideal ohmic boundaries.</p>
+            </figcaption>
+          </figure>
+          <p class="abstraction-step">Physical component <span aria-hidden="true">→</span> 1D semiconductor model</p>
           <div class="device-schematic" role="img" aria-label="Abrupt PN junction with the anode contact on the left and cathode on the right">
             <div class="contact contact-left">Anode</div>
             <div class="region region-p"><strong>P</strong><span id="pDopingLabel">N<sub>A</sub> = 10¹⁶ cm⁻³</span></div>
