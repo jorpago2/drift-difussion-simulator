@@ -1,14 +1,18 @@
-# 1D PN Junction Laboratory
+# Semiconductor Drift-Diffusion Laboratories
 
-A dependency-free teaching simulator for a stationary, one-dimensional silicon
-PN junction. The interface guides students through four stages:
+A dependency-free teaching simulator with two validated silicon-device laboratories:
+
+- a stationary 1D PN junction, focused on the diode I–V characteristic; and
+- a stationary 2D lateral NPN transistor, focused on the IC–VCE output family.
+
+The PN interface guides students through four stages:
 **Device → Solve → Results → Validate**. Before the solver runs, the application
 shows only the physical structure; an initial condition is never presented as a
 converged solution.
 
-The main application uses only the 1D PN model. The previous 2D, MOS, NPN, and
-WASM implementations remain in the repository as experimental code, outside
-the public v1 workflow and validation scope.
+The NPN laboratory is a full three-terminal 2D Poisson–continuity calculation,
+not a compact model or a pair of independent junctions. The old generic 2D, MOS,
+and WASM paths remain experimental and are not used by either public laboratory.
 
 On desktop viewports, controls are docked at the right and can be collapsed;
 on smaller screens they open as a modal panel. Plots use a high-density canvas
@@ -27,14 +31,15 @@ self-check:
 node scripts\serve-static.mjs
 ```
 
-Open `http://127.0.0.1:8769/`. To verify the numerical core:
+Open `http://127.0.0.1:8769/` for the PN diode or
+`http://127.0.0.1:8769/bjt.html` for the NPN transistor. To verify both numerical
+cores:
 
 ```powershell
-node scripts\self-check.mjs
+npm test
 ```
 
-When `npm` is available, `npm start` and `npm test` are equivalent aliases. No
-WASM compilation or package installation is required.
+No WASM compilation or package installation is required.
 
 ## Physical model
 
@@ -105,6 +110,62 @@ terminal current through `I = J A`; changing area scales current but does not
 change the one-dimensional solution. The interface retains J in A/cm² for
 device-level comparison.
 
+## 2D lateral NPN model
+
+The NPN domain is a rectangular N–P–N silicon region. The emitter and collector
+are ohmic contacts on the left and right boundaries; a finite-width base contact
+is centered over the base on the top boundary. Every remaining boundary is
+insulating. Voltages and conventional currents use
+
+```text
+V_E = 0,  V_BE = V_B - V_E,  V_CE = V_C - V_E
+I_E = I_C + I_B  (reported positive out of the emitter).
+```
+
+`src/bjt-core.js` solves 2D Poisson and both stationary continuity equations on
+a node-centered Cartesian control-volume mesh. Face fluxes use
+Scharfetter–Gummel discretization; SRH recombination, statistics, and material
+assumptions match the PN model. Gummel continuation first establishes
+equilibrium, then advances VCE and VBE in steps no larger than 0.1 V. Each
+nonlinear update uses matrix-free preconditioned conjugate gradients and fails
+explicitly on loss of positivity, linear-solver failure, or iteration exhaustion.
+
+The NPN result includes potential, electric field, charge, electron and hole
+density, SRH recombination, and electron, hole, and total current-density vector
+fields in SI units. Terminal current is first integrated in A/m for the 2D cross
+section and then multiplied by the explicitly configured device depth. The
+depth therefore scales all terminal currents without changing the 2D fields.
+
+The default 161 × 33 mesh resolves the shortest Debye length with more than
+three intervals and each estimated depletion region with more than twenty
+x intervals. Preflight also warns if the base depletion estimates overlap or
+if the collector-side depletion estimate reaches the collector contact.
+Converged NPN points require
+
+```text
+Poisson residual          < 1e-6
+electron residual         < 1e-6
+hole residual             < 1e-6
+terminal KCL error        < 1e-2
+electron SRH balance      < 1e-2
+hole SRH balance          < 1e-2
+```
+
+The tolerances are looser than in 1D because terminal fluxes are integrated over
+a 2D contact boundary, but they are still checked independently. The default
+lateral teaching geometry has modest current gain; β is a computed outcome,
+not a fitted parameter. The IC–VCE family contains three VBE curves and nine
+fully converged VCE points per curve. A default browser sweep can take several
+minutes.
+
+The NPN public API is:
+
+- `validateNpnConfig(config)`
+- `solveNpnBjt2D(config, previousSolution?)`
+- `sweepNpnOutput(config, collectorVoltages?, previousSolution?)`
+- `sweepNpnOutputFamily(config, baseVoltages?, collectorVoltages?)`
+- `serializeNpnProfileCsv(result)` and `serializeNpnSweepCsv(sweep)`
+
 ## Parameters and warnings
 
 Defaults: 300 K, εr = 11.7, ni = 10¹⁰ cm⁻³, Eg = 1.12 eV,
@@ -146,6 +207,13 @@ refinement, invalid-input rejection, and CSV serialization.
 The refinement criterion requires less than 2% difference between the 401- and
 801-node meshes.
 
+`scripts/bjt-self-check.mjs` independently checks NPN input rejection,
+equilibrium mass action and zero terminal current, forward-active current signs,
+all three residuals, KCL and separate carrier balances, positivity, 41 × 9 /
+81 × 17 / 161 × 33 mesh refinement, ordering of the output curves, current-field
+arrays, and CSV dimensions. Between the two finest meshes, collector current,
+base current, and the sampled potential field must each differ by less than 2%.
+
 CSV files contain model and area metadata plus both terminal-current and
 current-density columns with units in their headers. PNG export captures the
 active plot. Both exports remain disabled unless the current result has
@@ -153,10 +221,12 @@ converged.
 
 ## Validity limits
 
-Version 1 omits avalanche and tunneling breakdown, Fermi–Dirac degeneracy,
-bandgap narrowing, Auger recombination, field- or doping-dependent mobility,
-heterojunctions, transients, and 2D geometries. Consequently, the absence of
-reverse-bias breakdown is a model property, not a prediction for a real device.
-The simulator is quantitative only when it converges, the mesh is adequate,
-and the assumptions above are reasonable; it is not equivalent to an
-industrial TCAD package.
+Both laboratories omit avalanche and tunneling breakdown, Fermi–Dirac
+degeneracy, bandgap narrowing, Auger recombination, field- or doping-dependent
+mobility, contact resistance, self-heating, heterojunctions, and transients.
+The NPN model is 2D but assumes a uniform extrusion through the configured
+depth; it does not resolve three-dimensional current crowding. Consequently,
+the absence of breakdown and high-field effects is a model property, not a
+prediction for a real device. Results are quantitative only when the solver
+converges, the mesh warnings are resolved, and the assumptions are reasonable;
+the simulator is not equivalent to an industrial TCAD package.

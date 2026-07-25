@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Validated browser laboratory for a self-consistent 1D PN junction.",
+  "description": "Validated browser laboratories for self-consistent PN and 2D lateral NPN devices.",
   "scripts": {
     "start": "node scripts/serve-static.mjs",
     "serve": "node scripts/serve-static.mjs",
-    "test": "node scripts/self-check.mjs",
+    "test": "node scripts/self-check.mjs && node scripts/bjt-self-check.mjs",
     "build:wasm": "powershell -ExecutionPolicy Bypass -File scripts/build-wasm.ps1"
   }
 }
