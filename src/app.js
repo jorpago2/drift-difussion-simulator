@@ -18,39 +18,30 @@ const LESSONS = Object.freeze({
   equilibrium: {
     biasV: 0,
     kicker: "Thermal equilibrium",
-    title: "Predict the junction before solving",
-    prediction: "Before solving, predict the direction of the built-in field and which side has the wider depletion region.",
-    question: "What establishes equilibrium?",
-    detail: "Initial diffusion leaves uncovered charge, creates a built-in field, and bends the bands until the Fermi level is aligned.",
+    title: "PN junction at equilibrium",
     result: "Verify that the Fermi level is flat, the total current is zero, and the electrostatic drop matches the built-in potential.",
   },
   forward: {
     biasV: 0.6,
     kicker: "Forward bias",
-    title: "Observe how the barrier decreases",
-    prediction: "Predict how the depletion region changes and which carriers are injected when a positive voltage is applied to the anode.",
-    question: "Why does the current increase?",
-    detail: "Forward bias lowers the barrier, narrows the depletion region, and exponentially increases minority-carrier injection.",
+    title: "Forward-biased PN junction",
     result: "Relate the reduced band bending to increased minority carriers, SRH recombination, and current density.",
   },
   reverse: {
     biasV: -0.5,
     kicker: "Reverse bias",
-    title: "Explore depletion-region widening",
-    prediction: "Predict how the depletion width, peak field, and SRH generation change under reverse bias.",
-    question: "What does this model omit?",
-    detail: "Reverse bias raises the barrier and widens the depletion region. Avalanche and tunneling are omitted, so breakdown cannot be predicted.",
+    title: "Reverse-biased PN junction",
     result: "Verify the increased field and net generation in the depletion region without interpreting the curve as a breakdown model.",
   },
 });
 
 const dom = Object.fromEntries([
   "globalStatus", "openPanelButton", "controlPanel",
-  "lessonKicker", "workspaceTitle", "biasBadge", "predictionText", "pDopingLabel", "nDopingLabel",
+  "lessonKicker", "workspaceTitle", "biasBadge", "pDopingLabel", "nDopingLabel",
   "depletionZone", "preflightSummary", "resultsArea", "lessonSelect", "acceptorInput", "donorInput",
   "deviceOverview", "deviceAreaInput", "circuitMetrics",
-  "biasInput", "lengthInput", "cellsInput", "electronLifetimeInput", "holeLifetimeInput", "predictionTitle",
-  "predictionDetail", "preflightDetails", "derivedMetrics", "solveButton", "solverMessage", "resultExplanation",
+  "biasInput", "lengthInput", "cellsInput", "electronLifetimeInput", "holeLifetimeInput",
+  "preflightDetails", "derivedMetrics", "solveButton", "solverMessage", "resultExplanation",
   "generateJvButton", "jvInlineButton", "sweepMessage",
   "validationBanner", "validationMetrics", "warningList", "exportCsvButton", "exportPngButton", "cursorReadout",
   "potentialCanvas", "fieldCanvas", "chargeCanvas", "carrierCanvas", "bandCanvas", "jvCanvas", "jvEmpty",
@@ -191,9 +182,6 @@ function applyLesson(name, invalidate) {
   dom.biasInput.value = String(lesson.biasV);
   dom.lessonKicker.textContent = lesson.kicker;
   dom.workspaceTitle.textContent = lesson.title;
-  dom.predictionText.textContent = lesson.prediction;
-  dom.predictionTitle.textContent = lesson.question;
-  dom.predictionDetail.textContent = lesson.detail;
   setTeachingExplanation(lesson.result);
   if (invalidate) invalidateResults();
   updatePreflight();
@@ -249,7 +237,7 @@ function updatePreflight() {
     setMessage(dom.preflightDetails, `${text} ${warnings.join(" ")}`, "warning");
     dom.solveButton.disabled = solving;
   } else {
-    setMessage(dom.preflightSummary, "Configuration ready. Solve the selected bias to test your prediction.", "ready");
+    setMessage(dom.preflightSummary, "Configuration ready. Solve the selected operating point.", "ready");
     setMessage(dom.preflightDetails, "Preflight passed: finite parameters, physical ranges, and adequate mesh.", "ready");
     dom.solveButton.disabled = solving;
   }
@@ -317,6 +305,7 @@ async function solveCurrentConfiguration() {
         `Converged in ${result.diagnostics.totalIterations} cumulative iterations; current-conservation error ${formatScientific(result.diagnostics.currentContinuityError)}.`,
         "ready",
       );
+      for (const disclosure of dom.controlPanel.querySelectorAll("details[open]")) disclosure.open = false;
       if (!dockedPanelMedia.matches) dom.controlPanel.open = false;
       if (!dockedPanelMedia.matches) dom.resultsArea.scrollIntoView({ behavior: "smooth", block: "start" });
       generateSweep = true;

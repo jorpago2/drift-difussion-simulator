@@ -37,7 +37,7 @@
           <header class="pn-controls-heading">
             <span class="eyebrow">Define one operating point</span>
             <h2>Configure the junction</h2>
-            <p>Choose a physical situation, make a prediction, and then solve the coupled equations.</p>
+            <p>Select the operating condition and solve the coupled transport equations.</p>
           </header>
 
           <label>
@@ -68,20 +68,11 @@
             <small id="biasHelp" class="field-help">Positive is forward bias. Breakdown is not included for negative bias.</small>
           </label>
 
-          <details class="prediction-disclosure">
-            <summary>Prediction guide</summary>
-            <article class="teaching-card prediction-card">
-              <span>Predict before solving</span>
-              <h3 id="predictionTitle">What establishes equilibrium?</h3>
-              <p id="predictionDetail">Initial diffusion leaves uncovered charge, creates a built-in field, and bends the bands until the Fermi level is aligned.</p>
-            </article>
-          </details>
-
           <button id="solveButton" class="primary-button large-button" type="button">Solve current bias</button>
           <output id="solverMessage" class="solver-message" aria-live="polite">Ready to solve the selected operating point.</output>
 
           <details class="advanced-settings">
-            <summary>Area and numerical model</summary>
+            <summary>Area, numerics, and diagnostics</summary>
             <div class="input-grid">
               <label>
                 Device area (µm²)
@@ -109,12 +100,11 @@
                 <small id="holeLifetimeHelp" class="field-help">Hole SRH lifetime, 10⁻¹²–10⁻³ s.</small>
               </label>
             </div>
-          </details>
-
-          <details class="preflight-disclosure">
-            <summary>Preflight and derived scales</summary>
-            <div id="preflightDetails" class="message-box" data-state="ready"></div>
-            <dl id="derivedMetrics" class="metric-list"></dl>
+            <details class="preflight-disclosure">
+              <summary>Preflight and derived scales</summary>
+              <div id="preflightDetails" class="message-box" data-state="ready"></div>
+              <dl id="derivedMetrics" class="metric-list"></dl>
+            </details>
           </details>
         </div>
       </details>
@@ -123,17 +113,12 @@
         <div class="workspace-heading">
           <div>
             <span id="lessonKicker" class="eyebrow">Thermal equilibrium</span>
-            <h2 id="workspaceTitle">Predict the junction before solving</h2>
+            <h2 id="workspaceTitle">PN junction at equilibrium</h2>
           </div>
           <output id="biasBadge" class="bias-badge">V<sub>D</sub> = 0.00 V</output>
         </div>
 
-        <section id="deviceOverview" class="pn-device-overview" aria-labelledby="deviceOverviewTitle">
-          <div class="device-copy">
-            <p id="deviceOverviewTitle" class="section-label">Question to answer</p>
-            <p id="predictionText">Before solving, predict the direction of the built-in field and which side has the wider depletion region.</p>
-          </div>
-
+        <section id="deviceOverview" class="pn-device-overview" aria-label="PN junction structure">
           <div class="device-schematic" role="img" aria-label="Abrupt PN junction with the anode contact on the left and cathode on the right">
             <div class="contact contact-left">Anode</div>
             <div class="region region-p"><strong>P</strong><span id="pDopingLabel">N<sub>A</sub> = 10¹⁶ cm⁻³</span></div>
@@ -145,7 +130,7 @@
           <details class="overview-disclosure">
             <summary>Checks and real-device context</summary>
             <div class="overview-disclosure-content">
-              <div id="preflightSummary" class="preflight-summary" data-state="ready">Configuration ready. Solve the selected bias to test your prediction.</div>
+              <div id="preflightSummary" class="preflight-summary" data-state="ready">Configuration ready. Solve the selected operating point.</div>
 
               <details class="physical-device-context">
                 <summary>

@@ -255,23 +255,6 @@ sub {
   padding: clamp(12px, 4vw, 56px);
 }
 
-.device-copy {
-  max-width: 760px;
-}
-
-.device-copy h3 {
-  margin: 7px 0;
-  font-size: clamp(1.5rem, 4vw, 2.45rem);
-}
-
-.device-copy p:last-child {
-  max-width: 720px;
-  margin-bottom: 0;
-  color: var(--muted);
-  font-size: 1.02rem;
-  line-height: 1.58;
-}
-
 .component-cutaway {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(250px, 0.85fr);
@@ -560,16 +543,20 @@ sub {
 .circuit-metrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 0;
   margin: 0 0 16px;
+  border-block: 1px solid var(--border);
 }
 
 .circuit-metrics div {
   min-width: 0;
   padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface-soft);
+  border-left: 1px solid var(--border);
+  background: transparent;
+}
+
+.circuit-metrics div:first-child {
+  border-left: 0;
 }
 
 .circuit-metrics dt {
@@ -656,16 +643,15 @@ sub {
 
 .model-note {
   margin-top: 13px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  border: 0;
+  border-top: 1px solid var(--border);
   color: var(--muted);
-  background: rgb(255 255 255 / 0.78);
+  background: transparent;
   font-size: 0.78rem;
   line-height: 1.45;
 }
 
 .model-note summary,
-.prediction-disclosure > summary,
 .overview-disclosure > summary {
   padding: 0.75rem 0.9rem;
   cursor: pointer;
@@ -1231,7 +1217,7 @@ sub {
 
 }
 
-/* PN laboratory: controls → prediction → electrical response → physical explanation. */
+/* PN laboratory: operating point → electrical response → physical explanation. */
 .pn-shell {
   display: grid;
   grid-template-columns: minmax(19rem, 22rem) minmax(0, 1fr);
@@ -1282,42 +1268,43 @@ sub {
 
 .pn-controls .advanced-settings {
   margin: 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
 }
 
-.prediction-card {
-  padding: 0.9rem;
+.pn-controls .advanced-settings[open] summary {
+  border-bottom: 0;
 }
 
-.prediction-disclosure,
+.pn-controls .solver-message {
+  min-height: 0;
+  padding: 0.35rem 0.7rem;
+  border: 0;
+  border-left: 3px solid var(--border-strong);
+  border-radius: 0;
+  background: transparent;
+  font-size: 0.78rem;
+}
+
 .overview-disclosure {
   overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface-soft);
-}
-
-.prediction-disclosure[open] > summary,
-.overview-disclosure[open] > summary {
-  border-bottom: 1px solid var(--border);
-}
-
-.prediction-disclosure .prediction-card {
   border: 0;
+  border-top: 1px solid var(--border);
   border-radius: 0;
+  background: transparent;
 }
 
-.prediction-card h3 {
-  font-size: 1rem;
-}
-
-.prediction-card p {
-  font-size: 0.82rem;
+.overview-disclosure[open] > summary {
+  border-bottom: 0;
 }
 
 .preflight-disclosure {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface-soft);
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
 }
 
 .preflight-disclosure > summary {
@@ -1334,7 +1321,7 @@ sub {
 .overview-disclosure-content {
   display: grid;
   gap: 0.75rem;
-  padding: 0.75rem;
+  padding: 0.5rem 0 0;
 }
 
 .pn-workspace {
@@ -1345,24 +1332,6 @@ sub {
   display: grid;
   gap: 1rem;
   padding-top: 1rem;
-}
-
-.pn-device-overview .device-copy {
-  display: grid;
-  gap: 0.35rem;
-  max-width: none;
-  padding: 1rem 1.1rem;
-  border-left: 4px solid var(--accent);
-  border-radius: 0 10px 10px 0;
-  background: var(--accent-soft);
-}
-
-.pn-device-overview .device-copy p {
-  max-width: 68rem;
-  margin: 0;
-  color: var(--ink);
-  font-size: 1rem;
-  line-height: 1.5;
 }
 
 .pn-device-overview .device-schematic {
@@ -1420,7 +1389,11 @@ sub {
 
 .result-explanation {
   margin-bottom: 1rem;
-  padding: 1rem;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-left: 3px solid var(--accent);
+  border-radius: 0;
+  background: transparent;
 }
 
 .result-explanation h3 {
@@ -1496,6 +1469,14 @@ sub {
   .pn-page .pn-workspace {
     height: 100%;
     max-height: none;
+  }
+
+  .pn-page .pn-controls {
+    overflow: hidden;
+  }
+
+  .pn-page .pn-controls:has(.advanced-settings[open], .preflight-disclosure[open]) {
+    overflow: auto;
   }
 
   .pn-page .pn-workspace {
@@ -1619,7 +1600,6 @@ sub {
     gap: 0.55rem;
   }
 
-  .pn-controls .prediction-disclosure > summary,
   .pn-controls .advanced-settings > summary,
   .pn-controls .preflight-disclosure > summary {
     padding: 0.6rem 0.75rem;
@@ -1644,15 +1624,6 @@ sub {
   .pn-device-overview {
     gap: 0.65rem;
     padding-top: 0.65rem;
-  }
-
-  .pn-device-overview .device-copy {
-    padding: 0.7rem 0.85rem;
-  }
-
-  .pn-device-overview .device-copy p {
-    font-size: 0.9rem;
-    line-height: 1.35;
   }
 
   .pn-device-overview .device-schematic {
@@ -1746,10 +1717,6 @@ sub {
     padding: 0.8rem;
   }
 
-  .pn-device-overview .device-copy {
-    padding: 0.85rem;
-  }
-
   .result-action-row,
   .validation-metrics,
   .result-footer {
@@ -1769,5 +1736,9 @@ sub {
 
   .pn-workspace .circuit-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pn-workspace .circuit-metrics div:nth-child(odd) {
+    border-left: 0;
   }
 }
