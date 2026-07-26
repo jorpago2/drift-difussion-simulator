@@ -119,12 +119,47 @@
         </div>
 
         <section id="deviceOverview" class="pn-device-overview" aria-label="PN junction structure">
-          <div class="device-schematic" role="img" aria-label="Abrupt PN junction with the anode contact on the left and cathode on the right">
-            <div class="contact contact-left">Anode</div>
-            <div class="region region-p"><strong>P</strong><span id="pDopingLabel">N<sub>A</sub> = 10¹⁶ cm⁻³</span></div>
-            <div id="depletionZone" class="depletion-zone"><span>estimated depletion</span></div>
-            <div class="region region-n"><strong>N</strong><span id="nDopingLabel">N<sub>D</sub> = 10¹⁶ cm⁻³</span></div>
-            <div class="contact contact-right">Cathode</div>
+          <div class="pn-overview-layout">
+            <div class="device-schematic" role="img" aria-label="Abrupt PN junction with the anode contact on the left and cathode on the right">
+              <div class="contact contact-left">Anode</div>
+              <div class="region region-p"><strong>P</strong><span id="pDopingLabel">N<sub>A</sub> = 10¹⁶ cm⁻³</span></div>
+              <div id="depletionZone" class="depletion-zone"><span>estimated depletion</span></div>
+              <div class="region region-n"><strong>N</strong><span id="nDopingLabel">N<sub>D</sub> = 10¹⁶ cm⁻³</span></div>
+              <div class="contact contact-right">Cathode</div>
+            </div>
+
+            <section class="output-preview" aria-labelledby="outputPreviewTitle">
+              <header class="output-preview-heading">
+                <h3 id="outputPreviewTitle">Available result views</h3>
+                <span>Populated after convergence</span>
+              </header>
+              <div class="output-preview-list">
+                <figure class="output-preview-item">
+                  <figcaption><strong>I–V characteristic</strong><span>Terminal response</span></figcaption>
+                  <div class="empty-chart" role="img" aria-label="Empty axes for diode current versus voltage">
+                    <span class="empty-axis-y">I<sub>D</sub></span>
+                    <div class="empty-chart-grid"><span>Awaiting solution</span></div>
+                    <span class="empty-axis-x">V<sub>D</sub> (V)</span>
+                  </div>
+                </figure>
+                <figure class="output-preview-item">
+                  <figcaption><strong>Electrostatics</strong><span>Potential, field, and charge</span></figcaption>
+                  <div class="empty-chart" role="img" aria-label="Empty axes for electrostatic profiles versus position">
+                    <span class="empty-axis-y">ψ, E, ρ</span>
+                    <div class="empty-chart-grid"><span>Awaiting solution</span></div>
+                    <span class="empty-axis-x">x (µm)</span>
+                  </div>
+                </figure>
+                <figure class="output-preview-item">
+                  <figcaption><strong>Carriers and bands</strong><span>n, p, E<sub>c</sub>, E<sub>v</sub>, F<sub>n</sub>, F<sub>p</sub></span></figcaption>
+                  <div class="empty-chart" role="img" aria-label="Empty axes for carrier and band profiles versus position">
+                    <span class="empty-axis-y">n, p, E</span>
+                    <div class="empty-chart-grid"><span>Awaiting solution</span></div>
+                    <span class="empty-axis-x">x (µm)</span>
+                  </div>
+                </figure>
+              </div>
+            </section>
           </div>
 
           <details class="overview-disclosure">
