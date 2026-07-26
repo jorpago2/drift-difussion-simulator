@@ -20,8 +20,8 @@
       </div>
       <div class="topbar-actions">
         <output id="globalStatus" class="status-chip" data-state="idle" aria-live="polite">Not solved</output>
-        <button id="openPanelButton" class="icon-button" type="button" aria-expanded="false" aria-controls="controlPanel">
-          <span aria-hidden="true">☰</span>
+        <button id="openPanelButton" class="icon-button" type="button" aria-label="Open device controls" aria-expanded="false" aria-controls="controlPanel">
+          <span id="panelButtonIcon" aria-hidden="true">☰</span>
           <span>Controls</span>
         </button>
       </div>
@@ -210,7 +210,7 @@
           <div class="results-toolbar">
             <div>
               <p class="section-label">Converged physical state</p>
-              <h2 id="resultsTitle">Electrical response first</h2>
+              <h2 id="resultsTitle" tabindex="-1">Electrical response first</h2>
             </div>
             <div class="view-tabs" role="tablist" aria-label="Result views">
               <button id="jvTab" type="button" role="tab" aria-selected="true" aria-controls="jvView" data-view-tab="jv">I–V curve</button>
@@ -288,7 +288,7 @@
               <button id="exportCsvButton" type="button" disabled>Export CSV</button>
               <button id="exportPngButton" type="button" disabled>Export PNG</button>
             </div>
-            <output id="cursorReadout" class="cursor-readout" aria-live="polite">Move the pointer over a plot to inspect the profile.</output>
+            <output id="cursorReadout" class="cursor-readout" aria-live="polite">Tap or move over a plot to inspect the profile.</output>
           </footer>
         </section>
 

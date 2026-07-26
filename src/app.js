@@ -36,10 +36,10 @@ const LESSONS = Object.freeze({
 });
 
 const dom = Object.fromEntries([
-  "globalStatus", "openPanelButton", "controlPanel",
+  "globalStatus", "openPanelButton", "panelButtonIcon", "controlPanel",
   "lessonKicker", "workspaceTitle", "biasBadge", "pDopingLabel", "nDopingLabel",
   "depletionZone", "preflightSummary", "resultsArea", "lessonSelect", "acceptorInput", "donorInput",
-  "deviceOverview", "deviceAreaInput", "circuitMetrics",
+  "deviceOverview", "deviceAreaInput", "circuitMetrics", "resultsTitle",
   "biasInput", "lengthInput", "cellsInput", "electronLifetimeInput", "holeLifetimeInput",
   "preflightDetails", "derivedMetrics", "solveButton", "solverMessage", "resultExplanation",
   "generateJvButton", "jvInlineButton", "sweepMessage",
@@ -76,6 +76,7 @@ let currentResult = null;
 let currentSweep = null;
 let solving = false;
 let chartResizeFrame = 0;
+let cursorReadoutTimer = 0;
 
 bindEvents();
 applyLesson("equilibrium", false);
@@ -90,16 +91,17 @@ function requireElement(id) {
 
 function bindEvents() {
   dom.openPanelButton.addEventListener("click", () => {
-    dom.controlPanel.open = true;
-    dom.controlPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    dom.controlPanel.open = !dom.controlPanel.open;
+    if (dom.controlPanel.open) {
+      requestAnimationFrame(() => dom.controlPanel.scrollIntoView({ behavior: "smooth", block: "start" }));
+    }
   });
-  dom.controlPanel.addEventListener("toggle", () =>
-    dom.openPanelButton.setAttribute("aria-expanded", String(dom.controlPanel.open)));
+  dom.controlPanel.addEventListener("toggle", syncPanelButton);
   dockedPanelMedia.addEventListener("change", syncPanelMode);
   window.addEventListener("resize", scheduleChartRedraw);
 
   for (const button of viewTabs) {
-    button.addEventListener("click", () => selectView(button.dataset.viewTab));
+    button.addEventListener("click", () => selectView(button.dataset.viewTab, true));
     button.addEventListener("keydown", navigateResultTabs);
   }
 
@@ -119,19 +121,30 @@ function bindEvents() {
   for (const canvas of plotCanvases) {
     chartResizeObserver.observe(canvas);
     canvas.addEventListener("pointermove", updateCursorReadout);
+    canvas.addEventListener("click", (event) => {
+      updateCursorReadout(event);
+      activateCursorReadout();
+    });
     canvas.addEventListener("pointerleave", () => {
-      dom.cursorReadout.textContent = "Move the pointer over a plot to inspect the profile.";
+      if (dom.cursorReadout.dataset.active !== "true") resetCursorReadout();
     });
   }
 }
 
 function syncPanelMode() {
   dom.controlPanel.open = dockedPanelMedia.matches;
-  dom.openPanelButton.setAttribute("aria-expanded", String(dom.controlPanel.open));
+  syncPanelButton();
 }
 
-function selectView(view) {
+function syncPanelButton() {
+  dom.openPanelButton.setAttribute("aria-expanded", String(dom.controlPanel.open));
+  dom.openPanelButton.setAttribute("aria-label", `${dom.controlPanel.open ? "Close" : "Open"} device controls`);
+  dom.panelButtonIcon.textContent = dom.controlPanel.open ? "×" : "☰";
+}
+
+function selectView(view, preserveMobileScroll = false) {
   if (!currentResult?.diagnostics.converged) return;
+  const scrollPosition = window.scrollY;
   activeView = view;
   for (const button of viewTabs) {
     const selected = button.dataset.viewTab === view;
@@ -147,6 +160,9 @@ function selectView(view) {
   dom.cursorReadout.hidden = view === "validation";
   redrawActiveView();
   updateExportState();
+  if (preserveMobileScroll && !dockedPanelMedia.matches) {
+    requestAnimationFrame(() => window.scrollTo({ top: scrollPosition, behavior: "auto" }));
+  }
 }
 
 function navigateResultTabs(event) {
@@ -156,7 +172,7 @@ function navigateResultTabs(event) {
     (current + (event.key === "ArrowRight" ? 1 : -1) + viewTabs.length) % viewTabs.length;
   event.preventDefault();
   viewTabs[next].focus();
-  selectView(viewTabs[next].dataset.viewTab);
+  selectView(viewTabs[next].dataset.viewTab, true);
 }
 
 function scheduleChartRedraw() {
@@ -306,8 +322,7 @@ async function solveCurrentConfiguration() {
         "ready",
       );
       for (const disclosure of dom.controlPanel.querySelectorAll("details[open]")) disclosure.open = false;
-      if (!dockedPanelMedia.matches) dom.controlPanel.open = false;
-      if (!dockedPanelMedia.matches) dom.resultsArea.scrollIntoView({ behavior: "smooth", block: "start" });
+      revealMobileResults();
       generateSweep = true;
     }
   } catch (error) {
@@ -321,6 +336,15 @@ async function solveCurrentConfiguration() {
     updateExportState();
   }
   if (generateSweep) await generateJvSweep();
+}
+
+function revealMobileResults() {
+  if (dockedPanelMedia.matches) return;
+  dom.controlPanel.open = false;
+  requestAnimationFrame(() => {
+    dom.resultsArea.scrollIntoView({ behavior: "auto", block: "start" });
+    dom.resultsTitle.focus({ preventScroll: true });
+  });
 }
 
 function renderResult(result) {
@@ -742,6 +766,17 @@ function updateCursorReadout(event) {
     `n=${formatScientific(currentResult.electronM3[index] / 1e6)} cm⁻³`,
     `p=${formatScientific(currentResult.holeM3[index] / 1e6)} cm⁻³`,
   ].join(" | ");
+}
+
+function activateCursorReadout() {
+  clearTimeout(cursorReadoutTimer);
+  dom.cursorReadout.dataset.active = "true";
+  cursorReadoutTimer = window.setTimeout(resetCursorReadout, 4500);
+}
+
+function resetCursorReadout() {
+  delete dom.cursorReadout.dataset.active;
+  dom.cursorReadout.textContent = "Tap or move over a plot to inspect the profile.";
 }
 
 function linearTransform() {

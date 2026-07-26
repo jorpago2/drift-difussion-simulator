@@ -18,7 +18,13 @@
           <a href="bjt.html" aria-current="page">NPN transistor</a>
         </nav>
       </div>
-      <output id="bjtGlobalStatus" class="status-chip" data-state="idle" aria-live="polite">Not solved</output>
+      <div class="topbar-actions">
+        <output id="bjtGlobalStatus" class="status-chip" data-state="idle" aria-live="polite">Not solved</output>
+        <button id="openBjtPanelButton" class="icon-button" type="button" aria-label="Open device controls" aria-expanded="false" aria-controls="bjtControls">
+          <span id="bjtPanelButtonIcon" aria-hidden="true">☰</span>
+          <span>Controls</span>
+        </button>
+      </div>
     </header>
 
     <main class="bjt-shell">
@@ -134,11 +140,11 @@
           </article>
         </section>
 
-        <section id="bjtResults" class="results-area" hidden>
+        <section id="bjtResults" class="results-area" hidden aria-labelledby="bjtResultsTitle">
           <div class="results-toolbar">
             <div>
               <p class="section-label">Converged three-terminal solution</p>
-              <h2>Electrical behavior</h2>
+              <h2 id="bjtResultsTitle" tabindex="-1">Electrical behavior</h2>
             </div>
             <div class="view-tabs" role="tablist" aria-label="NPN result views">
               <button id="bjtOutputTab" type="button" role="tab" aria-selected="true" aria-controls="bjtOutputView" data-bjt-view="output">Output characteristics</button>

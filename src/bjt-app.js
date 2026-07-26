@@ -14,7 +14,7 @@ import {
 } from "./plot-utils.js";
 
 const ids = [
-  "bjtGlobalStatus", "bjtControls", "bjtForm", "bjtVbeInput", "bjtVceInput", "bjtEmitterDopingInput",
+  "bjtGlobalStatus", "openBjtPanelButton", "bjtPanelButtonIcon", "bjtControls", "bjtForm", "bjtVbeInput", "bjtVceInput", "bjtEmitterDopingInput",
   "bjtBaseDopingInput", "bjtCollectorDopingInput", "bjtLengthInput", "bjtHeightInput",
   "bjtEmitterWidthInput", "bjtBaseWidthInput", "bjtDepthInput", "bjtNxInput", "bjtNyInput",
   "bjtElectronLifetimeInput", "bjtHoleLifetimeInput", "bjtPreflight", "bjtDerivedMetrics",
@@ -24,7 +24,7 @@ const ids = [
   "bjtRecombinationCanvas",
   "bjtValidationBanner", "bjtValidationMetrics", "bjtWarningList", "bjtExportProfileButton",
   "bjtExportSweepButton", "bjtExportPngButton", "bjtOutputView", "bjtMapsView",
-  "bjtValidationView",
+  "bjtValidationView", "bjtResultsTitle",
 ];
 const dom = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
 for (const [id, element] of Object.entries(dom)) if (!element) throw new Error(`Missing #${id}`);
@@ -35,8 +35,15 @@ let currentFamily = null;
 let activeView = "output";
 let busy = false;
 let dirty = false;
-const compactControlsMedia = window.matchMedia("(max-width: 920px)");
+const compactControlsMedia = window.matchMedia("(max-width: 980px)");
 
+dom.openBjtPanelButton.addEventListener("click", () => {
+  dom.bjtControls.open = !dom.bjtControls.open;
+  if (dom.bjtControls.open) {
+    requestAnimationFrame(() => dom.bjtControls.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
+});
+dom.bjtControls.addEventListener("toggle", syncBjtPanelButton);
 dom.bjtForm.addEventListener("submit", solveOperatingPoint);
 dom.bjtSweepButton.addEventListener("click", solveOutputFamily);
 dom.bjtExportProfileButton.addEventListener("click", exportProfile);
@@ -48,10 +55,8 @@ for (const button of document.querySelectorAll("[data-bjt-view]")) {
 }
 for (const input of dom.bjtForm.querySelectorAll("input")) {
   input.addEventListener("input", () => {
-    dirty = true;
-    currentFamily = null;
+    invalidateBjtResults();
     updatePreflight();
-    updateExportState();
   });
 }
 window.addEventListener("resize", debounce(() => {
@@ -118,6 +123,25 @@ selectView("output");
 
 function syncControlsDisclosure() {
   dom.bjtControls.open = !compactControlsMedia.matches;
+  syncBjtPanelButton();
+}
+
+function syncBjtPanelButton() {
+  dom.openBjtPanelButton.setAttribute("aria-expanded", String(dom.bjtControls.open));
+  dom.openBjtPanelButton.setAttribute("aria-label", `${dom.bjtControls.open ? "Close" : "Open"} device controls`);
+  dom.bjtPanelButtonIcon.textContent = dom.bjtControls.open ? "×" : "☰";
+}
+
+function invalidateBjtResults() {
+  dirty = true;
+  currentResult = null;
+  currentFamily = null;
+  dom.bjtResults.hidden = true;
+  dom.bjtOverview.hidden = false;
+  dom.bjtWorkspaceTitle.textContent = "Predict the operating region";
+  dom.bjtOutputFigure.hidden = true;
+  dom.bjtSweepEmpty.hidden = false;
+  updateExportState();
 }
 
 function readConfig() {
@@ -154,7 +178,7 @@ function updatePreflight() {
     ["EB / BC depletion", `${formatScientific(derived.emitterBaseDepletionM * 1e6)} / ${formatScientific(derived.baseCollectorDepletionM * 1e6)} µm`],
   ] : []);
   dom.bjtSolveButton.disabled = busy || errors.length > 0;
-  if (dirty) setStatus("Configuration changed", "idle");
+  if (dirty) setStatus("Inputs changed", "idle");
 }
 
 function solveOperatingPoint(event) {
@@ -230,7 +254,18 @@ function renderOperatingPoint(result) {
   dom.bjtResults.hidden = false;
   dom.bjtSweepEmpty.hidden = false;
   dom.bjtOutputFigure.hidden = true;
+  selectView("output");
   drawMaps(result);
+  revealBjtResults();
+}
+
+function revealBjtResults() {
+  if (!compactControlsMedia.matches) return;
+  dom.bjtControls.open = false;
+  requestAnimationFrame(() => {
+    dom.bjtResults.scrollIntoView({ behavior: "auto", block: "start" });
+    dom.bjtResultsTitle.focus({ preventScroll: true });
+  });
 }
 
 function selectView(view) {
