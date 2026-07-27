@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import {
   DEFAULT_PN_CONFIG,
   bernoulli,
@@ -11,6 +12,12 @@ import {
   validatePnConfig,
 } from "../src/ddm-core.js";
 import { createNiceScale, drawScientificText, formatChartTick } from "../src/plot-utils.js";
+
+const pnHtml = await readFile(new URL("../index.html", import.meta.url), "utf8");
+const pnApp = await readFile(new URL("../src/app.js", import.meta.url), "utf8");
+assert.match(pnHtml, /id="resultsArea" class="results-area" aria-labelledby=/);
+assert.equal(pnHtml.match(/data-plot-state="empty"/g)?.length, 6);
+assert.doesNotMatch(pnApp, /resultsArea\.hidden|deviceOverview\.hidden/);
 
 const voltageScale = createNiceScale([-1, 0.65], 8);
 assert.deepEqual(voltageScale.ticks, [-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75]);

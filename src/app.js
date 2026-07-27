@@ -39,13 +39,12 @@ const dom = Object.fromEntries([
   "globalStatus", "openPanelButton", "panelButtonIcon", "controlPanel",
   "lessonKicker", "workspaceTitle", "biasBadge", "pDopingLabel", "nDopingLabel",
   "depletionZone", "preflightSummary", "resultsArea", "lessonSelect", "acceptorInput", "donorInput",
-  "deviceOverview", "deviceAreaInput", "circuitMetrics", "resultsTitle",
+  "deviceAreaInput", "circuitMetrics", "resultsTitle",
   "biasInput", "lengthInput", "cellsInput", "electronLifetimeInput", "holeLifetimeInput",
   "preflightDetails", "derivedMetrics", "solveButton", "solverMessage", "resultExplanation",
-  "generateJvButton", "jvInlineButton", "sweepMessage",
+  "generateJvButton", "sweepMessage",
   "validationBanner", "validationMetrics", "warningList", "exportProfileCsvButton", "exportSweepCsvButton", "exportPngButton", "cursorReadout",
-  "potentialCanvas", "fieldCanvas", "chargeCanvas", "carrierCanvas", "bandCanvas", "jvCanvas", "jvEmpty",
-  "jvFigure",
+  "potentialCanvas", "fieldCanvas", "chargeCanvas", "carrierCanvas", "bandCanvas", "jvCanvas",
 ].map((id) => [id, requireElement(id)]));
 
 const plotCanvases = [
@@ -79,6 +78,7 @@ let cursorReadoutTimer = 0;
 bindEvents();
 applyLesson("equilibrium", false);
 updatePreflight();
+renderEmptyDashboard();
 syncPanelMode();
 
 function requireElement(id) {
@@ -107,7 +107,6 @@ function bindEvents() {
   }
   dom.solveButton.addEventListener("click", solveCurrentConfiguration);
   dom.generateJvButton.addEventListener("click", generateJvSweep);
-  dom.jvInlineButton.addEventListener("click", generateJvSweep);
   dom.exportProfileCsvButton.addEventListener("click", exportProfileCsv);
   dom.exportSweepCsvButton.addEventListener("click", exportSweepCsv);
   dom.exportPngButton.addEventListener("click", exportPng);
@@ -220,19 +219,53 @@ function updatePreflight() {
 function invalidateResults() {
   currentResult = null;
   currentSweep = null;
-  dom.resultsArea.hidden = true;
-  dom.deviceOverview.hidden = false;
   dom.generateJvButton.disabled = true;
-  dom.jvFigure.hidden = true;
-  dom.jvEmpty.hidden = false;
-  dom.sweepMessage.textContent = "Solve an operating point first.";
-  dom.circuitMetrics.replaceChildren();
-  dom.validationMetrics.replaceChildren();
-  dom.warningList.replaceChildren();
-  dom.resultsArea.parentElement.classList.remove("showing-results");
-  setMessage(dom.validationBanner, "No result to validate.", "idle");
+  renderEmptyDashboard();
   updateGlobalStatus("Not solved", "idle");
   updateExportState();
+}
+
+function renderEmptyDashboard(message = "Awaiting a converged solution") {
+  chartRegistry.clear();
+  for (const canvas of plotCanvases) {
+    const context = canvas.getContext("2d");
+    context?.clearRect(0, 0, canvas.width, canvas.height);
+    setPlotState(canvas, "empty", message);
+  }
+  renderMetricList(dom.circuitMetrics, [
+    ["Operating region", "—"],
+    ["Operating voltage", "—"],
+    ["Terminal current", "—"],
+    ["Current density", "—"],
+    ["Small-signal r_d", "—"],
+    ["Defined area", "—"],
+  ]);
+  renderMetricList(dom.validationMetrics, [
+    ["Status", "Not solved"],
+    ["Poisson residual", "—"],
+    ["Electron residual", "—"],
+    ["Hole residual", "—"],
+    ["J nonuniformity", "—"],
+    ["Absolute J spread", "—"],
+    ["Electron R balance", "—"],
+    ["Hole R balance", "—"],
+    ["Mean J", "—"],
+    ["Simulated / expected barrier", "—"],
+    ["Mesh", "—"],
+  ]);
+  replaceList(dom.warningList, [
+    "No avalanche or tunneling: reverse bias does not predict breakdown.",
+    "Boltzmann statistics and constant mobility: this is not a general TCAD model at high density or field.",
+  ]);
+  dom.sweepMessage.textContent = "Solve an operating point first.";
+  setMessage(dom.validationBanner, "No result to validate.", "idle");
+}
+
+function setPlotState(canvas, state, message = "") {
+  const figure = canvas.closest("[data-plot-state]");
+  if (!figure) return;
+  figure.dataset.plotState = state;
+  figure.dataset.plotMessage = message;
 }
 
 async function solveCurrentConfiguration() {
@@ -255,19 +288,12 @@ async function solveCurrentConfiguration() {
     currentResult = result;
     currentSweep = null;
     if (!result.diagnostics.converged) {
-      dom.resultsArea.hidden = true;
-      dom.resultsArea.parentElement.classList.remove("showing-results");
+      renderEmptyDashboard("No converged result");
       updateGlobalStatus("Not converged", "failed");
       setMessage(dom.solverMessage, result.diagnostics.failureReason || "The solver did not converge.", "error");
     } else {
-      dom.resultsArea.hidden = false;
-      dom.deviceOverview.hidden = true;
-      dom.resultsArea.parentElement.classList.add("showing-results");
-      const lesson = LESSONS[dom.lessonSelect.value] ?? LESSONS.equilibrium;
-      dom.workspaceTitle.textContent = `${lesson.kicker} operating point`;
       dom.generateJvButton.disabled = false;
-      dom.jvFigure.hidden = true;
-      dom.jvEmpty.hidden = false;
+      setPlotState(dom.jvCanvas, "loading", "Calculating 67 points…");
       dom.sweepMessage.textContent = "Preparing the I–V characteristic…";
       renderResult(result);
       renderValidation(result);
@@ -278,13 +304,12 @@ async function solveCurrentConfiguration() {
         `Converged in ${result.diagnostics.totalIterations} cumulative iterations; current-conservation error ${formatScientific(result.diagnostics.currentContinuityError)}.`,
         "ready",
       );
-      for (const disclosure of dom.controlPanel.querySelectorAll("details[open]")) disclosure.open = false;
       revealMobileResults();
       generateSweep = true;
     }
   } catch (error) {
     currentResult = null;
-    dom.resultsArea.parentElement.classList.remove("showing-results");
+    renderEmptyDashboard("Solver error");
     updateGlobalStatus("Error", "failed");
     setMessage(dom.solverMessage, error instanceof Error ? error.message : String(error), "error");
   } finally {
@@ -297,7 +322,6 @@ async function solveCurrentConfiguration() {
 
 function revealMobileResults() {
   if (dockedPanelMedia.matches) return;
-  dom.controlPanel.open = false;
   requestAnimationFrame(() => {
     dom.resultsArea.scrollIntoView({ behavior: "auto", block: "start" });
     dom.resultsTitle.focus({ preventScroll: true });
@@ -350,6 +374,7 @@ function renderResult(result) {
   });
   for (const canvas of [dom.potentialCanvas, dom.fieldCanvas, dom.chargeCanvas, dom.carrierCanvas, dom.bandCanvas]) {
     chartRegistry.set(canvas, { type: "profile", x: xUm });
+    setPlotState(canvas, "ready");
   }
 }
 
@@ -357,7 +382,7 @@ async function generateJvSweep() {
   if (solving || !currentResult?.diagnostics.converged) return;
   solving = true;
   dom.generateJvButton.disabled = true;
-  dom.jvInlineButton.disabled = true;
+  setPlotState(dom.jvCanvas, "loading", "Calculating 67 points…");
   updateGlobalStatus("I–V sweep…", "solving");
   setMessage(dom.sweepMessage, "Preparing equilibrium for the sweep…", "warning");
 
@@ -407,19 +432,16 @@ async function generateJvSweep() {
     }
     renderJv(currentSweep);
     renderCircuitMetrics(currentResult, currentSweep);
-    dom.jvEmpty.hidden = true;
-    dom.jvFigure.hidden = false;
     updateGlobalStatus("I–V converged", "converged");
     setMessage(dom.sweepMessage, "67 points converged from −1.00 to 0.65 V.", "ready");
-    if (!dockedPanelMedia.matches) dom.controlPanel.open = false;
   } catch (error) {
     currentSweep = null;
+    setPlotState(dom.jvCanvas, "error", "I–V sweep did not converge");
     updateGlobalStatus("Sweep failed", "failed");
     setMessage(dom.sweepMessage, error instanceof Error ? error.message : String(error), "error");
   } finally {
     solving = false;
     dom.generateJvButton.disabled = !currentResult?.diagnostics.converged;
-    dom.jvInlineButton.disabled = false;
     updateExportState();
   }
 }
@@ -442,6 +464,7 @@ function renderJv(sweep) {
     ],
   });
   chartRegistry.set(dom.jvCanvas, { type: "sweep", x: voltage });
+  setPlotState(dom.jvCanvas, "ready");
 }
 
 function renderCircuitMetrics(result, sweep) {
