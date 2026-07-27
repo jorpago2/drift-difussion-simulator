@@ -1586,6 +1586,57 @@ sub {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.pn-results-dashboard {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(17rem, 1fr);
+  gap: 1.5rem;
+}
+
+.dashboard-section {
+  min-width: 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.dashboard-wide {
+  grid-column: 1 / -1;
+}
+
+.dashboard-section-heading {
+  margin-bottom: 0.75rem;
+}
+
+.dashboard-section-heading h3 {
+  margin: 0.15rem 0 0;
+  font-size: 1.05rem;
+}
+
+#electrostaticsView .plot-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#carriersView .plot-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboard-validation .validation-metrics,
+.dashboard-validation .warning-list {
+  grid-template-columns: 1fr;
+}
+
+.dashboard-primary #jvCanvas {
+  height: 320px;
+}
+
+#electrostaticsView canvas,
+#carriersView canvas {
+  height: 260px;
+}
+
+.result-exports {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 @media (min-width: 981px) {
   .pn-page {
     display: flex;
@@ -1622,9 +1673,8 @@ sub {
   }
 
   .pn-page .pn-workspace.showing-results {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    display: block;
+    overflow: auto;
   }
 
   .showing-results > .workspace-heading {
@@ -1632,10 +1682,7 @@ sub {
   }
 
   .showing-results .results-area {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    min-height: 0;
+    display: block;
     padding-top: 0;
   }
 
@@ -1671,53 +1718,13 @@ sub {
     grid-row: 1 / span 2;
   }
 
-  .showing-results .result-view {
-    flex: 1 1 0;
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .showing-results #jvView {
-    display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
-  }
-
-  .showing-results #jvFigure {
-    display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
-    height: 100%;
-    min-height: 0;
-    padding: 0.65rem;
-  }
-
-  .showing-results #jvFigure canvas,
-  .showing-results .plot-grid canvas {
-    height: 100%;
-    min-height: 0;
-  }
-
-  .showing-results .plot-grid {
-    grid-template-rows: repeat(2, minmax(0, 1fr));
-    height: 100%;
-  }
-
   .showing-results .plot-card {
-    display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
-    min-height: 0;
     padding: 0.6rem;
   }
 
-  .showing-results .validation-view {
-    overflow: auto;
-  }
-
-  .showing-results .validation-metrics {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .showing-results .warning-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .showing-results .dashboard-validation .validation-metrics,
+  .showing-results .dashboard-validation .warning-list {
+    grid-template-columns: 1fr;
   }
 
   .showing-results .result-footer {
@@ -1792,26 +1799,6 @@ sub {
     grid-template-rows: minmax(2rem, 1fr) 0.8rem;
   }
 
-  .showing-results .result-explanation,
-  .showing-results .model-note {
-    display: none;
-  }
-
-  .showing-results .plot-grid {
-    grid-template-rows: minmax(0, 1fr);
-  }
-
-  .showing-results #electrostaticsView .plot-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .showing-results #carriersView .plot-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .showing-results .plot-grid .plot-wide {
-    grid-column: auto;
-  }
 }
 
 @media (max-width: 980px) {
@@ -1882,6 +1869,25 @@ sub {
   }
 }
 
+@media (max-width: 780px) {
+  .pn-results-dashboard,
+  #electrostaticsView .plot-grid,
+  #carriersView .plot-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .jv-empty {
+    min-height: 260px;
+    padding: 2rem 1rem;
+  }
+
+  .dashboard-primary #jvCanvas,
+  #electrostaticsView canvas,
+  #carriersView canvas {
+    height: 320px;
+  }
+}
+
 @media (max-width: 600px) {
   .pn-workspace {
     padding: 0.8rem;
@@ -1920,17 +1926,6 @@ sub {
   .validation-metrics,
   .result-footer {
     grid-template-columns: 1fr;
-  }
-
-  .pn-workspace .view-tabs {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    overflow: visible;
-  }
-
-  .pn-workspace .view-tabs button {
-    min-width: 0;
-    white-space: normal;
   }
 
   .bjt-workspace .view-tabs {

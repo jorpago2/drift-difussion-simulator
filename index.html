@@ -130,8 +130,8 @@
 
             <section class="output-preview" aria-labelledby="outputPreviewTitle">
               <header class="output-preview-heading">
-                <h3 id="outputPreviewTitle">Available result views</h3>
-                <span>Populated after convergence</span>
+                <h3 id="outputPreviewTitle">Dashboard results</h3>
+                <span>Populated together after convergence</span>
               </header>
               <div class="output-preview-list">
                 <figure class="output-preview-item">
@@ -210,13 +210,7 @@
           <div class="results-toolbar">
             <div>
               <p class="section-label">Converged physical state</p>
-              <h2 id="resultsTitle" tabindex="-1">Electrical response first</h2>
-            </div>
-            <div class="view-tabs" role="tablist" aria-label="Result views">
-              <button id="jvTab" type="button" role="tab" aria-selected="true" aria-controls="jvView" data-view-tab="jv">I–V curve</button>
-              <button id="electrostaticsTab" type="button" role="tab" aria-selected="false" aria-controls="electrostaticsView" data-view-tab="electrostatics">Barrier and field</button>
-              <button id="carriersTab" type="button" role="tab" aria-selected="false" aria-controls="carriersView" data-view-tab="carriers">Carriers and bands</button>
-              <button id="validationTab" type="button" role="tab" aria-selected="false" aria-controls="validationView" data-view-tab="validation">Validate</button>
+              <h2 id="resultsTitle" tabindex="-1">PN diode dashboard</h2>
             </div>
           </div>
 
@@ -228,65 +222,84 @@
             <p>Start from current and operating region; use the barrier, carriers, and bands to explain their physical origin.</p>
           </article>
 
-          <div id="jvView" class="result-view" role="tabpanel" aria-labelledby="jvTab">
-            <div id="jvEmpty" class="jv-empty">
-              <h3>Building the complete I–V curve</h3>
-              <p>Each of the 67 voltage points must converge independently before the curve is presented as valid.</p>
-              <button id="jvInlineButton" class="primary-button" type="button">Calculate I–V</button>
-            </div>
-            <figure id="jvFigure" class="plot-card plot-wide" hidden>
-              <canvas id="jvCanvas" width="960" height="430" aria-label="Diode current versus voltage"></canvas>
-              <figcaption>Solid: drift–diffusion with SRH. Dashed: finite-base analytical reference in its low-injection range.</figcaption>
-            </figure>
-            <div class="result-action-row">
-              <button id="generateJvButton" type="button" disabled>Recalculate I–V</button>
-              <output id="sweepMessage" class="solver-message" aria-live="polite">Solve an operating point first.</output>
-            </div>
-          </div>
+          <div class="pn-results-dashboard">
+            <section id="jvView" class="dashboard-section dashboard-primary" aria-labelledby="jvSectionTitle">
+              <header class="dashboard-section-heading">
+                <span class="section-label">Terminal characteristic</span>
+                <h3 id="jvSectionTitle">Diode I–V curve</h3>
+              </header>
+              <div id="jvEmpty" class="jv-empty">
+                <h3>Building the complete I–V curve</h3>
+                <p>Each of the 67 voltage points must converge independently before the curve is presented as valid.</p>
+                <button id="jvInlineButton" class="primary-button" type="button">Calculate I–V</button>
+              </div>
+              <figure id="jvFigure" class="plot-card" hidden>
+                <canvas id="jvCanvas" width="960" height="430" aria-label="Diode current versus voltage"></canvas>
+                <figcaption>Solid: drift–diffusion with SRH. Dashed: finite-base analytical reference in its low-injection range.</figcaption>
+              </figure>
+              <div class="result-action-row">
+                <button id="generateJvButton" type="button" disabled>Recalculate I–V</button>
+                <output id="sweepMessage" class="solver-message" aria-live="polite">Solve an operating point first.</output>
+              </div>
+            </section>
 
-          <div id="electrostaticsView" class="result-view" role="tabpanel" aria-labelledby="electrostaticsTab" hidden>
-            <div class="plot-grid">
-              <figure class="plot-card plot-wide">
-                <canvas id="potentialCanvas" width="960" height="330" aria-label="Electrostatic potential profile"></canvas>
-                <figcaption>Electrostatic potential ψ(x): read the junction barrier from the contact-to-contact drop.</figcaption>
-              </figure>
-              <figure class="plot-card">
-                <canvas id="fieldCanvas" width="640" height="300" aria-label="Electric-field profile"></canvas>
-                <figcaption>Electric field E(x): direction and peak field inside the depletion region.</figcaption>
-              </figure>
-              <figure class="plot-card">
-                <canvas id="chargeCanvas" width="640" height="300" aria-label="Charge-density profile"></canvas>
-                <figcaption>Charge density ρ(x): exposed ionized dopants that sustain the field.</figcaption>
-              </figure>
-            </div>
-          </div>
+            <section id="validationView" class="dashboard-section dashboard-validation validation-view" aria-labelledby="validationSectionTitle">
+              <header class="dashboard-section-heading">
+                <span class="section-label">Numerical confidence</span>
+                <h3 id="validationSectionTitle">Validation</h3>
+              </header>
+              <div id="validationBanner" class="message-box" data-state="idle">No result to validate.</div>
+              <dl id="validationMetrics" class="metric-list validation-metrics"></dl>
+              <div>
+                <h3>Warnings and model limits</h3>
+                <ul id="warningList" class="warning-list"></ul>
+              </div>
+            </section>
 
-          <div id="carriersView" class="result-view" role="tabpanel" aria-labelledby="carriersTab" hidden>
-            <div class="plot-grid">
-              <figure class="plot-card plot-wide">
-                <canvas id="carrierCanvas" width="960" height="350" aria-label="Electron, hole, and doping profiles"></canvas>
-                <figcaption>Carrier densities and doping on a logarithmic scale.</figcaption>
-              </figure>
-              <figure class="plot-card plot-wide">
-                <canvas id="bandCanvas" width="960" height="350" aria-label="Band diagram and quasi-Fermi levels"></canvas>
-                <figcaption>Band edges and quasi-Fermi levels: connect barrier bending to carrier transport.</figcaption>
-              </figure>
-            </div>
-          </div>
+            <section id="electrostaticsView" class="dashboard-section dashboard-wide" aria-labelledby="electrostaticsSectionTitle">
+              <header class="dashboard-section-heading">
+                <span class="section-label">Internal electrostatics</span>
+                <h3 id="electrostaticsSectionTitle">Barrier, field, and charge</h3>
+              </header>
+              <div class="plot-grid">
+                <figure class="plot-card plot-wide">
+                  <canvas id="potentialCanvas" width="960" height="330" aria-label="Electrostatic potential profile"></canvas>
+                  <figcaption>Electrostatic potential ψ(x): read the junction barrier from the contact-to-contact drop.</figcaption>
+                </figure>
+                <figure class="plot-card">
+                  <canvas id="fieldCanvas" width="640" height="300" aria-label="Electric-field profile"></canvas>
+                  <figcaption>Electric field E(x): direction and peak field inside the depletion region.</figcaption>
+                </figure>
+                <figure class="plot-card">
+                  <canvas id="chargeCanvas" width="640" height="300" aria-label="Charge-density profile"></canvas>
+                  <figcaption>Charge density ρ(x): exposed ionized dopants that sustain the field.</figcaption>
+                </figure>
+              </div>
+            </section>
 
-          <div id="validationView" class="result-view validation-view" role="tabpanel" aria-labelledby="validationTab" hidden>
-            <div id="validationBanner" class="message-box" data-state="idle">No result to validate.</div>
-            <dl id="validationMetrics" class="metric-list validation-metrics"></dl>
-            <div>
-              <h3>Warnings and model limits</h3>
-              <ul id="warningList" class="warning-list"></ul>
-            </div>
+            <section id="carriersView" class="dashboard-section dashboard-wide" aria-labelledby="carriersSectionTitle">
+              <header class="dashboard-section-heading">
+                <span class="section-label">Transport picture</span>
+                <h3 id="carriersSectionTitle">Carriers and energy bands</h3>
+              </header>
+              <div class="plot-grid">
+                <figure class="plot-card">
+                  <canvas id="carrierCanvas" width="960" height="350" aria-label="Electron, hole, and doping profiles"></canvas>
+                  <figcaption>Carrier densities and doping on a logarithmic scale.</figcaption>
+                </figure>
+                <figure class="plot-card">
+                  <canvas id="bandCanvas" width="960" height="350" aria-label="Band diagram and quasi-Fermi levels"></canvas>
+                  <figcaption>Band edges and quasi-Fermi levels: connect barrier bending to carrier transport.</figcaption>
+                </figure>
+              </div>
+            </section>
           </div>
 
           <footer class="result-footer">
             <div class="export-row result-exports">
-              <button id="exportCsvButton" type="button" disabled>Export CSV</button>
-              <button id="exportPngButton" type="button" disabled>Export PNG</button>
+              <button id="exportProfileCsvButton" type="button" disabled>Export profile CSV</button>
+              <button id="exportSweepCsvButton" type="button" disabled>Export I–V CSV</button>
+              <button id="exportPngButton" type="button" disabled>Export I–V PNG</button>
             </div>
             <output id="cursorReadout" class="cursor-readout" aria-live="polite">Tap or move over a plot to inspect the profile.</output>
           </footer>

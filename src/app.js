@@ -43,12 +43,11 @@ const dom = Object.fromEntries([
   "biasInput", "lengthInput", "cellsInput", "electronLifetimeInput", "holeLifetimeInput",
   "preflightDetails", "derivedMetrics", "solveButton", "solverMessage", "resultExplanation",
   "generateJvButton", "jvInlineButton", "sweepMessage",
-  "validationBanner", "validationMetrics", "warningList", "exportCsvButton", "exportPngButton", "cursorReadout",
+  "validationBanner", "validationMetrics", "warningList", "exportProfileCsvButton", "exportSweepCsvButton", "exportPngButton", "cursorReadout",
   "potentialCanvas", "fieldCanvas", "chargeCanvas", "carrierCanvas", "bandCanvas", "jvCanvas", "jvEmpty",
-  "jvFigure", "electrostaticsView", "carriersView", "validationView", "jvView",
+  "jvFigure",
 ].map((id) => [id, requireElement(id)]));
 
-const viewTabs = [...document.querySelectorAll("[data-view-tab]")];
 const plotCanvases = [
   dom.potentialCanvas,
   dom.fieldCanvas,
@@ -71,7 +70,6 @@ const configInputs = [
 const chartRegistry = new Map();
 const chartResizeObserver = new ResizeObserver(scheduleChartRedraw);
 
-let activeView = "jv";
 let currentResult = null;
 let currentSweep = null;
 let solving = false;
@@ -100,11 +98,6 @@ function bindEvents() {
   dockedPanelMedia.addEventListener("change", syncPanelMode);
   window.addEventListener("resize", scheduleChartRedraw);
 
-  for (const button of viewTabs) {
-    button.addEventListener("click", () => selectView(button.dataset.viewTab, true));
-    button.addEventListener("keydown", navigateResultTabs);
-  }
-
   dom.lessonSelect.addEventListener("change", () => applyLesson(dom.lessonSelect.value, true));
   for (const input of configInputs) {
     input.addEventListener("input", () => {
@@ -115,7 +108,8 @@ function bindEvents() {
   dom.solveButton.addEventListener("click", solveCurrentConfiguration);
   dom.generateJvButton.addEventListener("click", generateJvSweep);
   dom.jvInlineButton.addEventListener("click", generateJvSweep);
-  dom.exportCsvButton.addEventListener("click", exportCsv);
+  dom.exportProfileCsvButton.addEventListener("click", exportProfileCsv);
+  dom.exportSweepCsvButton.addEventListener("click", exportSweepCsv);
   dom.exportPngButton.addEventListener("click", exportPng);
 
   for (const canvas of plotCanvases) {
@@ -142,54 +136,18 @@ function syncPanelButton() {
   dom.panelButtonIcon.textContent = dom.controlPanel.open ? "×" : "☰";
 }
 
-function selectView(view, preserveMobileScroll = false) {
-  if (!currentResult?.diagnostics.converged) return;
-  const scrollPosition = window.scrollY;
-  activeView = view;
-  for (const button of viewTabs) {
-    const selected = button.dataset.viewTab === view;
-    button.setAttribute("aria-selected", String(selected));
-    button.tabIndex = selected ? 0 : -1;
-  }
-  dom.electrostaticsView.hidden = view !== "electrostatics";
-  dom.carriersView.hidden = view !== "carriers";
-  dom.validationView.hidden = view !== "validation";
-  dom.jvView.hidden = view !== "jv";
-  dom.circuitMetrics.hidden = view !== "jv";
-  dom.resultExplanation.hidden = view !== "jv";
-  dom.cursorReadout.hidden = view === "validation";
-  redrawActiveView();
-  updateExportState();
-  if (preserveMobileScroll && !dockedPanelMedia.matches) {
-    requestAnimationFrame(() => window.scrollTo({ top: scrollPosition, behavior: "auto" }));
-  }
-}
-
-function navigateResultTabs(event) {
-  if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-  const current = viewTabs.indexOf(event.currentTarget);
-  const next = event.key === "Home" ? 0 : event.key === "End" ? viewTabs.length - 1 :
-    (current + (event.key === "ArrowRight" ? 1 : -1) + viewTabs.length) % viewTabs.length;
-  event.preventDefault();
-  viewTabs[next].focus();
-  selectView(viewTabs[next].dataset.viewTab, true);
-}
-
 function scheduleChartRedraw() {
   if (chartResizeFrame || !currentResult?.diagnostics.converged) return;
   chartResizeFrame = requestAnimationFrame(() => {
     chartResizeFrame = 0;
-    redrawActiveView();
+    redrawDashboard();
   });
 }
 
-function redrawActiveView() {
+function redrawDashboard() {
   if (!currentResult?.diagnostics.converged) return;
-  if (activeView === "jv") {
-    if (currentSweep?.converged) renderJv(currentSweep);
-  } else {
-    renderResult(currentResult);
-  }
+  renderResult(currentResult);
+  if (currentSweep?.converged) renderJv(currentSweep);
 }
 
 function applyLesson(name, invalidate) {
@@ -314,7 +272,6 @@ async function solveCurrentConfiguration() {
       renderResult(result);
       renderValidation(result);
       renderCircuitMetrics(result, null);
-      selectView("jv");
       updateGlobalStatus("Converged", "converged");
       setMessage(
         dom.solverMessage,
@@ -452,7 +409,6 @@ async function generateJvSweep() {
     renderCircuitMetrics(currentResult, currentSweep);
     dom.jvEmpty.hidden = true;
     dom.jvFigure.hidden = false;
-    selectView("jv");
     updateGlobalStatus("I–V converged", "converged");
     setMessage(dom.sweepMessage, "67 points converged from −1.00 to 0.65 V.", "ready");
     if (!dockedPanelMedia.matches) dom.controlPanel.open = false;
@@ -585,25 +541,26 @@ function updateGlobalStatus(text, state) {
 
 function updateExportState() {
   const resultReady = currentResult?.diagnostics.converged === true;
-  const sweepRequired = activeView === "jv";
-  dom.exportCsvButton.disabled = !resultReady || (sweepRequired && !currentSweep?.converged);
-  dom.exportPngButton.disabled = activeView === "validation" || !resultReady ||
-    (sweepRequired && !currentSweep?.converged);
+  const sweepReady = currentSweep?.converged === true;
+  dom.exportProfileCsvButton.disabled = !resultReady;
+  dom.exportSweepCsvButton.disabled = !sweepReady;
+  dom.exportPngButton.disabled = !sweepReady;
 }
 
-function exportCsv() {
+function exportProfileCsv() {
   if (!currentResult?.diagnostics.converged) return;
-  const isSweep = activeView === "jv";
-  const csv = isSweep ? serializePnSweepCsv(currentSweep) : serializePnProfileCsv(currentResult);
-  downloadBlob(csv, "text/csv;charset=utf-8", isSweep ? "pn-junction-iv.csv" : "pn-junction-profile.csv");
+  downloadBlob(serializePnProfileCsv(currentResult), "text/csv;charset=utf-8", "pn-junction-profile.csv");
+}
+
+function exportSweepCsv() {
+  if (!currentSweep?.converged) return;
+  downloadBlob(serializePnSweepCsv(currentSweep), "text/csv;charset=utf-8", "pn-junction-iv.csv");
 }
 
 function exportPng() {
-  if (!currentResult?.diagnostics.converged || activeView === "validation") return;
-  const canvas = activeView === "jv" ? dom.jvCanvas :
-    (activeView === "carriers" ? dom.carrierCanvas : dom.potentialCanvas);
-  canvas.toBlob((blob) => {
-    if (blob) downloadBlob(blob, "image/png", `pn-junction-${activeView}.png`);
+  if (!currentSweep?.converged) return;
+  dom.jvCanvas.toBlob((blob) => {
+    if (blob) downloadBlob(blob, "image/png", "pn-junction-iv.png");
   }, "image/png");
 }
 
