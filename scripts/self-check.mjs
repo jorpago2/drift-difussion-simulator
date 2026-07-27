@@ -18,6 +18,7 @@ const pnApp = await readFile(new URL("../src/app.js", import.meta.url), "utf8");
 assert.match(pnHtml, /id="resultsArea" class="results-area" aria-labelledby=/);
 assert.equal(pnHtml.match(/data-plot-state="empty"/g)?.length, 6);
 assert.doesNotMatch(pnApp, /resultsArea\.hidden|deviceOverview\.hidden/);
+assert.equal(pnApp.match(/\["Scaled residuals \(ψ \/ n \/ p\)"/g)?.length, 2);
 
 const voltageScale = createNiceScale([-1, 0.65], 8);
 assert.deepEqual(voltageScale.ticks, [-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75]);

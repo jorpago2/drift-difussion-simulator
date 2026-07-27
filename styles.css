@@ -1373,8 +1373,8 @@ sub {
 
 .pn-device-overview {
   display: grid;
-  gap: 1rem;
-  padding-top: 1rem;
+  gap: 0.55rem;
+  padding-top: 0.25rem;
 }
 
 .pn-overview-layout {
@@ -1386,7 +1386,7 @@ sub {
 
 .pn-device-overview .device-schematic {
   grid-template-columns: clamp(2.5rem, 5vw, 4rem) repeat(2, minmax(0, 1fr)) clamp(2.5rem, 5vw, 4rem);
-  min-height: 10rem;
+  min-height: 7.5rem;
 }
 
 .pn-overview-layout .region {
@@ -1483,7 +1483,7 @@ sub {
 
 .validation-view {
   display: grid;
-  gap: 1rem;
+  gap: 0.65rem;
 }
 
 .validation-view h3 {
@@ -1514,8 +1514,8 @@ sub {
 
 .pn-results-dashboard {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(17rem, 1fr);
-  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1.55fr) minmax(19rem, 1fr);
+  gap: 1rem;
 }
 
 .dashboard-section {
@@ -1551,11 +1551,23 @@ sub {
 }
 
 .dashboard-validation .message-box {
-  min-height: 6rem;
+  min-height: 3.75rem;
 }
 
-.dashboard-validation .validation-metrics > div:nth-child(10) {
-  min-height: 3.6rem;
+.dashboard-validation .validation-metrics div {
+  min-height: 3.5rem;
+  padding: 0.45rem 0.55rem;
+}
+
+.dashboard-validation .warning-list {
+  gap: 0.4rem;
+}
+
+.dashboard-validation .warning-list li {
+  padding: 0.45rem 0.55rem;
+  border-left-width: 3px;
+  font-size: 0.72rem;
+  line-height: 1.35;
 }
 
 .dashboard-primary #jvCanvas {
@@ -1626,6 +1638,16 @@ sub {
     margin-bottom: 0.65rem;
   }
 
+  .showing-results .results-toolbar > div {
+    display: flex;
+    align-items: baseline;
+    gap: 0.65rem;
+  }
+
+  .showing-results .results-toolbar h2 {
+    font-size: 1.25rem;
+  }
+
   .showing-results .circuit-metrics {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
@@ -1654,6 +1676,10 @@ sub {
 
   .showing-results .plot-card {
     padding: 0.6rem;
+  }
+
+  .showing-results .result-action-row .solver-message {
+    min-height: 46px;
   }
 
   .showing-results .dashboard-validation .validation-metrics,
@@ -1714,7 +1740,7 @@ sub {
   }
 
   .pn-device-overview .device-schematic {
-    min-height: 12rem;
+    min-height: 7rem;
   }
 
 }
@@ -1804,7 +1830,7 @@ sub {
   }
 
   .pn-device-overview .device-schematic {
-    min-height: 10rem;
+    min-height: 7.5rem;
   }
 
   .overview-disclosure > summary,

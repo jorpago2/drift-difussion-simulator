@@ -242,15 +242,11 @@ function renderEmptyDashboard(message = "Awaiting a converged solution") {
   ]);
   renderMetricList(dom.validationMetrics, [
     ["Status", "Not solved"],
-    ["Poisson residual", "—"],
-    ["Electron residual", "—"],
-    ["Hole residual", "—"],
-    ["J nonuniformity", "—"],
-    ["Absolute J spread", "—"],
-    ["Electron R balance", "—"],
-    ["Hole R balance", "—"],
+    ["Scaled residuals (ψ / n / p)", "— / — / —"],
+    ["Current uniformity", "—"],
+    ["Carrier balance (n / p)", "— / —"],
     ["Mean J", "—"],
-    ["Simulated / expected barrier", "—"],
+    ["Barrier: simulated / expected", "— / — V"],
     ["Mesh", "—"],
   ]);
   replaceList(dom.warningList, [
@@ -258,7 +254,7 @@ function renderEmptyDashboard(message = "Awaiting a converged solution") {
     "Boltzmann statistics and constant mobility: this is not a general TCAD model at high density or field.",
   ]);
   dom.sweepMessage.textContent = "Solve an operating point first.";
-  setMessage(dom.validationBanner, "No result to validate.", "idle");
+  setMessage(dom.validationBanner, "PENDING — solve to evaluate residuals and conservation.", "idle");
 }
 
 function setPlotState(canvas, state, message = "") {
@@ -502,22 +498,22 @@ function renderValidation(result) {
   const expectedBarrierV = result.derived.builtInPotentialV - result.config.biasV;
   renderMetricList(dom.validationMetrics, [
     ["Status", result.diagnostics.converged ? "Converged" : "Not converged"],
-    ["Poisson residual", formatScientific(result.diagnostics.poissonResidual)],
-    ["Electron residual", formatScientific(result.diagnostics.electronResidual)],
-    ["Hole residual", formatScientific(result.diagnostics.holeResidual)],
-    ["J nonuniformity", formatPercent(result.diagnostics.currentContinuityError)],
-    ["Absolute J spread", `${formatScientific(result.diagnostics.currentContinuityAbsoluteErrorAm2 / 1e4)} A/cm²`],
-    ["Electron R balance", formatPercent(result.diagnostics.electronBalanceError)],
-    ["Hole R balance", formatPercent(result.diagnostics.holeBalanceError)],
+    ["Scaled residuals (ψ / n / p)", [
+      result.diagnostics.poissonResidual,
+      result.diagnostics.electronResidual,
+      result.diagnostics.holeResidual,
+    ].map((value) => formatScientific(value)).join(" / ")],
+    ["Current uniformity", `${formatPercent(result.diagnostics.currentContinuityError)}; ΔJ = ${formatScientific(result.diagnostics.currentContinuityAbsoluteErrorAm2 / 1e4)} A/cm²`],
+    ["Carrier balance (n / p)", `${formatPercent(result.diagnostics.electronBalanceError)} / ${formatPercent(result.diagnostics.holeBalanceError)}`],
     ["Mean J", `${formatScientific(result.diagnostics.meanCurrentDensityAm2 / 1e4)} A/cm²`],
-    ["Simulated / expected barrier", `${formatFixed(potentialBarrierV, 4)} / ${formatFixed(expectedBarrierV, 4)} V`],
+    ["Barrier: simulated / expected", `${formatFixed(potentialBarrierV, 4)} / ${formatFixed(expectedBarrierV, 4)} V`],
     ["Mesh", `${result.config.cells} nodes; Δx = ${formatScientific(result.derived.dxM * 1e9)} nm`],
   ]);
   setMessage(
     dom.validationBanner,
     result.diagnostics.converged
-      ? "PASS: equations, positivity, and conservation satisfy the v1 thresholds."
-      : "FAIL: do not use this result as a physical solution.",
+      ? "PASS — residual and conservation thresholds satisfied."
+      : "FAIL — do not use this result as a physical solution.",
     result.diagnostics.converged ? "pass" : "error",
   );
   const limitations = [
