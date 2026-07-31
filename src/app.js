@@ -242,17 +242,14 @@ function renderEmptyDashboard(message = "Awaiting a converged solution") {
   ]);
   renderMetricList(dom.validationMetrics, [
     ["Status", "Not solved"],
+    ["Mean J", "—"],
     ["Scaled residuals (ψ / n / p)", "— / — / —"],
     ["Current uniformity", "—"],
     ["Carrier balance (n / p)", "— / —"],
-    ["Mean J", "—"],
     ["Barrier: simulated / expected", "— / — V"],
     ["Mesh", "—"],
   ]);
-  replaceList(dom.warningList, [
-    "No avalanche or tunneling: reverse bias does not predict breakdown.",
-    "Boltzmann statistics and constant mobility: this is not a general TCAD model at high density or field.",
-  ]);
+  replaceList(dom.warningList, []);
   dom.sweepMessage.textContent = "Solve an operating point first.";
   setMessage(dom.validationBanner, "PENDING — solve to evaluate residuals and conservation.", "idle");
 }
@@ -498,6 +495,7 @@ function renderValidation(result) {
   const expectedBarrierV = result.derived.builtInPotentialV - result.config.biasV;
   renderMetricList(dom.validationMetrics, [
     ["Status", result.diagnostics.converged ? "Converged" : "Not converged"],
+    ["Mean J", `${formatScientific(result.diagnostics.meanCurrentDensityAm2 / 1e4)} A/cm²`],
     ["Scaled residuals (ψ / n / p)", [
       result.diagnostics.poissonResidual,
       result.diagnostics.electronResidual,
@@ -505,7 +503,6 @@ function renderValidation(result) {
     ].map((value) => formatScientific(value)).join(" / ")],
     ["Current uniformity", `${formatPercent(result.diagnostics.currentContinuityError)}; ΔJ = ${formatScientific(result.diagnostics.currentContinuityAbsoluteErrorAm2 / 1e4)} A/cm²`],
     ["Carrier balance (n / p)", `${formatPercent(result.diagnostics.electronBalanceError)} / ${formatPercent(result.diagnostics.holeBalanceError)}`],
-    ["Mean J", `${formatScientific(result.diagnostics.meanCurrentDensityAm2 / 1e4)} A/cm²`],
     ["Barrier: simulated / expected", `${formatFixed(potentialBarrierV, 4)} / ${formatFixed(expectedBarrierV, 4)} V`],
     ["Mesh", `${result.config.cells} nodes; Δx = ${formatScientific(result.derived.dxM * 1e9)} nm`],
   ]);
@@ -516,12 +513,7 @@ function renderValidation(result) {
       : "FAIL — do not use this result as a physical solution.",
     result.diagnostics.converged ? "pass" : "error",
   );
-  const limitations = [
-    ...result.warnings,
-    "No avalanche or tunneling: reverse bias does not predict breakdown.",
-    "Boltzmann statistics and constant mobility: this is not a general TCAD model at high density or field.",
-  ];
-  replaceList(dom.warningList, [...new Set(limitations)]);
+  replaceList(dom.warningList, [...new Set(result.warnings)]);
 }
 
 function renderMetricList(container, entries) {

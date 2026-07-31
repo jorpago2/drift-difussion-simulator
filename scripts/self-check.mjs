@@ -15,10 +15,12 @@ import { createNiceScale, drawScientificText, formatChartTick } from "../src/plo
 
 const pnHtml = await readFile(new URL("../index.html", import.meta.url), "utf8");
 const pnApp = await readFile(new URL("../src/app.js", import.meta.url), "utf8");
+const pnStyles = await readFile(new URL("../styles.css", import.meta.url), "utf8");
 assert.match(pnHtml, /id="resultsArea" class="results-area" aria-labelledby=/);
 assert.equal(pnHtml.match(/data-plot-state="empty"/g)?.length, 6);
 assert.doesNotMatch(pnApp, /resultsArea\.hidden|deviceOverview\.hidden/);
 assert.equal(pnApp.match(/\["Scaled residuals \(ψ \/ n \/ p\)"/g)?.length, 2);
+assert.match(pnStyles, /#electrostaticsView \.plot-grid \{[\s\S]{0,120}repeat\(3/);
 
 const voltageScale = createNiceScale([-1, 0.65], 8);
 assert.deepEqual(voltageScale.ticks, [-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75]);
