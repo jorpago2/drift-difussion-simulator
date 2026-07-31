@@ -17,6 +17,10 @@ const pnHtml = await readFile(new URL("../index.html", import.meta.url), "utf8")
 const pnApp = await readFile(new URL("../src/app.js", import.meta.url), "utf8");
 const pnStyles = await readFile(new URL("../styles.css", import.meta.url), "utf8");
 assert.match(pnHtml, /id="resultsArea" class="results-area" aria-labelledby=/);
+assert.match(pnHtml, /<details id="validationView"[^>]*dashboard-validation/);
+assert.match(pnHtml, /id="jvView"[^>]*dashboard-primary dashboard-wide/);
+assert.match(pnHtml, /class="space-charge space-charge-p"/);
+assert.match(pnHtml, /class="space-charge space-charge-n"/);
 assert.equal(pnHtml.match(/data-plot-state="empty"/g)?.length, 6);
 assert.doesNotMatch(pnApp, /resultsArea\.hidden|deviceOverview\.hidden/);
 assert.equal(pnApp.match(/\["Scaled residuals \(ψ \/ n \/ p\)"/g)?.length, 2);

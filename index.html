@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Teaching laboratory for a 1D PN junction with drift-diffusion, Scharfetter-Gummel discretization, and SRH recombination.">
     <title>1D PN Junction Laboratory</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="styles.css">
     <script type="module" src="src/app.js"></script>
   </head>
@@ -120,11 +121,30 @@
 
         <section id="deviceOverview" class="pn-device-overview" aria-label="PN junction structure">
           <div class="pn-overview-layout">
-            <div class="device-schematic" role="img" aria-label="Abrupt PN junction with the anode contact on the left and cathode on the right">
+            <div class="device-schematic charge-schematic" role="img" aria-label="Conceptual PN junction charge map. Mobile holes balance ionized acceptors in the quasineutral P region, mobile electrons balance ionized donors in the quasineutral N region, and the depletion region contains uncovered fixed acceptor and donor charge. The electric field points from N to P.">
               <div class="contact contact-left">Anode</div>
-              <div class="region region-p"><strong>P</strong><span id="pDopingLabel">N<sub>A</sub> = 10¹⁶ cm⁻³</span></div>
-              <div id="depletionZone" class="depletion-zone"><span>estimated depletion</span></div>
-              <div class="region region-n"><strong>N</strong><span id="nDopingLabel">N<sub>D</sub> = 10¹⁶ cm⁻³</span></div>
+              <div class="region region-p charge-region">
+                <div class="region-heading"><strong>P</strong><span id="pDopingLabel">N<sub>A</sub> = 10¹⁶ cm⁻³</span></div>
+                <div class="neutral-charge-map" aria-hidden="true">
+                  <span class="charge-symbol charge-positive">h<sup>+</sup></span><span class="charge-symbol charge-negative">A<sup>−</sup></span>
+                  <span class="charge-symbol charge-positive">h<sup>+</sup></span><span class="charge-symbol charge-negative">A<sup>−</sup></span>
+                </div>
+                <span class="charge-region-label">quasineutral: h<sup>+</sup> balances A<sup>−</sup></span>
+              </div>
+              <div id="depletionZone" class="depletion-zone charge-depletion" aria-hidden="true">
+                <div class="space-charge space-charge-p"><span>A<sup>−</sup></span><span>A<sup>−</sup></span><span>A<sup>−</sup></span></div>
+                <div class="space-charge space-charge-n"><span>D<sup>+</sup></span><span>D<sup>+</sup></span><span>D<sup>+</sup></span></div>
+                <span class="field-direction">← E</span>
+                <strong>depletion</strong>
+              </div>
+              <div class="region region-n charge-region">
+                <div class="region-heading"><strong>N</strong><span id="nDopingLabel">N<sub>D</sub> = 10¹⁶ cm⁻³</span></div>
+                <div class="neutral-charge-map" aria-hidden="true">
+                  <span class="charge-symbol charge-positive">D<sup>+</sup></span><span class="charge-symbol charge-negative">e<sup>−</sup></span>
+                  <span class="charge-symbol charge-positive">D<sup>+</sup></span><span class="charge-symbol charge-negative">e<sup>−</sup></span>
+                </div>
+                <span class="charge-region-label">quasineutral: D<sup>+</sup> balances e<sup>−</sup></span>
+              </div>
               <div class="contact contact-right">Cathode</div>
             </div>
 
@@ -191,7 +211,7 @@
           </article>
 
           <div class="pn-results-dashboard">
-            <section id="jvView" class="dashboard-section dashboard-primary" aria-labelledby="jvSectionTitle">
+            <section id="jvView" class="dashboard-section dashboard-primary dashboard-wide" aria-labelledby="jvSectionTitle">
               <header class="dashboard-section-heading">
                 <span class="section-label">Terminal characteristic</span>
                 <h3 id="jvSectionTitle">Diode I–V curve</h3>
@@ -206,18 +226,21 @@
               </div>
             </section>
 
-            <section id="validationView" class="dashboard-section dashboard-validation validation-view" aria-labelledby="validationSectionTitle">
-              <header class="dashboard-section-heading">
-                <span class="section-label">Numerical confidence</span>
-                <h3 id="validationSectionTitle">Validation</h3>
-              </header>
-              <div id="validationBanner" class="message-box" data-state="idle">No result to validate.</div>
-              <dl id="validationMetrics" class="metric-list validation-metrics"></dl>
-              <div>
-                <h3>Active warnings</h3>
-                <ul id="warningList" class="warning-list"></ul>
+            <details id="validationView" class="dashboard-section dashboard-wide dashboard-validation validation-view">
+              <summary class="validation-summary">
+                <span class="section-label">Optional diagnostics</span>
+                <h3 id="validationSectionTitle">Numerical confidence</h3>
+                <small>Residuals, current conservation, and mesh checks</small>
+              </summary>
+              <div class="validation-content">
+                <div id="validationBanner" class="message-box" data-state="idle">No result to validate.</div>
+                <dl id="validationMetrics" class="metric-list validation-metrics"></dl>
+                <div class="validation-warnings">
+                  <h3>Active warnings</h3>
+                  <ul id="warningList" class="warning-list"></ul>
+                </div>
               </div>
-            </section>
+            </details>
 
             <section id="electrostaticsView" class="dashboard-section dashboard-wide" aria-labelledby="electrostaticsSectionTitle">
               <header class="dashboard-section-heading">

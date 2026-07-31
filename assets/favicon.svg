@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>PN junction simulator</title>
+  <rect width="64" height="64" rx="14" fill="#12343b"/>
+  <path d="M7 32h9m32 0h9" stroke="#f7faf9" stroke-width="4" stroke-linecap="round"/>
+  <path d="M16 14h16v36H16a5 5 0 0 1-5-5V19a5 5 0 0 1 5-5Z" fill="#c84f68"/>
+  <path d="M32 14h16a5 5 0 0 1 5 5v26a5 5 0 0 1-5 5H32Z" fill="#3278b7"/>
+  <rect x="29.5" y="14" width="5" height="36" fill="#f7faf9"/>
+  <text x="22.5" y="37" fill="#fff" font-family="Arial, sans-serif" font-size="15" font-weight="700" text-anchor="middle">P</text>
+  <text x="41.5" y="37" fill="#fff" font-family="Arial, sans-serif" font-size="15" font-weight="700" text-anchor="middle">N</text>
+</svg>
