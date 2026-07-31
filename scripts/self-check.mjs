@@ -23,9 +23,16 @@ assert.match(pnHtml, /<details class="dashboard-section dashboard-wide validatio
 assert.match(pnHtml, /<details class="result-tools">/);
 assert.doesNotMatch(pnHtml, /id="resultExplanation"/);
 assert.match(pnHtml, /id="jvView"[^>]*dashboard-primary dashboard-wide/);
-assert.match(pnHtml, /id="jvLogScaleInput" type="checkbox"/);
+assert.match(pnHtml, /id="minimumBiasInput"[^>]*value="-1"/);
+assert.match(pnHtml, /id="maximumBiasInput"[^>]*value="0.65"/);
 assert.match(pnHtml, /id="jvPointCountInput"[^>]*min="17" max="201"[^>]*value="67"/);
-assert.match(pnApp, /logScale \? Float64Array\.from\(current, Math\.abs\) : current/);
+assert.match(pnHtml, /id="jvQuantitySelect"/);
+assert.match(pnHtml, /id="jvScaleSelect"/);
+assert.match(pnHtml, /id="jvReferenceInput"[^>]*checked/);
+assert.match(pnHtml, /id="profilePointInput"[^>]*type="range"/);
+assert.doesNotMatch(pnHtml, /id="biasInput"|id="generateJvButton"/);
+assert.match(pnApp, /async function solveVoltageSweep\(\)/);
+assert.doesNotMatch(pnApp, /solveCurrentConfiguration|generateJvSweep/);
 assert.match(pnHtml, /class="space-charge space-charge-p"/);
 assert.match(pnHtml, /class="space-charge space-charge-n"/);
 assert.equal(pnHtml.match(/data-plot-state="empty"/g)?.length, 6);
@@ -47,7 +54,12 @@ assert.equal(customVoltageGrid[0], -1);
 assert.equal(customVoltageGrid.at(-1), 0.65);
 assert.ok(customVoltageGrid.includes(0));
 assert.ok(customVoltageGrid.every((value, index) => index === 0 || value > customVoltageGrid[index - 1]));
+const forwardVoltageGrid = createPnVoltageGrid(17, 0.1, 0.7);
+assert.equal(forwardVoltageGrid[0], 0.1);
+assert.equal(forwardVoltageGrid.at(-1), 0.7);
+assert.equal(forwardVoltageGrid.length, 17);
 assert.throws(() => createPnVoltageGrid(Number.NaN), /pointCount/);
+assert.throws(() => createPnVoltageGrid(17, 0.5, 0.1), /minimumV/);
 
 const scientificLabelCalls = [];
 const scientificLabelContext = {

@@ -19,9 +19,10 @@ On desktop viewports, controls are docked at the right and can be collapsed;
 on smaller screens they open as a modal panel. Plots use a high-density canvas
 backing store so curves and labels remain sharp on HiDPI displays.
 
-The primary result is the diode I–V characteristic. Solving an operating point
-automatically computes the 67-point curve; electrostatic, carrier, and band
-profiles remain available as secondary views that explain the terminal behavior.
+The diode laboratory solves one configurable I–V sweep as its primary result.
+It starts at equilibrium, continues toward `V_D,min` and `V_D,max`, and stores
+every converged point. Selecting a point on the completed sweep updates the
+electrostatic, carrier, and band profiles without running another simulation.
 
 ## Run
 

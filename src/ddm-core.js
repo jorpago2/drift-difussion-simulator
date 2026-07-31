@@ -800,10 +800,14 @@ export function createPnVoltageGrid(pointCount = 67, minimumV = -1, maximumV = 0
   if (!Number.isInteger(pointCount) || pointCount < 3 || pointCount > 2001) {
     throw new RangeError("pointCount must be an integer between 3 and 2001.");
   }
-  if (!Number.isFinite(minimumV) || !Number.isFinite(maximumV) || minimumV >= 0 || maximumV <= 0) {
-    throw new RangeError("The voltage grid must span a finite negative-to-positive interval.");
+  if (!Number.isFinite(minimumV) || !Number.isFinite(maximumV) || minimumV >= maximumV) {
+    throw new RangeError("The voltage grid requires finite limits with minimumV < maximumV.");
   }
   const intervals = pointCount - 1;
+  if (minimumV >= 0 || maximumV <= 0) {
+    return Array.from({ length: pointCount }, (_, index) =>
+      index === intervals ? maximumV : minimumV + (maximumV - minimumV) * index / intervals);
+  }
   const negativeIntervals = Math.max(1, Math.min(intervals - 1,
     Math.round(intervals * Math.abs(minimumV) / (maximumV - minimumV))));
   const positiveIntervals = intervals - negativeIntervals;

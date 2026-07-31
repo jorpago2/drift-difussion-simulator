@@ -32,23 +32,14 @@
       <details id="controlPanel" class="pn-controls" open>
         <summary class="pn-controls-toggle">
           <span>Device controls</span>
-          <small>Experiment, bias, and solver</small>
+          <small>Sweep range, device, and solver</small>
         </summary>
         <div class="pn-controls-content">
           <header class="pn-controls-heading">
-            <span class="eyebrow">Define one operating point</span>
-            <h2>Configure the junction</h2>
-            <p>Select the operating condition and solve the coupled transport equations.</p>
+            <span class="eyebrow">Define one voltage sweep</span>
+            <h2>Configure the diode</h2>
+            <p>Solve the complete I–V characteristic from equilibrium by voltage continuation.</p>
           </header>
-
-          <label>
-            Guided experiment
-            <select id="lessonSelect">
-              <option value="equilibrium">Equilibrium · built-in field</option>
-              <option value="forward">Forward bias · carrier injection</option>
-              <option value="reverse">Reverse bias · depletion widening</option>
-            </select>
-          </label>
 
           <div class="input-grid">
             <label>
@@ -63,14 +54,24 @@
             </label>
           </div>
 
-          <label>
-            <span class="label-text">Applied voltage V<sub>D</sub> = V<sub>A</sub> − V<sub>C</sub> (V)</span>
-            <input id="biasInput" type="number" min="-1" max="0.8" step="0.025" value="0" aria-describedby="biasHelp">
-            <small id="biasHelp" class="field-help">Positive is forward bias. Breakdown is not included for negative bias.</small>
-          </label>
+          <div class="input-grid sweep-inputs">
+            <label>
+              <span class="label-text">V<sub>D,min</sub> (V)</span>
+              <input id="minimumBiasInput" type="number" min="-1" max="0.8" step="0.025" value="-1" aria-describedby="sweepRangeHelp">
+            </label>
+            <label>
+              <span class="label-text">V<sub>D,max</sub> (V)</span>
+              <input id="maximumBiasInput" type="number" min="-1" max="0.8" step="0.025" value="0.65" aria-describedby="sweepRangeHelp">
+            </label>
+            <label>
+              Sweep points
+              <input id="jvPointCountInput" type="number" min="17" max="201" step="1" value="67" aria-describedby="sweepRangeHelp">
+            </label>
+          </div>
+          <small id="sweepRangeHelp" class="field-help">V<sub>D</sub> = V<sub>A</sub> − V<sub>C</sub>. The solver starts at equilibrium and continues toward both limits with internal steps ≤25 mV.</small>
 
-          <button id="solveButton" class="primary-button large-button" type="button">Solve current bias</button>
-          <output id="solverMessage" class="solver-message" aria-live="polite">Ready to solve the selected operating point.</output>
+          <button id="solveButton" class="primary-button large-button" type="button">Calculate I–V sweep</button>
+          <output id="solverMessage" class="solver-message" aria-live="polite">Ready to calculate the voltage sweep.</output>
 
           <details class="advanced-settings">
             <summary>Area, numerics, and diagnostics</summary>
@@ -79,11 +80,6 @@
                 Device area (µm²)
                 <input id="deviceAreaInput" type="number" min="1" max="1e8" step="1000" value="10000" aria-describedby="deviceAreaHelp">
                 <small id="deviceAreaHelp" class="field-help">Converts current density to terminal current through I = J·A.</small>
-              </label>
-              <label>
-                I–V sweep points
-                <input id="jvPointCountInput" type="number" min="17" max="201" step="1" value="67" aria-describedby="jvPointCountHelp">
-                <small id="jvPointCountHelp" class="field-help">17–201 plotted voltages from −1.00 to 0.65 V; internal continuation remains ≤25 mV.</small>
               </label>
               <label>
                 Length (µm)
@@ -118,10 +114,10 @@
       <section class="pn-workspace showing-results" aria-label="PN junction laboratory">
         <div class="workspace-heading">
           <div>
-            <span id="lessonKicker" class="eyebrow">Thermal equilibrium</span>
-            <h2 id="workspaceTitle">PN junction at equilibrium</h2>
+            <span class="eyebrow">Voltage sweep</span>
+            <h2>PN diode characteristic</h2>
           </div>
-          <output id="biasBadge" class="bias-badge">V<sub>D</sub> = 0.00 V</output>
+          <output id="biasBadge" class="bias-badge">−1.00 ≤ V<sub>D</sub> ≤ 0.65 V</output>
         </div>
 
         <section id="deviceOverview" class="pn-device-overview" aria-label="PN junction structure">
@@ -158,7 +154,7 @@
           <details class="overview-disclosure">
             <summary>Checks and real-device context</summary>
             <div class="overview-disclosure-content">
-              <div id="preflightSummary" class="preflight-summary" data-state="ready">Configuration ready. Solve the selected operating point.</div>
+              <div id="preflightSummary" class="preflight-summary" data-state="ready">Configuration ready. Calculate the I–V sweep.</div>
 
               <details class="physical-device-context">
                 <summary>
@@ -210,18 +206,37 @@
                   <span class="section-label">Terminal characteristic</span>
                   <h3 id="jvSectionTitle" tabindex="-1">Diode I–V curve</h3>
                 </div>
-                <label class="plot-scale-toggle" for="jvLogScaleInput">
-                  <input id="jvLogScaleInput" type="checkbox">
-                  <span>Log Y · |I<sub>D</sub>|</span>
-                </label>
+                <div class="plot-controls" aria-label="I–V plot controls">
+                  <label class="plot-control">
+                    Quantity
+                    <select id="jvQuantitySelect">
+                      <option value="current">Terminal current (mA)</option>
+                      <option value="density">Current density (A/cm²)</option>
+                    </select>
+                  </label>
+                  <label class="plot-control">
+                    Y scale
+                    <select id="jvScaleSelect">
+                      <option value="linear">Linear</option>
+                      <option value="log">Log magnitude</option>
+                    </select>
+                  </label>
+                  <label class="plot-control plot-check">
+                    <input id="jvReferenceInput" type="checkbox" checked>
+                    Analytical reference
+                  </label>
+                </div>
               </header>
               <figure id="jvFigure" class="plot-card" data-plot-state="empty" data-plot-message="Awaiting solution">
                 <canvas id="jvCanvas" width="960" height="430" aria-label="Diode current versus voltage"></canvas>
                 <figcaption>Solid: drift–diffusion with SRH. Dashed: finite-base analytical reference in its low-injection range.</figcaption>
               </figure>
               <div class="result-action-row">
-                <button id="generateJvButton" type="button" disabled>Recalculate I–V</button>
-                <output id="sweepMessage" class="solver-message" aria-live="polite">Solve an operating point first.</output>
+                <label class="profile-point-control" for="profilePointInput">
+                  <span>Inspect profiles at <output id="profileVoltageOutput">—</output></span>
+                  <input id="profilePointInput" type="range" min="0" max="1" value="0" step="1" disabled>
+                </label>
+                <output id="sweepMessage" class="solver-message" aria-live="polite">Calculate the I–V sweep first.</output>
               </div>
             </section>
 

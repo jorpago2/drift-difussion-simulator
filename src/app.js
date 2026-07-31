@@ -15,32 +15,13 @@ import {
   setScientificText,
 } from "./plot-utils.js";
 
-const LESSONS = Object.freeze({
-  equilibrium: {
-    biasV: 0,
-    kicker: "Thermal equilibrium",
-    title: "PN junction at equilibrium",
-  },
-  forward: {
-    biasV: 0.6,
-    kicker: "Forward bias",
-    title: "Forward-biased PN junction",
-  },
-  reverse: {
-    biasV: -0.5,
-    kicker: "Reverse bias",
-    title: "Reverse-biased PN junction",
-  },
-});
-
 const dom = Object.fromEntries([
   "globalStatus", "openPanelButton", "panelButtonIcon", "controlPanel",
-  "lessonKicker", "workspaceTitle", "biasBadge", "pDopingLabel", "nDopingLabel",
-  "depletionZone", "preflightSummary", "resultsArea", "lessonSelect", "acceptorInput", "donorInput",
-  "deviceAreaInput", "jvPointCountInput", "circuitMetrics", "jvSectionTitle",
-  "biasInput", "lengthInput", "cellsInput", "electronLifetimeInput", "holeLifetimeInput",
+  "biasBadge", "pDopingLabel", "nDopingLabel", "depletionZone", "preflightSummary", "resultsArea",
+  "acceptorInput", "donorInput", "minimumBiasInput", "maximumBiasInput", "jvPointCountInput",
+  "deviceAreaInput", "circuitMetrics", "jvSectionTitle", "lengthInput", "cellsInput", "electronLifetimeInput", "holeLifetimeInput",
   "preflightDetails", "derivedMetrics", "solveButton", "solverMessage",
-  "generateJvButton", "sweepMessage", "jvLogScaleInput",
+  "sweepMessage", "jvQuantitySelect", "jvScaleSelect", "jvReferenceInput", "profilePointInput", "profileVoltageOutput",
   "validationBanner", "validationMetrics", "warningList", "exportProfileCsvButton", "exportSweepCsvButton", "exportPngButton", "cursorReadout",
   "potentialCanvas", "fieldCanvas", "chargeCanvas", "carrierCanvas", "bandCanvas", "jvCanvas",
 ].map((id) => [id, requireElement(id)]));
@@ -57,7 +38,9 @@ const dockedPanelMedia = window.matchMedia("(min-width: 981px)");
 const configInputs = [
   dom.acceptorInput,
   dom.donorInput,
-  dom.biasInput,
+  dom.minimumBiasInput,
+  dom.maximumBiasInput,
+  dom.jvPointCountInput,
   dom.deviceAreaInput,
   dom.lengthInput,
   dom.cellsInput,
@@ -69,12 +52,12 @@ const chartResizeObserver = new ResizeObserver(scheduleChartRedraw);
 
 let currentResult = null;
 let currentSweep = null;
+let selectedSweepIndex = -1;
 let solving = false;
 let chartResizeFrame = 0;
 let cursorReadoutTimer = 0;
 
 bindEvents();
-applyLesson("equilibrium", false);
 updatePreflight();
 renderEmptyDashboard();
 syncPanelMode();
@@ -96,18 +79,20 @@ function bindEvents() {
   dockedPanelMedia.addEventListener("change", syncPanelMode);
   window.addEventListener("resize", scheduleChartRedraw);
 
-  dom.lessonSelect.addEventListener("change", () => applyLesson(dom.lessonSelect.value, true));
   for (const input of configInputs) {
     input.addEventListener("input", () => {
       invalidateResults();
       updatePreflight();
     });
   }
-  dom.solveButton.addEventListener("click", solveCurrentConfiguration);
-  dom.generateJvButton.addEventListener("click", generateJvSweep);
-  dom.jvPointCountInput.addEventListener("change", invalidateJvSweep);
-  dom.jvLogScaleInput.addEventListener("change", () => {
-    if (currentSweep?.converged) renderJv(currentSweep);
+  dom.solveButton.addEventListener("click", solveVoltageSweep);
+  for (const control of [dom.jvQuantitySelect, dom.jvScaleSelect, dom.jvReferenceInput]) {
+    control.addEventListener("change", () => {
+      if (currentSweep?.converged) renderJv(currentSweep);
+    });
+  }
+  dom.profilePointInput.addEventListener("input", () => {
+    selectSweepPoint(Number(dom.profilePointInput.value));
   });
   dom.exportProfileCsvButton.addEventListener("click", exportProfileCsv);
   dom.exportSweepCsvButton.addEventListener("click", exportSweepCsv);
@@ -118,6 +103,7 @@ function bindEvents() {
     canvas.addEventListener("pointermove", updateCursorReadout);
     canvas.addEventListener("click", (event) => {
       updateCursorReadout(event);
+      if (canvas === dom.jvCanvas) selectSweepPoint(chartIndexFromEvent(event, chartRegistry.get(canvas)));
       activateCursorReadout();
     });
     canvas.addEventListener("pointerleave", () => {
@@ -151,22 +137,12 @@ function redrawDashboard() {
   if (currentSweep?.converged) renderJv(currentSweep);
 }
 
-function applyLesson(name, invalidate) {
-  const lesson = LESSONS[name] ?? LESSONS.equilibrium;
-  dom.lessonSelect.value = name;
-  dom.biasInput.value = String(lesson.biasV);
-  dom.lessonKicker.textContent = lesson.kicker;
-  dom.workspaceTitle.textContent = lesson.title;
-  if (invalidate) invalidateResults();
-  updatePreflight();
-}
-
 function readConfig() {
   return {
     ...DEFAULT_PN_CONFIG,
     acceptorCm3: Number(dom.acceptorInput.value),
     donorCm3: Number(dom.donorInput.value),
-    biasV: Number(dom.biasInput.value),
+    biasV: 0,
     deviceAreaUm2: Number(dom.deviceAreaInput.value),
     lengthUm: Number(dom.lengthInput.value),
     cells: Number(dom.cellsInput.value),
@@ -175,10 +151,37 @@ function readConfig() {
   };
 }
 
+function readSweepDefinition() {
+  return {
+    minimumV: Number(dom.minimumBiasInput.value),
+    maximumV: Number(dom.maximumBiasInput.value),
+    pointCount: Number(dom.jvPointCountInput.value),
+  };
+}
+
+function validateSweepDefinition() {
+  const sweep = readSweepDefinition();
+  const errors = [];
+  if (!Number.isFinite(sweep.minimumV) || sweep.minimumV < -1 || sweep.minimumV > 0.8) {
+    errors.push("V_D,min must be between −1 and 0.8 V.");
+  }
+  if (!Number.isFinite(sweep.maximumV) || sweep.maximumV < -1 || sweep.maximumV > 0.8) {
+    errors.push("V_D,max must be between −1 and 0.8 V.");
+  }
+  if (Number.isFinite(sweep.minimumV) && Number.isFinite(sweep.maximumV) && sweep.minimumV >= sweep.maximumV) {
+    errors.push("V_D,min must be smaller than V_D,max.");
+  }
+  if (!Number.isInteger(sweep.pointCount) || sweep.pointCount < 17 || sweep.pointCount > 201) {
+    errors.push("Sweep points must be an integer between 17 and 201.");
+  }
+  return { ...sweep, errors };
+}
+
 function updatePreflight() {
   const validation = validatePnConfig(readConfig());
+  const sweep = validateSweepDefinition();
   const { config, errors, warnings, derived } = validation;
-  setScientificText(dom.biasBadge, `V_D = ${formatFixed(config.biasV, 3)} V`);
+  setScientificText(dom.biasBadge, `${formatFixed(sweep.minimumV, 2)} ≤ V_D ≤ ${formatFixed(sweep.maximumV, 2)} V`);
   setScientificText(dom.pDopingLabel, `N_A = ${formatScientific(config.acceptorCm3)} cm⁻³`);
   setScientificText(dom.nDopingLabel, `N_D = ${formatScientific(config.donorCm3)} cm⁻³`);
 
@@ -196,9 +199,10 @@ function updatePreflight() {
     dom.derivedMetrics.replaceChildren();
   }
 
-  if (errors.length) {
-    setMessage(dom.preflightSummary, errors.join(" "), "error");
-    setMessage(dom.preflightDetails, errors.join(" "), "error");
+  const allErrors = errors.concat(sweep.errors);
+  if (allErrors.length) {
+    setMessage(dom.preflightSummary, allErrors.join(" "), "error");
+    setMessage(dom.preflightDetails, allErrors.join(" "), "error");
     dom.solveButton.disabled = true;
   } else if (warnings.length) {
     const text = `Valid configuration with ${warnings.length} warning${warnings.length === 1 ? "" : "s"}.`;
@@ -206,7 +210,7 @@ function updatePreflight() {
     setMessage(dom.preflightDetails, `${text} ${warnings.join(" ")}`, "warning");
     dom.solveButton.disabled = solving;
   } else {
-    setMessage(dom.preflightSummary, "Configuration ready. Solve the selected operating point.", "ready");
+    setMessage(dom.preflightSummary, "Configuration ready. Calculate the I–V sweep.", "ready");
     setMessage(dom.preflightDetails, "Preflight passed: finite parameters, physical ranges, and adequate mesh.", "ready");
     dom.solveButton.disabled = solving;
   }
@@ -215,20 +219,11 @@ function updatePreflight() {
 function invalidateResults() {
   currentResult = null;
   currentSweep = null;
-  dom.generateJvButton.disabled = true;
+  selectedSweepIndex = -1;
+  dom.profilePointInput.disabled = true;
+  dom.profileVoltageOutput.textContent = "—";
   renderEmptyDashboard();
   updateGlobalStatus("Not solved", "idle");
-  updateExportState();
-}
-
-function invalidateJvSweep() {
-  currentSweep = null;
-  if (!currentResult?.diagnostics.converged) return;
-  chartRegistry.delete(dom.jvCanvas);
-  dom.jvCanvas.getContext("2d")?.clearRect(0, 0, dom.jvCanvas.width, dom.jvCanvas.height);
-  setPlotState(dom.jvCanvas, "empty", "Recalculate for the selected point count");
-  dom.sweepMessage.textContent = "Recalculate the I–V curve to apply the new point count.";
-  renderCircuitMetrics(currentResult, null);
   updateExportState();
 }
 
@@ -255,7 +250,7 @@ function renderEmptyDashboard(message = "Awaiting a converged solution") {
     ["Mesh", "—"],
   ]);
   replaceList(dom.warningList, []);
-  dom.sweepMessage.textContent = "Solve an operating point first.";
+  dom.sweepMessage.textContent = "Calculate the I–V sweep first.";
   setMessage(dom.validationBanner, "PENDING — solve to evaluate residuals and conservation.", "idle");
 }
 
@@ -266,56 +261,102 @@ function setPlotState(canvas, state, message = "") {
   figure.dataset.plotMessage = message;
 }
 
-async function solveCurrentConfiguration() {
+async function solveVoltageSweep() {
   if (solving) return;
   const validation = validatePnConfig(readConfig());
-  if (validation.errors.length) {
-    setMessage(dom.solverMessage, validation.errors.join(" "), "error");
+  const sweepDefinition = validateSweepDefinition();
+  const errors = validation.errors.concat(sweepDefinition.errors);
+  if (errors.length) {
+    setMessage(dom.solverMessage, errors.join(" "), "error");
     return;
   }
 
   solving = true;
   dom.solveButton.disabled = true;
-  updateGlobalStatus("Solving…", "solving");
-  setMessage(dom.solverMessage, "Solving equilibrium, voltage continuation, and residuals…", "warning");
+  for (const input of [dom.minimumBiasInput, dom.maximumBiasInput, dom.jvPointCountInput]) input.disabled = true;
+  updateGlobalStatus("I–V sweep…", "solving");
+  setPlotState(dom.jvCanvas, "loading", `Calculating ${sweepDefinition.pointCount} points…`);
+  setMessage(dom.solverMessage, "Solving equilibrium and continuing toward both voltage limits…", "warning");
+  setMessage(dom.sweepMessage, "Preparing equilibrium for the sweep…", "warning");
   await nextPaint();
 
-  let generateSweep = false;
   try {
-    const result = solvePnJunction1D(validation.config);
-    currentResult = result;
-    currentSweep = null;
-    if (!result.diagnostics.converged) {
-      renderEmptyDashboard("No converged result");
-      updateGlobalStatus("Not converged", "failed");
-      setMessage(dom.solverMessage, result.diagnostics.failureReason || "The solver did not converge.", "error");
-    } else {
-      dom.generateJvButton.disabled = false;
-      setPlotState(dom.jvCanvas, "loading", "Calculating the I–V sweep…");
-      dom.sweepMessage.textContent = "Preparing the I–V characteristic…";
-      renderResult(result);
-      renderValidation(result);
-      renderCircuitMetrics(result, null);
-      updateGlobalStatus("Converged", "converged");
-      setMessage(
-        dom.solverMessage,
-        `Converged in ${result.diagnostics.totalIterations} cumulative iterations; current-conservation error ${formatScientific(result.diagnostics.currentContinuityError)}.`,
-        "ready",
-      );
-      revealMobileResults();
-      generateSweep = true;
+    const baseConfig = validation.config;
+    const voltages = createPnVoltageGrid(
+      sweepDefinition.pointCount,
+      sweepDefinition.minimumV,
+      sweepDefinition.maximumV,
+    );
+    const results = new Map();
+    const equilibrium = solvePnJunction1D(baseConfig);
+    if (!equilibrium.diagnostics.converged) {
+      throw new Error(equilibrium.diagnostics.failureReason || "Equilibrium did not converge.");
     }
+    results.set(0, equilibrium);
+    const branches = [
+      voltages.filter((value) => value < 0).sort((a, b) => b - a),
+      voltages.filter((value) => value > 0),
+    ];
+    let solved = voltages.includes(0) ? 1 : 0;
+    for (const branch of branches) {
+      let previous = equilibrium;
+      for (const voltage of branch) {
+        previous = solvePnJunction1D({ ...baseConfig, biasV: voltage }, previous);
+        results.set(voltage, previous);
+        solved += 1;
+        setMessage(dom.sweepMessage, `Solving I–V: ${solved}/${sweepDefinition.pointCount} points…`, "warning");
+        await nextPaint();
+        if (!previous.diagnostics.converged) break;
+      }
+    }
+
+    const points = voltages.map((voltage) => {
+      const result = results.get(voltage);
+      return {
+        voltageV: voltage,
+        currentDensityAm2: result?.diagnostics.meanCurrentDensityAm2 ?? NaN,
+        shockleyCurrentDensityAm2: voltage <= equilibrium.derived.lowInjectionLimitV &&
+          equilibrium.derived.finiteBaseReferenceValid
+          ? shockleyReferenceCurrentDensity(baseConfig, voltage)
+          : null,
+        converged: result?.diagnostics.converged ?? false,
+        result: result ?? null,
+      };
+    });
+    currentSweep = {
+      config: baseConfig,
+      points,
+      converged: points.every((point) => point.converged),
+      warnings: equilibrium.warnings,
+    };
+    if (!currentSweep.converged) throw new Error("The sweep stopped because at least one point did not converge.");
+
+    selectedSweepIndex = nearestVoltageIndex(points, 0);
+    dom.profilePointInput.min = "0";
+    dom.profilePointInput.max = String(points.length - 1);
+    dom.profilePointInput.disabled = false;
+    selectSweepPoint(selectedSweepIndex);
+    updateGlobalStatus("I–V converged", "converged");
+    setMessage(
+      dom.solverMessage,
+      `${sweepDefinition.pointCount}-point sweep converged from ${formatFixed(sweepDefinition.minimumV, 3)} to ${formatFixed(sweepDefinition.maximumV, 3)} V.`,
+      "ready",
+    );
+    setMessage(dom.sweepMessage, "Move the slider or click the curve to inspect any solved voltage.", "ready");
+    revealMobileResults();
   } catch (error) {
     currentResult = null;
-    renderEmptyDashboard("Solver error");
-    updateGlobalStatus("Error", "failed");
+    currentSweep = null;
+    selectedSweepIndex = -1;
+    renderEmptyDashboard("Sweep failed");
+    updateGlobalStatus("Sweep failed", "failed");
     setMessage(dom.solverMessage, error instanceof Error ? error.message : String(error), "error");
   } finally {
     solving = false;
+    for (const input of [dom.minimumBiasInput, dom.maximumBiasInput, dom.jvPointCountInput]) input.disabled = false;
     updatePreflight();
     updateExportState();
   }
-  if (generateSweep) await generateJvSweep();
 }
 
 function revealMobileResults() {
@@ -376,102 +417,62 @@ function renderResult(result) {
   }
 }
 
-async function generateJvSweep() {
-  if (solving || !currentResult?.diagnostics.converged) return;
-  const pointCount = Number(dom.jvPointCountInput.value);
-  if (!Number.isInteger(pointCount) || pointCount < 17 || pointCount > 201) {
-    setMessage(dom.sweepMessage, "I–V sweep points must be an integer between 17 and 201.", "error");
-    return;
-  }
-  solving = true;
-  dom.generateJvButton.disabled = true;
-  dom.jvPointCountInput.disabled = true;
-  setPlotState(dom.jvCanvas, "loading", `Calculating ${pointCount} points…`);
-  updateGlobalStatus("I–V sweep…", "solving");
-  setMessage(dom.sweepMessage, "Preparing equilibrium for the sweep…", "warning");
-
-  try {
-    const baseConfig = { ...readConfig(), biasV: 0 };
-    const voltages = createPnVoltageGrid(pointCount);
-    const results = new Map();
-    const equilibrium = solvePnJunction1D(baseConfig);
-    results.set(0, equilibrium);
-    const branches = [
-      voltages.filter((value) => value < 0).sort((a, b) => b - a),
-      voltages.filter((value) => value > 0),
-    ];
-    let solved = 1;
-    for (const branch of branches) {
-      let previous = equilibrium;
-      for (const voltage of branch) {
-        previous = solvePnJunction1D({ ...baseConfig, biasV: voltage }, previous);
-        results.set(voltage, previous);
-        solved += 1;
-        setMessage(dom.sweepMessage, `Solving I–V: ${solved}/${pointCount} points…`, "warning");
-        await nextPaint();
-        if (!previous.diagnostics.converged) break;
-      }
-    }
-
-    const points = voltages.map((voltage) => {
-      const result = results.get(voltage);
-      return {
-        voltageV: voltage,
-        currentDensityAm2: result?.diagnostics.meanCurrentDensityAm2 ?? NaN,
-        shockleyCurrentDensityAm2: voltage <= equilibrium.derived.lowInjectionLimitV &&
-          equilibrium.derived.finiteBaseReferenceValid
-          ? shockleyReferenceCurrentDensity(baseConfig, voltage)
-          : null,
-        converged: result?.diagnostics.converged ?? false,
-      };
-    });
-    currentSweep = {
-      config: baseConfig,
-      points,
-      converged: points.every((point) => point.converged),
-      warnings: currentResult.warnings,
-    };
-    if (!currentSweep.converged) {
-      throw new Error("The sweep stopped because at least one point did not converge.");
-    }
-    renderJv(currentSweep);
-    renderCircuitMetrics(currentResult, currentSweep);
-    updateGlobalStatus("I–V converged", "converged");
-    setMessage(dom.sweepMessage, `${pointCount} points converged from −1.00 to 0.65 V.`, "ready");
-  } catch (error) {
-    currentSweep = null;
-    setPlotState(dom.jvCanvas, "error", "I–V sweep did not converge");
-    updateGlobalStatus("Sweep failed", "failed");
-    setMessage(dom.sweepMessage, error instanceof Error ? error.message : String(error), "error");
-  } finally {
-    solving = false;
-    dom.generateJvButton.disabled = !currentResult?.diagnostics.converged;
-    dom.jvPointCountInput.disabled = false;
-    updateExportState();
-  }
-}
-
 function renderJv(sweep) {
   const voltage = Float64Array.from(sweep.points, (point) => point.voltageV);
   const areaM2 = sweep.config.deviceAreaUm2 * 1e-12;
-  const current = Float64Array.from(sweep.points, (point) => point.currentDensityAm2 * areaM2 * 1e3);
+  const densityMode = dom.jvQuantitySelect.value === "density";
+  const scale = densityMode ? 1e-4 : areaM2 * 1e3;
+  const values = Float64Array.from(sweep.points, (point) => point.currentDensityAm2 * scale);
   const reference = Float64Array.from(sweep.points, (point) =>
-    point.shockleyCurrentDensityAm2 == null ? NaN : point.shockleyCurrentDensityAm2 * areaM2 * 1e3,
+    point.shockleyCurrentDensityAm2 == null ? NaN : point.shockleyCurrentDensityAm2 * scale,
   );
-  const logScale = dom.jvLogScaleInput.checked;
-  drawLineChart(dom.jvCanvas, {
+  const logScale = dom.jvScaleSelect.value === "log";
+  const series = [
+    { label: "DD + SRH", values: logScale ? Float64Array.from(values, Math.abs) : values, color: "#087e8b" },
+  ];
+  if (dom.jvReferenceInput.checked) {
+    series.push({
+      label: "Finite-base diode",
+      values: logScale ? Float64Array.from(reference, Math.abs) : reference,
+      color: "#ca7b00",
+      dash: [7, 4],
+    });
+  }
+  const geometry = drawLineChart(dom.jvCanvas, {
     x: voltage,
     xLabel: "V_D (V)",
-    yLabel: logScale ? "|I_D| (mA)" : "I_D (mA)",
+    yLabel: densityMode
+      ? (logScale ? "|J_D| (A/cm²)" : "J_D (A/cm²)")
+      : (logScale ? "|I_D| (mA)" : "I_D (mA)"),
     includeZero: !logScale,
     transform: logScale ? logTransform() : undefined,
-    series: [
-      { label: "DD + SRH", values: logScale ? Float64Array.from(current, Math.abs) : current, color: "#087e8b" },
-      { label: "Finite-base diode", values: logScale ? Float64Array.from(reference, Math.abs) : reference, color: "#ca7b00", dash: [7, 4] },
-    ],
+    xMarker: sweep.points[selectedSweepIndex]?.voltageV,
+    series,
   });
-  chartRegistry.set(dom.jvCanvas, { type: "sweep", x: voltage });
+  chartRegistry.set(dom.jvCanvas, { type: "sweep", x: voltage, geometry });
   setPlotState(dom.jvCanvas, "ready");
+}
+
+function nearestVoltageIndex(points, targetV) {
+  let nearest = 0;
+  for (let index = 1; index < points.length; index += 1) {
+    if (Math.abs(points[index].voltageV - targetV) < Math.abs(points[nearest].voltageV - targetV)) nearest = index;
+  }
+  return nearest;
+}
+
+function selectSweepPoint(index) {
+  const point = currentSweep?.points[index];
+  if (!point?.result?.diagnostics.converged) return;
+  selectedSweepIndex = index;
+  currentResult = point.result;
+  dom.profilePointInput.value = String(index);
+  setScientificText(dom.profileVoltageOutput, `V_D = ${formatFixed(point.voltageV, 3)} V`);
+  renderResult(currentResult);
+  renderValidation(currentResult);
+  renderCircuitMetrics(currentResult, currentSweep);
+  renderJv(currentSweep);
+  updateExportState();
 }
 
 function renderCircuitMetrics(result, sweep) {
@@ -678,6 +679,20 @@ function drawLineChart(canvas, specification) {
   context.restore();
   context.setLineDash([]);
 
+  if (Number.isFinite(specification.xMarker)) {
+    const markerX = mapX(specification.xMarker);
+    context.save();
+    context.beginPath();
+    context.rect(pad.left, pad.top, plotWidth, plotHeight);
+    context.clip();
+    context.strokeStyle = "#b12f49";
+    context.lineWidth = 1.5;
+    context.setLineDash([4, 4]);
+    drawLine(context, markerX, pad.top, markerX, pad.top + plotHeight);
+    context.restore();
+    context.setLineDash([]);
+  }
+
   context.textAlign = "center";
   context.fillStyle = "#20343b";
   context.font = "700 12px Inter, system-ui, sans-serif";
@@ -701,6 +716,7 @@ function drawLineChart(canvas, specification) {
     drawScientificText(context, series.label, legendX + 28, 24);
     legendX += 42 + measureScientificText(context, series.label);
   }
+  return { width, pad, plotWidth, xScale };
 }
 
 function prepareCanvas(canvas) {
@@ -727,9 +743,7 @@ function updateCursorReadout(event) {
   const canvas = event.currentTarget;
   const chart = chartRegistry.get(canvas);
   if (!chart) return;
-  const rect = canvas.getBoundingClientRect();
-  const fraction = clamp((event.clientX - rect.left) / rect.width, 0, 1);
-  const index = Math.round(fraction * (chart.x.length - 1));
+  const index = chartIndexFromEvent(event, chart);
   if (chart.type === "sweep") {
     const point = currentSweep?.points[index];
     if (point) {
@@ -745,6 +759,23 @@ function updateCursorReadout(event) {
     `n=${formatScientific(currentResult.electronM3[index] / 1e6)} cm⁻³`,
     `p=${formatScientific(currentResult.holeM3[index] / 1e6)} cm⁻³`,
   ].join(" | ");
+}
+
+function chartIndexFromEvent(event, chart) {
+  if (!chart?.x?.length) return -1;
+  const rect = event.currentTarget.getBoundingClientRect();
+  if (!chart.geometry) {
+    return Math.round(clamp((event.clientX - rect.left) / rect.width, 0, 1) * (chart.x.length - 1));
+  }
+  const { width, pad, plotWidth, xScale } = chart.geometry;
+  const logicalX = (event.clientX - rect.left) * width / rect.width;
+  const fraction = clamp((logicalX - pad.left) / plotWidth, 0, 1);
+  const target = xScale.min + fraction * (xScale.max - xScale.min);
+  let nearest = 0;
+  for (let index = 1; index < chart.x.length; index += 1) {
+    if (Math.abs(chart.x[index] - target) < Math.abs(chart.x[nearest] - target)) nearest = index;
+  }
+  return nearest;
 }
 
 function activateCursorReadout() {
