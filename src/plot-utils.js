@@ -25,6 +25,22 @@ export function createNiceScale(values, targetTickCount = 7, includeZero = false
   return { min, max, step, ticks };
 }
 
+export function createBoundedScale(values, targetTickCount = 7, includeZero = false, domain) {
+  if (!domain) return createNiceScale(values, targetTickCount, includeZero);
+  const [minimum, maximum] = domain;
+  if (!Number.isFinite(minimum) || !Number.isFinite(maximum) || minimum >= maximum) {
+    throw new RangeError("Axis limits require finite values with minimum < maximum.");
+  }
+  const automatic = createNiceScale([minimum, maximum], targetTickCount);
+  const ticks = automatic.ticks.filter((tick) => tick >= minimum && tick <= maximum);
+  return {
+    min: minimum,
+    max: maximum,
+    step: automatic.step,
+    ticks: ticks.length ? ticks : [minimum, maximum],
+  };
+}
+
 export function formatChartTick(value, step = 0) {
   if (!Number.isFinite(value)) return "–";
   if (value === 0) return "0";

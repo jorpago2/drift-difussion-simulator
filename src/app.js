@@ -8,6 +8,7 @@ import {
   validatePnConfig,
 } from "./ddm-core.js";
 import {
+  createBoundedScale,
   createNiceScale,
   drawScientificText,
   formatChartTick,
@@ -22,6 +23,7 @@ const dom = Object.fromEntries([
   "deviceAreaInput", "circuitMetrics", "jvSectionTitle", "lengthInput", "cellsInput", "electronLifetimeInput", "holeLifetimeInput",
   "preflightDetails", "derivedMetrics", "solveButton", "solverMessage",
   "sweepMessage", "jvQuantitySelect", "jvScaleSelect", "jvReferenceInput", "profilePointInput", "profileVoltageOutput",
+  "xAxisMinInput", "xAxisMaxInput", "yAxisMinInput", "yAxisMaxInput", "resetPlotViewButton", "plotViewportMessage",
   "validationBanner", "validationMetrics", "warningList", "exportProfileCsvButton", "exportSweepCsvButton", "exportPngButton", "cursorReadout",
   "potentialCanvas", "fieldCanvas", "chargeCanvas", "carrierCanvas", "bandCanvas", "jvCanvas",
 ].map((id) => [id, requireElement(id)]));
@@ -49,10 +51,14 @@ const configInputs = [
 ];
 const chartRegistry = new Map();
 const chartResizeObserver = new ResizeObserver(scheduleChartRedraw);
+const axisLimitInputs = [dom.xAxisMinInput, dom.xAxisMaxInput, dom.yAxisMinInput, dom.yAxisMaxInput];
 
 let currentResult = null;
 let currentSweep = null;
 let selectedSweepIndex = -1;
+let jvViewport = emptyJvViewport();
+let jvPan = null;
+let suppressJvClick = false;
 let solving = false;
 let chartResizeFrame = 0;
 let cursorReadoutTimer = 0;
@@ -86,11 +92,17 @@ function bindEvents() {
     });
   }
   dom.solveButton.addEventListener("click", solveVoltageSweep);
-  for (const control of [dom.jvQuantitySelect, dom.jvScaleSelect, dom.jvReferenceInput]) {
+  for (const control of [dom.jvQuantitySelect, dom.jvScaleSelect]) {
     control.addEventListener("change", () => {
+      resetJvViewport(false);
       if (currentSweep?.converged) renderJv(currentSweep);
     });
   }
+  dom.jvReferenceInput.addEventListener("change", () => {
+    if (currentSweep?.converged) renderJv(currentSweep);
+  });
+  for (const input of axisLimitInputs) input.addEventListener("input", applyAxisLimits);
+  dom.resetPlotViewButton.addEventListener("click", () => resetJvViewport(true));
   dom.profilePointInput.addEventListener("input", () => {
     selectSweepPoint(Number(dom.profilePointInput.value));
   });
@@ -102,6 +114,10 @@ function bindEvents() {
     chartResizeObserver.observe(canvas);
     canvas.addEventListener("pointermove", updateCursorReadout);
     canvas.addEventListener("click", (event) => {
+      if (canvas === dom.jvCanvas && suppressJvClick) {
+        suppressJvClick = false;
+        return;
+      }
       updateCursorReadout(event);
       if (canvas === dom.jvCanvas) selectSweepPoint(chartIndexFromEvent(event, chartRegistry.get(canvas)));
       activateCursorReadout();
@@ -110,6 +126,12 @@ function bindEvents() {
       if (dom.cursorReadout.dataset.active !== "true") resetCursorReadout();
     });
   }
+  dom.jvCanvas.addEventListener("wheel", zoomJvPlot, { passive: false });
+  dom.jvCanvas.addEventListener("pointerdown", startJvPan);
+  dom.jvCanvas.addEventListener("pointermove", moveJvPan);
+  dom.jvCanvas.addEventListener("pointerup", endJvPan);
+  dom.jvCanvas.addEventListener("pointercancel", endJvPan);
+  dom.jvCanvas.addEventListener("keydown", navigateJvPlot);
 }
 
 function syncPanelMode() {
@@ -220,6 +242,7 @@ function invalidateResults() {
   currentResult = null;
   currentSweep = null;
   selectedSweepIndex = -1;
+  resetJvViewport(false);
   dom.profilePointInput.disabled = true;
   dom.profileVoltageOutput.textContent = "—";
   renderEmptyDashboard();
@@ -271,6 +294,7 @@ async function solveVoltageSweep() {
     return;
   }
 
+  resetJvViewport(false);
   solving = true;
   dom.solveButton.disabled = true;
   for (const input of [dom.minimumBiasInput, dom.maximumBiasInput, dom.jvPointCountInput]) input.disabled = true;
@@ -427,6 +451,7 @@ function renderJv(sweep) {
     point.shockleyCurrentDensityAm2 == null ? NaN : point.shockleyCurrentDensityAm2 * scale,
   );
   const logScale = dom.jvScaleSelect.value === "log";
+  const transform = logScale ? logTransform() : linearTransform();
   const series = [
     { label: "DD + SRH", values: logScale ? Float64Array.from(values, Math.abs) : values, color: "#087e8b" },
   ];
@@ -445,12 +470,94 @@ function renderJv(sweep) {
       ? (logScale ? "|J_D| (A/cm²)" : "J_D (A/cm²)")
       : (logScale ? "|I_D| (mA)" : "I_D (mA)"),
     includeZero: !logScale,
-    transform: logScale ? logTransform() : undefined,
+    transform,
+    xDomain: hasFiniteViewportPair("x") ? [jvViewport.xMin, jvViewport.xMax] : undefined,
+    yDomain: hasFiniteViewportPair("y")
+      ? [transform.forward(jvViewport.yMin), transform.forward(jvViewport.yMax)]
+      : undefined,
     xMarker: sweep.points[selectedSweepIndex]?.voltageV,
     series,
   });
   chartRegistry.set(dom.jvCanvas, { type: "sweep", x: voltage, geometry });
   setPlotState(dom.jvCanvas, "ready");
+}
+
+function emptyJvViewport() {
+  return { xMin: null, xMax: null, yMin: null, yMax: null };
+}
+
+function hasFiniteViewportPair(axis) {
+  const minimum = jvViewport[`${axis}Min`];
+  const maximum = jvViewport[`${axis}Max`];
+  return Number.isFinite(minimum) && Number.isFinite(maximum) && minimum < maximum;
+}
+
+function applyAxisLimits() {
+  const x = readAxisPair(dom.xAxisMinInput, dom.xAxisMaxInput, "X");
+  const y = readAxisPair(dom.yAxisMinInput, dom.yAxisMaxInput, "Y", dom.jvScaleSelect.value === "log");
+  const error = x.error || y.error;
+  for (const input of axisLimitInputs) input.setCustomValidity(error || "");
+  if (error) {
+    setAxisMessage(error, "error");
+    return;
+  }
+  jvViewport = {
+    xMin: x.values?.[0] ?? null,
+    xMax: x.values?.[1] ?? null,
+    yMin: y.values?.[0] ?? null,
+    yMax: y.values?.[1] ?? null,
+  };
+  setAxisMessage(hasFiniteViewportPair("x") || hasFiniteViewportPair("y") ? "Manual limits" : "Automatic limits");
+  if (currentSweep?.converged) renderJv(currentSweep);
+}
+
+function readAxisPair(minimumInput, maximumInput, axis, positive = false) {
+  const minimumText = minimumInput.value.trim();
+  const maximumText = maximumInput.value.trim();
+  if (!minimumText && !maximumText) return { values: null };
+  if (!minimumText || !maximumText) return { error: `${axis} requires both minimum and maximum.` };
+  const minimum = Number(minimumText);
+  const maximum = Number(maximumText);
+  if (!Number.isFinite(minimum) || !Number.isFinite(maximum) || minimum >= maximum) {
+    return { error: `${axis} minimum must be smaller than its maximum.` };
+  }
+  if (positive && minimum <= 0) return { error: "Logarithmic Y limits must be positive." };
+  return { values: [minimum, maximum] };
+}
+
+function resetJvViewport(redraw) {
+  jvViewport = emptyJvViewport();
+  for (const input of axisLimitInputs) {
+    input.value = "";
+    input.setCustomValidity("");
+  }
+  setAxisMessage("Automatic limits");
+  if (redraw && currentSweep?.converged) renderJv(currentSweep);
+}
+
+function setAxisMessage(message, state = "ready") {
+  dom.plotViewportMessage.textContent = message;
+  dom.plotViewportMessage.dataset.state = state;
+}
+
+function setJvViewportFromScales(xMinimum, xMaximum, yMinimum, yMaximum, transform, message) {
+  jvViewport = {
+    xMin: xMinimum,
+    xMax: xMaximum,
+    yMin: transform.inverse(yMinimum),
+    yMax: transform.inverse(yMaximum),
+  };
+  dom.xAxisMinInput.value = formatAxisInput(jvViewport.xMin);
+  dom.xAxisMaxInput.value = formatAxisInput(jvViewport.xMax);
+  dom.yAxisMinInput.value = formatAxisInput(jvViewport.yMin);
+  dom.yAxisMaxInput.value = formatAxisInput(jvViewport.yMax);
+  for (const input of axisLimitInputs) input.setCustomValidity("");
+  setAxisMessage(message);
+  renderJv(currentSweep);
+}
+
+function formatAxisInput(value) {
+  return Number(value.toPrecision(7)).toString();
 }
 
 function nearestVoltageIndex(points, targetV) {
@@ -611,8 +718,8 @@ function drawLineChart(canvas, specification) {
   for (const series of specification.series) {
     for (const value of series.values) if (Number.isFinite(value) && transform.valid(value)) yValues.push(transform.forward(value));
   }
-  const xScale = createNiceScale(xValues, 8);
-  const yScale = createNiceScale(yValues, 7, specification.includeZero);
+  const xScale = createBoundedScale(xValues, 8, false, specification.xDomain);
+  const yScale = createBoundedScale(yValues, 7, specification.includeZero, specification.yDomain);
   const mapX = (value) => pad.left + ((value - xScale.min) / (xScale.max - xScale.min)) * plotWidth;
   const mapY = (value) => pad.top + plotHeight - ((value - yScale.min) / (yScale.max - yScale.min)) * plotHeight;
 
@@ -716,7 +823,7 @@ function drawLineChart(canvas, specification) {
     drawScientificText(context, series.label, legendX + 28, 24);
     legendX += 42 + measureScientificText(context, series.label);
   }
-  return { width, pad, plotWidth, xScale };
+  return { width, height, pad, plotWidth, plotHeight, xScale, yScale, transform };
 }
 
 function prepareCanvas(canvas) {
@@ -776,6 +883,145 @@ function chartIndexFromEvent(event, chart) {
     if (Math.abs(chart.x[index] - target) < Math.abs(chart.x[nearest] - target)) nearest = index;
   }
   return nearest;
+}
+
+function zoomJvPlot(event) {
+  const chart = chartRegistry.get(dom.jvCanvas);
+  if (!currentSweep?.converged || !chart?.geometry) return;
+  event.preventDefault();
+  const geometry = chart.geometry;
+  const point = chartPointFromEvent(event, geometry);
+  const { xScale, yScale, transform } = geometry;
+
+  if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
+    const xShift = event.deltaX / geometry.plotWidth * (xScale.max - xScale.min);
+    setJvViewportFromScales(
+      xScale.min + xShift,
+      xScale.max + xShift,
+      yScale.min,
+      yScale.max,
+      transform,
+      "Trackpad pan",
+    );
+    return;
+  }
+
+  const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? geometry.height : 1);
+  const factor = Math.exp(clamp(delta * 0.0015, -0.8, 0.8));
+  const xAnchor = xScale.min + point.xFraction * (xScale.max - xScale.min);
+  const yAnchor = yScale.max - point.yFraction * (yScale.max - yScale.min);
+  setJvViewportFromScales(
+    xAnchor - (xAnchor - xScale.min) * factor,
+    xAnchor + (xScale.max - xAnchor) * factor,
+    yAnchor - (yAnchor - yScale.min) * factor,
+    yAnchor + (yScale.max - yAnchor) * factor,
+    transform,
+    "Interactive zoom",
+  );
+}
+
+function startJvPan(event) {
+  const chart = chartRegistry.get(dom.jvCanvas);
+  if (event.button !== 0 || !currentSweep?.converged || !chart?.geometry) return;
+  const point = chartPointFromEvent(event, chart.geometry);
+  if (!point.inside) return;
+  const { xScale, yScale } = chart.geometry;
+  jvPan = {
+    pointerId: event.pointerId,
+    startX: point.logicalX,
+    startY: point.logicalY,
+    xMin: xScale.min,
+    xMax: xScale.max,
+    yMin: yScale.min,
+    yMax: yScale.max,
+    geometry: chart.geometry,
+    moved: false,
+  };
+  dom.jvCanvas.dataset.panning = "true";
+  dom.jvCanvas.setPointerCapture(event.pointerId);
+}
+
+function moveJvPan(event) {
+  if (!jvPan || event.pointerId !== jvPan.pointerId) return;
+  const point = chartPointFromEvent(event, jvPan.geometry);
+  const deltaX = point.logicalX - jvPan.startX;
+  const deltaY = point.logicalY - jvPan.startY;
+  if (!jvPan.moved && Math.hypot(deltaX, deltaY) < 4) return;
+  jvPan.moved = true;
+  const xShift = deltaX / jvPan.geometry.plotWidth * (jvPan.xMax - jvPan.xMin);
+  const yShift = deltaY / jvPan.geometry.plotHeight * (jvPan.yMax - jvPan.yMin);
+  setJvViewportFromScales(
+    jvPan.xMin - xShift,
+    jvPan.xMax - xShift,
+    jvPan.yMin + yShift,
+    jvPan.yMax + yShift,
+    jvPan.geometry.transform,
+    "Interactive pan",
+  );
+}
+
+function endJvPan(event) {
+  if (!jvPan || event.pointerId !== jvPan.pointerId) return;
+  suppressJvClick = jvPan.moved;
+  jvPan = null;
+  delete dom.jvCanvas.dataset.panning;
+  if (dom.jvCanvas.hasPointerCapture(event.pointerId)) dom.jvCanvas.releasePointerCapture(event.pointerId);
+}
+
+function navigateJvPlot(event) {
+  const chart = chartRegistry.get(dom.jvCanvas);
+  if (!currentSweep?.converged || !chart?.geometry) return;
+  if (event.key === "Home") {
+    event.preventDefault();
+    resetJvViewport(true);
+    return;
+  }
+  const { xScale, yScale, transform } = chart.geometry;
+  const xSpan = xScale.max - xScale.min;
+  const ySpan = yScale.max - yScale.min;
+  let xMinimum = xScale.min;
+  let xMaximum = xScale.max;
+  let yMinimum = yScale.min;
+  let yMaximum = yScale.max;
+  if (event.key === "+" || event.key === "=") {
+    [xMinimum, xMaximum] = centeredDomain(xScale.min, xScale.max, 0.8);
+    [yMinimum, yMaximum] = centeredDomain(yScale.min, yScale.max, 0.8);
+  } else if (event.key === "-") {
+    [xMinimum, xMaximum] = centeredDomain(xScale.min, xScale.max, 1.25);
+    [yMinimum, yMaximum] = centeredDomain(yScale.min, yScale.max, 1.25);
+  } else if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+    const shift = xSpan * (event.key === "ArrowLeft" ? -0.1 : 0.1);
+    xMinimum += shift;
+    xMaximum += shift;
+  } else if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+    const shift = ySpan * (event.key === "ArrowUp" ? 0.1 : -0.1);
+    yMinimum += shift;
+    yMaximum += shift;
+  } else {
+    return;
+  }
+  event.preventDefault();
+  setJvViewportFromScales(xMinimum, xMaximum, yMinimum, yMaximum, transform, "Keyboard view");
+}
+
+function chartPointFromEvent(event, geometry) {
+  const rect = event.currentTarget.getBoundingClientRect();
+  const logicalX = (event.clientX - rect.left) * geometry.width / rect.width;
+  const logicalY = (event.clientY - rect.top) * geometry.height / rect.height;
+  return {
+    logicalX,
+    logicalY,
+    xFraction: clamp((logicalX - geometry.pad.left) / geometry.plotWidth, 0, 1),
+    yFraction: clamp((logicalY - geometry.pad.top) / geometry.plotHeight, 0, 1),
+    inside: logicalX >= geometry.pad.left && logicalX <= geometry.pad.left + geometry.plotWidth &&
+      logicalY >= geometry.pad.top && logicalY <= geometry.pad.top + geometry.plotHeight,
+  };
+}
+
+function centeredDomain(minimum, maximum, factor) {
+  const center = (minimum + maximum) / 2;
+  const halfSpan = (maximum - minimum) * factor / 2;
+  return [center - halfSpan, center + halfSpan];
 }
 
 function activateCursorReadout() {

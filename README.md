@@ -23,6 +23,8 @@ The diode laboratory solves one configurable I–V sweep as its primary result.
 It starts at equilibrium, continues toward `V_D,min` and `V_D,max`, and stores
 every converged point. Selecting a point on the completed sweep updates the
 electrostatic, carrier, and band profiles without running another simulation.
+The I–V view supports wheel or trackpad zoom, drag panning, and explicit X/Y
+limits without altering the converged sweep data.
 
 ## Run
 

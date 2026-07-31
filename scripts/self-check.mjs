@@ -12,7 +12,7 @@ import {
   sweepPnJunction,
   validatePnConfig,
 } from "../src/ddm-core.js";
-import { createNiceScale, drawScientificText, formatChartTick } from "../src/plot-utils.js";
+import { createBoundedScale, createNiceScale, drawScientificText, formatChartTick } from "../src/plot-utils.js";
 
 const pnHtml = await readFile(new URL("../index.html", import.meta.url), "utf8");
 const pnApp = await readFile(new URL("../src/app.js", import.meta.url), "utf8");
@@ -30,8 +30,13 @@ assert.match(pnHtml, /id="jvQuantitySelect"/);
 assert.match(pnHtml, /id="jvScaleSelect"/);
 assert.match(pnHtml, /id="jvReferenceInput"[^>]*checked/);
 assert.match(pnHtml, /id="profilePointInput"[^>]*type="range"/);
+assert.match(pnHtml, /id="xAxisMinInput"[^>]*placeholder="Auto"/);
+assert.match(pnHtml, /id="yAxisMaxInput"[^>]*placeholder="Auto"/);
+assert.match(pnHtml, /id="resetPlotViewButton"/);
 assert.doesNotMatch(pnHtml, /id="biasInput"|id="generateJvButton"/);
 assert.match(pnApp, /async function solveVoltageSweep\(\)/);
+assert.match(pnApp, /addEventListener\("wheel", zoomJvPlot, \{ passive: false \}\)/);
+assert.match(pnApp, /addEventListener\("pointerdown", startJvPan\)/);
 assert.doesNotMatch(pnApp, /solveCurrentConfiguration|generateJvSweep/);
 assert.match(pnHtml, /class="space-charge space-charge-p"/);
 assert.match(pnHtml, /class="space-charge space-charge-n"/);
@@ -47,6 +52,11 @@ assert.deepEqual(currentScale.ticks, [0, 0.5, 1, 1.5, 2, 2.5, 3]);
 assert.equal(formatChartTick(-0.75, voltageScale.step), "-0.75");
 assert.equal(formatChartTick(0, voltageScale.step), "0");
 assert.equal(formatChartTick(1e-15), "1.0e-15");
+const boundedScale = createBoundedScale([-1, 1], 7, false, [-0.12, 0.34]);
+assert.equal(boundedScale.min, -0.12);
+assert.equal(boundedScale.max, 0.34);
+assert.ok(boundedScale.ticks.every((tick) => tick >= boundedScale.min && tick <= boundedScale.max));
+assert.throws(() => createBoundedScale([0, 1], 7, false, [1, 0]), /minimum < maximum/);
 
 const customVoltageGrid = createPnVoltageGrid(101);
 assert.equal(customVoltageGrid.length, 101);
