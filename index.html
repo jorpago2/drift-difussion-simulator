@@ -199,28 +199,16 @@
           </details>
         </section>
 
-        <section id="resultsArea" class="results-area" aria-labelledby="resultsTitle">
-          <div class="results-toolbar">
-            <div>
-              <p class="section-label">Simulation dashboard</p>
-              <h2 id="resultsTitle" tabindex="-1">PN diode dashboard</h2>
-            </div>
-          </div>
+        <section id="resultsArea" class="results-area" aria-labelledby="jvSectionTitle">
 
           <dl id="circuitMetrics" class="circuit-metrics" aria-label="Diode operating-point metrics"></dl>
-
-          <article id="resultExplanation" class="teaching-card result-explanation">
-            <span>Explain the result</span>
-            <h3>Read the I–V curve, then inspect the internal physics</h3>
-            <p>Start from current and operating region; use the barrier, carriers, and bands to explain their physical origin.</p>
-          </article>
 
           <div class="pn-results-dashboard">
             <section id="jvView" class="dashboard-section dashboard-primary dashboard-wide" aria-labelledby="jvSectionTitle">
               <header class="dashboard-section-heading plot-heading">
                 <div>
                   <span class="section-label">Terminal characteristic</span>
-                  <h3 id="jvSectionTitle">Diode I–V curve</h3>
+                  <h3 id="jvSectionTitle" tabindex="-1">Diode I–V curve</h3>
                 </div>
                 <label class="plot-scale-toggle" for="jvLogScaleInput">
                   <input id="jvLogScaleInput" type="checkbox">
@@ -237,6 +225,53 @@
               </div>
             </section>
 
+            <details class="dashboard-section dashboard-wide validation-view physics-view">
+              <summary class="validation-summary">
+                <span class="section-label">Optional analysis</span>
+                <h3>Internal device profiles</h3>
+                <small>Potential, field, charge, carriers, and bands</small>
+              </summary>
+              <div class="physics-content">
+                <section id="electrostaticsView" class="profile-group" aria-labelledby="electrostaticsSectionTitle">
+                  <header class="dashboard-section-heading">
+                    <span class="section-label">Electrostatics</span>
+                    <h3 id="electrostaticsSectionTitle">Barrier, field, and charge</h3>
+                  </header>
+                  <div class="plot-grid">
+                    <figure class="plot-card plot-wide" data-plot-state="empty" data-plot-message="Awaiting solution">
+                      <canvas id="potentialCanvas" width="960" height="330" aria-label="Electrostatic potential profile"></canvas>
+                      <figcaption>Electrostatic potential ψ(x): read the junction barrier from the contact-to-contact drop.</figcaption>
+                    </figure>
+                    <figure class="plot-card" data-plot-state="empty" data-plot-message="Awaiting solution">
+                      <canvas id="fieldCanvas" width="640" height="300" aria-label="Electric-field profile"></canvas>
+                      <figcaption>Electric field E(x): direction and peak field inside the depletion region.</figcaption>
+                    </figure>
+                    <figure class="plot-card" data-plot-state="empty" data-plot-message="Awaiting solution">
+                      <canvas id="chargeCanvas" width="640" height="300" aria-label="Charge-density profile"></canvas>
+                      <figcaption>Charge density ρ(x): exposed ionized dopants that sustain the field.</figcaption>
+                    </figure>
+                  </div>
+                </section>
+
+                <section id="carriersView" class="profile-group" aria-labelledby="carriersSectionTitle">
+                  <header class="dashboard-section-heading">
+                    <span class="section-label">Transport</span>
+                    <h3 id="carriersSectionTitle">Carriers and energy bands</h3>
+                  </header>
+                  <div class="plot-grid">
+                    <figure class="plot-card" data-plot-state="empty" data-plot-message="Awaiting solution">
+                      <canvas id="carrierCanvas" width="960" height="350" aria-label="Electron, hole, and doping profiles"></canvas>
+                      <figcaption>Carrier densities and doping on a logarithmic scale.</figcaption>
+                    </figure>
+                    <figure class="plot-card" data-plot-state="empty" data-plot-message="Awaiting solution">
+                      <canvas id="bandCanvas" width="960" height="350" aria-label="Band diagram and quasi-Fermi levels"></canvas>
+                      <figcaption>Band edges and quasi-Fermi levels: connect barrier bending to carrier transport.</figcaption>
+                    </figure>
+                  </div>
+                </section>
+              </div>
+            </details>
+
             <details id="validationView" class="dashboard-section dashboard-wide dashboard-validation validation-view">
               <summary class="validation-summary">
                 <span class="section-label">Optional diagnostics</span>
@@ -252,52 +287,17 @@
                 </div>
               </div>
             </details>
-
-            <section id="electrostaticsView" class="dashboard-section dashboard-wide" aria-labelledby="electrostaticsSectionTitle">
-              <header class="dashboard-section-heading">
-                <span class="section-label">Internal electrostatics</span>
-                <h3 id="electrostaticsSectionTitle">Barrier, field, and charge</h3>
-              </header>
-              <div class="plot-grid">
-                <figure class="plot-card plot-wide" data-plot-state="empty" data-plot-message="Awaiting solution">
-                  <canvas id="potentialCanvas" width="960" height="330" aria-label="Electrostatic potential profile"></canvas>
-                  <figcaption>Electrostatic potential ψ(x): read the junction barrier from the contact-to-contact drop.</figcaption>
-                </figure>
-                <figure class="plot-card" data-plot-state="empty" data-plot-message="Awaiting solution">
-                  <canvas id="fieldCanvas" width="640" height="300" aria-label="Electric-field profile"></canvas>
-                  <figcaption>Electric field E(x): direction and peak field inside the depletion region.</figcaption>
-                </figure>
-                <figure class="plot-card" data-plot-state="empty" data-plot-message="Awaiting solution">
-                  <canvas id="chargeCanvas" width="640" height="300" aria-label="Charge-density profile"></canvas>
-                  <figcaption>Charge density ρ(x): exposed ionized dopants that sustain the field.</figcaption>
-                </figure>
-              </div>
-            </section>
-
-            <section id="carriersView" class="dashboard-section dashboard-wide" aria-labelledby="carriersSectionTitle">
-              <header class="dashboard-section-heading">
-                <span class="section-label">Transport picture</span>
-                <h3 id="carriersSectionTitle">Carriers and energy bands</h3>
-              </header>
-              <div class="plot-grid">
-                <figure class="plot-card" data-plot-state="empty" data-plot-message="Awaiting solution">
-                  <canvas id="carrierCanvas" width="960" height="350" aria-label="Electron, hole, and doping profiles"></canvas>
-                  <figcaption>Carrier densities and doping on a logarithmic scale.</figcaption>
-                </figure>
-                <figure class="plot-card" data-plot-state="empty" data-plot-message="Awaiting solution">
-                  <canvas id="bandCanvas" width="960" height="350" aria-label="Band diagram and quasi-Fermi levels"></canvas>
-                  <figcaption>Band edges and quasi-Fermi levels: connect barrier bending to carrier transport.</figcaption>
-                </figure>
-              </div>
-            </section>
           </div>
 
           <footer class="result-footer">
-            <div class="export-row result-exports">
-              <button id="exportProfileCsvButton" type="button" disabled>Export profile CSV</button>
-              <button id="exportSweepCsvButton" type="button" disabled>Export I–V CSV</button>
-              <button id="exportPngButton" type="button" disabled>Export I–V PNG</button>
-            </div>
+            <details class="result-tools">
+              <summary>Export results</summary>
+              <div class="export-row result-exports">
+                <button id="exportProfileCsvButton" type="button" disabled>Profile CSV</button>
+                <button id="exportSweepCsvButton" type="button" disabled>I–V CSV</button>
+                <button id="exportPngButton" type="button" disabled>I–V PNG</button>
+              </div>
+            </details>
             <output id="cursorReadout" class="cursor-readout" aria-live="polite">Tap or move over a plot to inspect the profile.</output>
           </footer>
         </section>

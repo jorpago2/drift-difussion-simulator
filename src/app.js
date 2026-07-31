@@ -20,19 +20,16 @@ const LESSONS = Object.freeze({
     biasV: 0,
     kicker: "Thermal equilibrium",
     title: "PN junction at equilibrium",
-    result: "Verify that the Fermi level is flat, the total current is zero, and the electrostatic drop matches the built-in potential.",
   },
   forward: {
     biasV: 0.6,
     kicker: "Forward bias",
     title: "Forward-biased PN junction",
-    result: "Relate the reduced band bending to increased minority carriers, SRH recombination, and current density.",
   },
   reverse: {
     biasV: -0.5,
     kicker: "Reverse bias",
     title: "Reverse-biased PN junction",
-    result: "Verify the increased field and net generation in the depletion region without interpreting the curve as a breakdown model.",
   },
 });
 
@@ -40,9 +37,9 @@ const dom = Object.fromEntries([
   "globalStatus", "openPanelButton", "panelButtonIcon", "controlPanel",
   "lessonKicker", "workspaceTitle", "biasBadge", "pDopingLabel", "nDopingLabel",
   "depletionZone", "preflightSummary", "resultsArea", "lessonSelect", "acceptorInput", "donorInput",
-  "deviceAreaInput", "jvPointCountInput", "circuitMetrics", "resultsTitle",
+  "deviceAreaInput", "jvPointCountInput", "circuitMetrics", "jvSectionTitle",
   "biasInput", "lengthInput", "cellsInput", "electronLifetimeInput", "holeLifetimeInput",
-  "preflightDetails", "derivedMetrics", "solveButton", "solverMessage", "resultExplanation",
+  "preflightDetails", "derivedMetrics", "solveButton", "solverMessage",
   "generateJvButton", "sweepMessage", "jvLogScaleInput",
   "validationBanner", "validationMetrics", "warningList", "exportProfileCsvButton", "exportSweepCsvButton", "exportPngButton", "cursorReadout",
   "potentialCanvas", "fieldCanvas", "chargeCanvas", "carrierCanvas", "bandCanvas", "jvCanvas",
@@ -160,14 +157,8 @@ function applyLesson(name, invalidate) {
   dom.biasInput.value = String(lesson.biasV);
   dom.lessonKicker.textContent = lesson.kicker;
   dom.workspaceTitle.textContent = lesson.title;
-  setTeachingExplanation(lesson.result);
   if (invalidate) invalidateResults();
   updatePreflight();
-}
-
-function setTeachingExplanation(text) {
-  const paragraph = dom.resultExplanation.querySelector("p");
-  if (paragraph) paragraph.textContent = text;
 }
 
 function readConfig() {
@@ -249,12 +240,10 @@ function renderEmptyDashboard(message = "Awaiting a converged solution") {
     setPlotState(canvas, "empty", message);
   }
   renderMetricList(dom.circuitMetrics, [
-    ["Operating region", "—"],
-    ["Operating voltage", "—"],
-    ["Terminal current", "—"],
-    ["Current density", "—"],
+    ["V_D", "—"],
+    ["I_D", "—"],
+    ["J_D", "—"],
     ["Small-signal r_d", "—"],
-    ["Defined area", "—"],
   ]);
   renderMetricList(dom.validationMetrics, [
     ["Status", "Not solved"],
@@ -333,7 +322,7 @@ function revealMobileResults() {
   if (dockedPanelMedia.matches) return;
   requestAnimationFrame(() => {
     dom.resultsArea.scrollIntoView({ behavior: "auto", block: "start" });
-    dom.resultsTitle.focus({ preventScroll: true });
+    dom.jvSectionTitle.focus({ preventScroll: true });
   });
 }
 
@@ -488,7 +477,6 @@ function renderJv(sweep) {
 function renderCircuitMetrics(result, sweep) {
   const currentA = result.diagnostics.meanCurrentDensityAm2 * result.derived.deviceAreaM2;
   const biasV = result.config.biasV;
-  const region = biasV > 1e-12 ? "Forward bias" : biasV < -1e-12 ? "Reverse bias" : "Equilibrium";
   let dynamicResistance = "Available after I–V sweep";
   if (sweep?.converged) {
     let index = 0;
@@ -506,12 +494,10 @@ function renderCircuitMetrics(result, sweep) {
     }
   }
   renderMetricList(dom.circuitMetrics, [
-    ["Operating region", region],
-    ["Operating voltage", `${formatFixed(biasV, 3)} V`],
-    ["Terminal current", formatNearZero(currentA * 1e3, 1e-12, "mA")],
-    ["Current density", formatNearZero(result.diagnostics.meanCurrentDensityAm2 / 1e4, 1e-15, "A/cm²")],
+    ["V_D", `${formatFixed(biasV, 3)} V`],
+    ["I_D", formatNearZero(currentA * 1e3, 1e-12, "mA")],
+    ["J_D", formatNearZero(result.diagnostics.meanCurrentDensityAm2 / 1e4, 1e-15, "A/cm²")],
     ["Small-signal r_d", dynamicResistance],
-    ["Defined area", `${formatScientific(result.config.deviceAreaUm2)} µm²`],
   ]);
 }
 
