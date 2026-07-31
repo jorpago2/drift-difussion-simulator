@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import {
   DEFAULT_PN_CONFIG,
   bernoulli,
+  createPnVoltageGrid,
   neutralCarrierPair,
   serializePnProfileCsv,
   serializePnSweepCsv,
@@ -19,6 +20,9 @@ const pnStyles = await readFile(new URL("../styles.css", import.meta.url), "utf8
 assert.match(pnHtml, /id="resultsArea" class="results-area" aria-labelledby=/);
 assert.match(pnHtml, /<details id="validationView"[^>]*dashboard-validation/);
 assert.match(pnHtml, /id="jvView"[^>]*dashboard-primary dashboard-wide/);
+assert.match(pnHtml, /id="jvLogScaleInput" type="checkbox"/);
+assert.match(pnHtml, /id="jvPointCountInput"[^>]*min="17" max="201"[^>]*value="67"/);
+assert.match(pnApp, /logScale \? Float64Array\.from\(current, Math\.abs\) : current/);
 assert.match(pnHtml, /class="space-charge space-charge-p"/);
 assert.match(pnHtml, /class="space-charge space-charge-n"/);
 assert.equal(pnHtml.match(/data-plot-state="empty"/g)?.length, 6);
@@ -32,6 +36,15 @@ const currentScale = createNiceScale([-1e-12, 2.9], 7, true);
 assert.deepEqual(currentScale.ticks, [0, 0.5, 1, 1.5, 2, 2.5, 3]);
 assert.equal(formatChartTick(-0.75, voltageScale.step), "-0.75");
 assert.equal(formatChartTick(0, voltageScale.step), "0");
+assert.equal(formatChartTick(1e-15), "1.0e-15");
+
+const customVoltageGrid = createPnVoltageGrid(101);
+assert.equal(customVoltageGrid.length, 101);
+assert.equal(customVoltageGrid[0], -1);
+assert.equal(customVoltageGrid.at(-1), 0.65);
+assert.ok(customVoltageGrid.includes(0));
+assert.ok(customVoltageGrid.every((value, index) => index === 0 || value > customVoltageGrid[index - 1]));
+assert.throws(() => createPnVoltageGrid(Number.NaN), /pointCount/);
 
 const scientificLabelCalls = [];
 const scientificLabelContext = {

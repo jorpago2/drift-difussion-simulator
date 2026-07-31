@@ -1636,6 +1636,29 @@ sub {
   font-size: 1.05rem;
 }
 
+.plot-heading {
+  display: flex;
+  gap: 0.75rem;
+  align-items: end;
+  justify-content: space-between;
+}
+
+.plot-scale-toggle {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.plot-scale-toggle input {
+  margin: 0;
+  accent-color: var(--accent);
+}
+
 #electrostaticsView .plot-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -2016,6 +2039,10 @@ sub {
 
   .pn-device-overview .device-schematic {
     min-height: 8.5rem;
+  }
+
+  .plot-heading {
+    align-items: center;
   }
 
   .charge-region-label,

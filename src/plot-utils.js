@@ -27,7 +27,7 @@ export function createNiceScale(values, targetTickCount = 7, includeZero = false
 
 export function formatChartTick(value, step = 0) {
   if (!Number.isFinite(value)) return "–";
-  if (Math.abs(value) < Number.EPSILON * 10) return "0";
+  if (value === 0) return "0";
   const absolute = Math.abs(value);
   if (absolute >= 1e4 || absolute < 1e-3) return value.toExponential(1).replace("e+", "e");
   if (!step) return Number(value.toPrecision(3)).toString();

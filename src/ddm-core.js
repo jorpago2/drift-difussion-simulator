@@ -796,6 +796,23 @@ const PN_LIMITS = Object.freeze({
 
 const PN_CONTINUATION_STEP_V = 0.025;
 
+export function createPnVoltageGrid(pointCount = 67, minimumV = -1, maximumV = 0.65) {
+  if (!Number.isInteger(pointCount) || pointCount < 3 || pointCount > 2001) {
+    throw new RangeError("pointCount must be an integer between 3 and 2001.");
+  }
+  if (!Number.isFinite(minimumV) || !Number.isFinite(maximumV) || minimumV >= 0 || maximumV <= 0) {
+    throw new RangeError("The voltage grid must span a finite negative-to-positive interval.");
+  }
+  const intervals = pointCount - 1;
+  const negativeIntervals = Math.max(1, Math.min(intervals - 1,
+    Math.round(intervals * Math.abs(minimumV) / (maximumV - minimumV))));
+  const positiveIntervals = intervals - negativeIntervals;
+  const negative = Array.from({ length: negativeIntervals + 1 }, (_, index) =>
+    index === negativeIntervals ? 0 : minimumV + Math.abs(minimumV) * index / negativeIntervals);
+  const positive = Array.from({ length: positiveIntervals }, (_, index) => maximumV * (index + 1) / positiveIntervals);
+  return negative.concat(positive);
+}
+
 export function validatePnConfig(input = {}) {
   const config = { ...DEFAULT_PN_CONFIG, ...input };
   const errors = [];
@@ -923,7 +940,7 @@ export function solvePnJunction1D(input = {}, previousSolution = null) {
 export function sweepPnJunction(input = {}, voltages = null) {
   const validation = validatePnConfig(input);
   if (validation.errors.length) throw new RangeError(validation.errors.join(" "));
-  const requested = voltages ?? Array.from({ length: 67 }, (_, index) => -1 + index * 0.025);
+  const requested = voltages ?? createPnVoltageGrid();
   const unique = [...new Set(requested.map(Number))].sort((a, b) => a - b);
   for (const voltage of unique) {
     if (!Number.isFinite(voltage) || voltage < PN_LIMITS.biasV[0] || voltage > PN_LIMITS.biasV[1]) {

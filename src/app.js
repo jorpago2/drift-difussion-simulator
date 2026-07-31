@@ -1,5 +1,6 @@
 import {
   DEFAULT_PN_CONFIG,
+  createPnVoltageGrid,
   serializePnProfileCsv,
   serializePnSweepCsv,
   shockleyReferenceCurrentDensity,
@@ -39,10 +40,10 @@ const dom = Object.fromEntries([
   "globalStatus", "openPanelButton", "panelButtonIcon", "controlPanel",
   "lessonKicker", "workspaceTitle", "biasBadge", "pDopingLabel", "nDopingLabel",
   "depletionZone", "preflightSummary", "resultsArea", "lessonSelect", "acceptorInput", "donorInput",
-  "deviceAreaInput", "circuitMetrics", "resultsTitle",
+  "deviceAreaInput", "jvPointCountInput", "circuitMetrics", "resultsTitle",
   "biasInput", "lengthInput", "cellsInput", "electronLifetimeInput", "holeLifetimeInput",
   "preflightDetails", "derivedMetrics", "solveButton", "solverMessage", "resultExplanation",
-  "generateJvButton", "sweepMessage",
+  "generateJvButton", "sweepMessage", "jvLogScaleInput",
   "validationBanner", "validationMetrics", "warningList", "exportProfileCsvButton", "exportSweepCsvButton", "exportPngButton", "cursorReadout",
   "potentialCanvas", "fieldCanvas", "chargeCanvas", "carrierCanvas", "bandCanvas", "jvCanvas",
 ].map((id) => [id, requireElement(id)]));
@@ -107,6 +108,10 @@ function bindEvents() {
   }
   dom.solveButton.addEventListener("click", solveCurrentConfiguration);
   dom.generateJvButton.addEventListener("click", generateJvSweep);
+  dom.jvPointCountInput.addEventListener("change", invalidateJvSweep);
+  dom.jvLogScaleInput.addEventListener("change", () => {
+    if (currentSweep?.converged) renderJv(currentSweep);
+  });
   dom.exportProfileCsvButton.addEventListener("click", exportProfileCsv);
   dom.exportSweepCsvButton.addEventListener("click", exportSweepCsv);
   dom.exportPngButton.addEventListener("click", exportPng);
@@ -225,6 +230,17 @@ function invalidateResults() {
   updateExportState();
 }
 
+function invalidateJvSweep() {
+  currentSweep = null;
+  if (!currentResult?.diagnostics.converged) return;
+  chartRegistry.delete(dom.jvCanvas);
+  dom.jvCanvas.getContext("2d")?.clearRect(0, 0, dom.jvCanvas.width, dom.jvCanvas.height);
+  setPlotState(dom.jvCanvas, "empty", "Recalculate for the selected point count");
+  dom.sweepMessage.textContent = "Recalculate the I–V curve to apply the new point count.";
+  renderCircuitMetrics(currentResult, null);
+  updateExportState();
+}
+
 function renderEmptyDashboard(message = "Awaiting a converged solution") {
   chartRegistry.clear();
   for (const canvas of plotCanvases) {
@@ -286,7 +302,7 @@ async function solveCurrentConfiguration() {
       setMessage(dom.solverMessage, result.diagnostics.failureReason || "The solver did not converge.", "error");
     } else {
       dom.generateJvButton.disabled = false;
-      setPlotState(dom.jvCanvas, "loading", "Calculating 67 points…");
+      setPlotState(dom.jvCanvas, "loading", "Calculating the I–V sweep…");
       dom.sweepMessage.textContent = "Preparing the I–V characteristic…";
       renderResult(result);
       renderValidation(result);
@@ -373,15 +389,21 @@ function renderResult(result) {
 
 async function generateJvSweep() {
   if (solving || !currentResult?.diagnostics.converged) return;
+  const pointCount = Number(dom.jvPointCountInput.value);
+  if (!Number.isInteger(pointCount) || pointCount < 17 || pointCount > 201) {
+    setMessage(dom.sweepMessage, "I–V sweep points must be an integer between 17 and 201.", "error");
+    return;
+  }
   solving = true;
   dom.generateJvButton.disabled = true;
-  setPlotState(dom.jvCanvas, "loading", "Calculating 67 points…");
+  dom.jvPointCountInput.disabled = true;
+  setPlotState(dom.jvCanvas, "loading", `Calculating ${pointCount} points…`);
   updateGlobalStatus("I–V sweep…", "solving");
   setMessage(dom.sweepMessage, "Preparing equilibrium for the sweep…", "warning");
 
   try {
     const baseConfig = { ...readConfig(), biasV: 0 };
-    const voltages = Array.from({ length: 67 }, (_, index) => Number((-1 + index * 0.025).toFixed(3)));
+    const voltages = createPnVoltageGrid(pointCount);
     const results = new Map();
     const equilibrium = solvePnJunction1D(baseConfig);
     results.set(0, equilibrium);
@@ -396,7 +418,7 @@ async function generateJvSweep() {
         previous = solvePnJunction1D({ ...baseConfig, biasV: voltage }, previous);
         results.set(voltage, previous);
         solved += 1;
-        setMessage(dom.sweepMessage, `Solving I–V: ${solved}/67 points…`, "warning");
+        setMessage(dom.sweepMessage, `Solving I–V: ${solved}/${pointCount} points…`, "warning");
         await nextPaint();
         if (!previous.diagnostics.converged) break;
       }
@@ -426,7 +448,7 @@ async function generateJvSweep() {
     renderJv(currentSweep);
     renderCircuitMetrics(currentResult, currentSweep);
     updateGlobalStatus("I–V converged", "converged");
-    setMessage(dom.sweepMessage, "67 points converged from −1.00 to 0.65 V.", "ready");
+    setMessage(dom.sweepMessage, `${pointCount} points converged from −1.00 to 0.65 V.`, "ready");
   } catch (error) {
     currentSweep = null;
     setPlotState(dom.jvCanvas, "error", "I–V sweep did not converge");
@@ -435,6 +457,7 @@ async function generateJvSweep() {
   } finally {
     solving = false;
     dom.generateJvButton.disabled = !currentResult?.diagnostics.converged;
+    dom.jvPointCountInput.disabled = false;
     updateExportState();
   }
 }
@@ -446,14 +469,16 @@ function renderJv(sweep) {
   const reference = Float64Array.from(sweep.points, (point) =>
     point.shockleyCurrentDensityAm2 == null ? NaN : point.shockleyCurrentDensityAm2 * areaM2 * 1e3,
   );
+  const logScale = dom.jvLogScaleInput.checked;
   drawLineChart(dom.jvCanvas, {
     x: voltage,
     xLabel: "V_D (V)",
-    yLabel: "I_D (mA)",
-    includeZero: true,
+    yLabel: logScale ? "|I_D| (mA)" : "I_D (mA)",
+    includeZero: !logScale,
+    transform: logScale ? logTransform() : undefined,
     series: [
-      { label: "DD + SRH", values: current, color: "#087e8b" },
-      { label: "Finite-base diode", values: reference, color: "#ca7b00", dash: [7, 4] },
+      { label: "DD + SRH", values: logScale ? Float64Array.from(current, Math.abs) : current, color: "#087e8b" },
+      { label: "Finite-base diode", values: logScale ? Float64Array.from(reference, Math.abs) : reference, color: "#ca7b00", dash: [7, 4] },
     ],
   });
   chartRegistry.set(dom.jvCanvas, { type: "sweep", x: voltage });
