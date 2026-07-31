@@ -200,7 +200,7 @@
             <section id="jvView" class="dashboard-section dashboard-primary dashboard-wide" aria-labelledby="jvSectionTitle">
               <div class="jv-layout">
                 <figure id="jvFigure" class="plot-card" data-plot-state="empty" data-plot-message="Awaiting solution">
-                  <canvas id="jvCanvas" width="760" height="540" tabindex="0" aria-label="Interactive diode current versus voltage" aria-describedby="jvInteractionHelp jvDescription"></canvas>
+                  <canvas id="jvCanvas" width="760" height="540" tabindex="0" aria-label="Interactive diode current versus voltage" aria-describedby="jvInteractionHelp"></canvas>
                 </figure>
                 <aside class="jv-side-panel" aria-label="I–V plot controls and selected operating point">
                   <header class="dashboard-section-heading">
@@ -231,8 +231,8 @@
                   </label>
                   </div>
 
-                  <fieldset class="axis-limits">
-                    <legend>Visible axis limits</legend>
+                  <details class="axis-limits">
+                    <summary>Axis limits <output id="plotViewportMessage" aria-live="polite">Auto</output></summary>
                     <div class="axis-limit-grid">
                       <label>X min <input id="xAxisMinInput" type="number" step="any" placeholder="Auto"></label>
                       <label>X max <input id="xAxisMaxInput" type="number" step="any" placeholder="Auto"></label>
@@ -240,17 +240,14 @@
                       <label>Y max <input id="yAxisMaxInput" type="number" step="any" placeholder="Auto"></label>
                     </div>
                     <button id="resetPlotViewButton" type="button">Reset view</button>
-                    <output id="plotViewportMessage" class="axis-message" aria-live="polite">Automatic limits</output>
-                  </fieldset>
+                  </details>
 
-                  <p id="jvInteractionHelp" class="interaction-help">Wheel or trackpad: zoom · drag: pan · Home: reset</p>
+                  <p id="jvInteractionHelp" class="interaction-help">Wheel: zoom · drag: pan · Home: reset</p>
 
                   <label class="profile-point-control" for="profilePointInput">
                     <span>Inspect profiles at <output id="profileVoltageOutput">—</output></span>
                     <input id="profilePointInput" type="range" min="0" max="1" value="0" step="1" disabled>
                   </label>
-                  <output id="sweepMessage" class="solver-message" aria-live="polite">Calculate the I–V sweep first.</output>
-                  <p id="jvDescription" class="plot-note">Solid: drift–diffusion with SRH. Dashed: finite-base analytical reference in its low-injection range.</p>
                 </aside>
               </div>
             </section>

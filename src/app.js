@@ -22,7 +22,7 @@ const dom = Object.fromEntries([
   "acceptorInput", "donorInput", "minimumBiasInput", "maximumBiasInput", "jvPointCountInput",
   "deviceAreaInput", "circuitMetrics", "jvSectionTitle", "lengthInput", "cellsInput", "electronLifetimeInput", "holeLifetimeInput",
   "preflightDetails", "derivedMetrics", "solveButton", "solverMessage",
-  "sweepMessage", "jvQuantitySelect", "jvScaleSelect", "jvReferenceInput", "profilePointInput", "profileVoltageOutput",
+  "jvQuantitySelect", "jvScaleSelect", "jvReferenceInput", "profilePointInput", "profileVoltageOutput",
   "xAxisMinInput", "xAxisMaxInput", "yAxisMinInput", "yAxisMaxInput", "resetPlotViewButton", "plotViewportMessage",
   "validationBanner", "validationMetrics", "warningList", "exportProfileCsvButton", "exportSweepCsvButton", "exportPngButton", "cursorReadout",
   "potentialCanvas", "fieldCanvas", "chargeCanvas", "carrierCanvas", "bandCanvas", "jvCanvas",
@@ -273,7 +273,6 @@ function renderEmptyDashboard(message = "Awaiting a converged solution") {
     ["Mesh", "—"],
   ]);
   replaceList(dom.warningList, []);
-  dom.sweepMessage.textContent = "Calculate the I–V sweep first.";
   setMessage(dom.validationBanner, "PENDING — solve to evaluate residuals and conservation.", "idle");
 }
 
@@ -301,7 +300,6 @@ async function solveVoltageSweep() {
   updateGlobalStatus("I–V sweep…", "solving");
   setPlotState(dom.jvCanvas, "loading", `Calculating ${sweepDefinition.pointCount} points…`);
   setMessage(dom.solverMessage, "Solving equilibrium and continuing toward both voltage limits…", "warning");
-  setMessage(dom.sweepMessage, "Preparing equilibrium for the sweep…", "warning");
   await nextPaint();
 
   try {
@@ -328,7 +326,7 @@ async function solveVoltageSweep() {
         previous = solvePnJunction1D({ ...baseConfig, biasV: voltage }, previous);
         results.set(voltage, previous);
         solved += 1;
-        setMessage(dom.sweepMessage, `Solving I–V: ${solved}/${sweepDefinition.pointCount} points…`, "warning");
+        setMessage(dom.solverMessage, `Solving I–V: ${solved}/${sweepDefinition.pointCount} points…`, "warning");
         await nextPaint();
         if (!previous.diagnostics.converged) break;
       }
@@ -366,7 +364,6 @@ async function solveVoltageSweep() {
       `${sweepDefinition.pointCount}-point sweep converged from ${formatFixed(sweepDefinition.minimumV, 3)} to ${formatFixed(sweepDefinition.maximumV, 3)} V.`,
       "ready",
     );
-    setMessage(dom.sweepMessage, "Move the slider or click the curve to inspect any solved voltage.", "ready");
     revealMobileResults();
   } catch (error) {
     currentResult = null;
@@ -507,7 +504,7 @@ function applyAxisLimits() {
     yMin: y.values?.[0] ?? null,
     yMax: y.values?.[1] ?? null,
   };
-  setAxisMessage(hasFiniteViewportPair("x") || hasFiniteViewportPair("y") ? "Manual limits" : "Automatic limits");
+  setAxisMessage(hasFiniteViewportPair("x") || hasFiniteViewportPair("y") ? "Manual" : "Auto");
   if (currentSweep?.converged) renderJv(currentSweep);
 }
 
@@ -531,7 +528,7 @@ function resetJvViewport(redraw) {
     input.value = "";
     input.setCustomValidity("");
   }
-  setAxisMessage("Automatic limits");
+  setAxisMessage("Auto");
   if (redraw && currentSweep?.converged) renderJv(currentSweep);
 }
 
@@ -901,7 +898,7 @@ function zoomJvPlot(event) {
       yScale.min,
       yScale.max,
       transform,
-      "Trackpad pan",
+      "Pan",
     );
     return;
   }
@@ -916,7 +913,7 @@ function zoomJvPlot(event) {
     yAnchor - (yAnchor - yScale.min) * factor,
     yAnchor + (yScale.max - yAnchor) * factor,
     transform,
-    "Interactive zoom",
+    "Zoom",
   );
 }
 
@@ -956,7 +953,7 @@ function moveJvPan(event) {
     jvPan.yMin + yShift,
     jvPan.yMax + yShift,
     jvPan.geometry.transform,
-    "Interactive pan",
+    "Pan",
   );
 }
 
@@ -1001,7 +998,7 @@ function navigateJvPlot(event) {
     return;
   }
   event.preventDefault();
-  setJvViewportFromScales(xMinimum, xMaximum, yMinimum, yMaximum, transform, "Keyboard view");
+  setJvViewportFromScales(xMinimum, xMaximum, yMinimum, yMaximum, transform, "Keyboard");
 }
 
 function chartPointFromEvent(event, geometry) {

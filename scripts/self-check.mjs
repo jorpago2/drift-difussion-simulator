@@ -33,6 +33,8 @@ assert.match(pnHtml, /id="profilePointInput"[^>]*type="range"/);
 assert.match(pnHtml, /id="xAxisMinInput"[^>]*placeholder="Auto"/);
 assert.match(pnHtml, /id="yAxisMaxInput"[^>]*placeholder="Auto"/);
 assert.match(pnHtml, /id="resetPlotViewButton"/);
+assert.match(pnHtml, /<details class="axis-limits">/);
+assert.doesNotMatch(pnHtml, /id="sweepMessage"|Move the slider/);
 assert.doesNotMatch(pnHtml, /id="biasInput"|id="generateJvButton"/);
 assert.match(pnApp, /async function solveVoltageSweep\(\)/);
 assert.match(pnApp, /addEventListener\("wheel", zoomJvPlot, \{ passive: false \}\)/);
