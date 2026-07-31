@@ -284,9 +284,17 @@ export function sweepNpnOutputFamily(
     Math.max(0, validation.config.baseEmitterVoltageV - 0.03),
     validation.config.baseEmitterVoltageV,
   ];
+  const normalizedBase = [...new Set(requestedBase.map(Number))].sort((left, right) => left - right);
+  if (!normalizedBase.length || normalizedBase.some((voltage) =>
+    !Number.isFinite(voltage) ||
+    voltage < LIMITS.baseEmitterVoltageV[0] || voltage > LIMITS.baseEmitterVoltageV[1])) {
+    throw new RangeError(
+      `VBE sweep values must be finite and within ${LIMITS.baseEmitterVoltageV[0]}-${LIMITS.baseEmitterVoltageV[1]} V.`,
+    );
+  }
   const curves = [];
   let previousAtZero = null;
-  for (const baseEmitterVoltageV of requestedBase) {
+  for (const baseEmitterVoltageV of normalizedBase) {
     const sweep = sweepNpnOutput(
       { ...validation.config, baseEmitterVoltageV },
       collectorVoltages,

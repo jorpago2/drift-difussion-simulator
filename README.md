@@ -167,9 +167,14 @@ hole SRH balance          < 1e-2
 The tolerances are looser than in 1D because terminal fluxes are integrated over
 a 2D contact boundary, but they are still checked independently. The default
 lateral teaching geometry has modest current gain; β is a computed outcome,
-not a fitted parameter. The IC–VCE family contains three VBE curves and nine
-fully converged VCE points per curve. A default browser sweep can take several
-minutes.
+not a fitted parameter. The browser treats a configurable VBE × VCE grid as the
+single primary calculation (five VBE curves and seven VCE points by default).
+Its main result is the IC–VCE output family; a linked IC–VBE transfer slice,
+terminal metrics, and optional 2D maps are all read from the same converged grid.
+Changing the selected curve or bias point does not run the solver again. Because
+VBE is held constant along each curve, this is a voltage-driven family rather
+than the constant-IB family often shown in introductory circuit texts. A default
+browser grid can take several minutes.
 
 Each IC–VCE curve also includes a dashed, parameter-derived 1D low-injection
 transport reference. It uses the minority-electron diffusion solution in the

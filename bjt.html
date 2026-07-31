@@ -32,39 +32,46 @@
       <details id="bjtControls" class="bjt-controls" open>
         <summary class="bjt-controls-toggle">
           <span>Device controls</span>
-          <small>Bias, doping, and solver</small>
+          <small>Bias grid, device, and solver</small>
         </summary>
         <div>
-          <span class="eyebrow">Three-terminal device</span>
-          <h2 id="bjtControlsTitle">NPN configuration</h2>
-          <p class="control-intro">Emitter and collector contacts are lateral; the base contact is on the top surface. Voltages use the emitter as reference.</p>
+          <span class="eyebrow">Output-characteristic sweep</span>
+          <h2 id="bjtControlsTitle">Configure the NPN</h2>
+          <p class="control-intro">Sweep a voltage-driven family of output curves. The emitter is the voltage reference.</p>
         </div>
 
         <form id="bjtForm">
-          <div class="input-grid">
+          <div class="input-grid bjt-bias-grid">
             <label>
-              <span class="label-text">V<sub>BE</sub> (V)</span>
-              <input id="bjtVbeInput" type="number" min="-0.2" max="0.75" step="0.025" value="0.55">
+              <span class="label-text">V<sub>BE,min</sub> (V)</span>
+              <input id="bjtVbeMinInput" type="number" min="-0.2" max="0.75" step="0.01" value="0.49">
             </label>
             <label>
-              <span class="label-text">V<sub>CE</sub> (V)</span>
-              <input id="bjtVceInput" type="number" min="-0.2" max="5" step="0.05" value="0.8">
+              <span class="label-text">V<sub>BE,max</sub> (V)</span>
+              <input id="bjtVbeMaxInput" type="number" min="-0.2" max="0.75" step="0.01" value="0.55">
+            </label>
+            <label>
+              <span class="label-text">V<sub>BE</sub> curves</span>
+              <input id="bjtBasePointCountInput" type="number" min="3" max="9" step="1" value="5">
+            </label>
+            <label>
+              <span class="label-text">V<sub>CE,max</sub> (V)</span>
+              <input id="bjtVceMaxInput" type="number" min="0.1" max="5" step="0.05" value="0.8">
+            </label>
+            <label>
+              <span class="label-text">V<sub>CE</sub> points</span>
+              <input id="bjtCollectorPointCountInput" type="number" min="5" max="21" step="1" value="7">
             </label>
           </div>
-          <label>
-            <span class="label-text">Emitter N<sub>D</sub> (cm⁻³)</span>
-            <input id="bjtEmitterDopingInput" type="number" min="1e14" max="5e17" step="any" value="8e15">
-          </label>
-          <label>
-            <span class="label-text">Base N<sub>A</sub> (cm⁻³)</span>
-            <input id="bjtBaseDopingInput" type="number" min="1e14" max="5e17" step="any" value="4e15">
-          </label>
-          <label>
-            <span class="label-text">Collector N<sub>D</sub> (cm⁻³)</span>
-            <input id="bjtCollectorDopingInput" type="number" min="1e14" max="5e17" step="any" value="1e15">
-          </label>
+          <small class="field-help">Each curve holds V<sub>BE</sub> constant while V<sub>CE</sub> runs from 0 V to V<sub>CE,max</sub>. This is voltage-driven, not a constant-I<sub>B</sub> family.</small>
+
           <details class="advanced-settings">
-            <summary>Geometry and numerical model</summary>
+            <summary>Doping, geometry, and numerics</summary>
+            <div class="bjt-doping-grid">
+              <label><span class="label-text">Emitter N<sub>D</sub> (cm⁻³)</span><input id="bjtEmitterDopingInput" type="number" min="1e14" max="5e17" step="any" value="8e15"></label>
+              <label><span class="label-text">Base N<sub>A</sub> (cm⁻³)</span><input id="bjtBaseDopingInput" type="number" min="1e14" max="5e17" step="any" value="4e15"></label>
+              <label><span class="label-text">Collector N<sub>D</sub> (cm⁻³)</span><input id="bjtCollectorDopingInput" type="number" min="1e14" max="5e17" step="any" value="1e15"></label>
+            </div>
             <div class="input-grid">
               <label>Length (µm)<input id="bjtLengthInput" type="number" min="1.5" max="10" step="0.1" value="2"></label>
               <label>Height (µm)<input id="bjtHeightInput" type="number" min="0.2" max="3" step="0.05" value="0.4"></label>
@@ -76,56 +83,24 @@
               <label><span class="label-text">τ<sub>n</sub> (s)</span><input id="bjtElectronLifetimeInput" type="number" min="1e-12" max="1e-3" step="any" value="1e-9"></label>
               <label><span class="label-text">τ<sub>p</sub> (s)</span><input id="bjtHoleLifetimeInput" type="number" min="1e-12" max="1e-3" step="any" value="1e-9"></label>
             </div>
+            <dl id="bjtDerivedMetrics" class="metric-list"></dl>
           </details>
           <div id="bjtPreflight" class="message-box" data-state="ready"></div>
-          <dl id="bjtDerivedMetrics" class="metric-list"></dl>
-          <button id="bjtSolveButton" class="primary-button large-button" type="submit">Solve NPN operating point</button>
-          <output id="bjtSolverMessage" class="solver-message" aria-live="polite">The 2D solver has not been run.</output>
+          <button id="bjtSolveButton" class="primary-button large-button" type="submit">Calculate characteristic grid</button>
+          <output id="bjtSolverMessage" class="solver-message" aria-live="polite">Ready to calculate the NPN bias grid.</output>
         </form>
       </details>
 
-      <section class="bjt-workspace" aria-label="NPN results">
+      <section class="bjt-workspace" aria-label="NPN transistor laboratory">
         <div class="workspace-heading">
           <div>
-            <span class="eyebrow">Lateral silicon BJT</span>
-            <h2 id="bjtWorkspaceTitle">Predict the operating region</h2>
+            <span class="eyebrow">Voltage-driven bias grid</span>
+            <h2 id="bjtWorkspaceTitle">NPN output and transfer characteristics</h2>
           </div>
-          <output id="bjtBiasBadge" class="bias-badge">V<sub>BE</sub> = 0.55 V · V<sub>CE</sub> = 0.80 V</output>
+          <output id="bjtBiasBadge" class="bias-badge">0.49 ≤ V<sub>BE</sub> ≤ 0.55 V · 0 ≤ V<sub>CE</sub> ≤ 0.80 V</output>
         </div>
 
-        <section id="bjtOverview" class="bjt-overview">
-          <figure class="component-cutaway">
-            <div class="cutaway-stage cutaway-bjt">
-              <img src="assets/device-cutaways/bjt-to92-cutaway-realistic.png" width="1536" height="1024" alt="Realistic section of a representative TO-92 NPN transistor with three isolated leads, a center collector paddle, backside die attach, and two top-side bond wires">
-              <span class="cutaway-marker marker-1" aria-hidden="true">1</span>
-              <span class="cutaway-marker marker-2" aria-hidden="true">2</span>
-              <span class="cutaway-marker marker-3" aria-hidden="true">3</span>
-              <span class="cutaway-marker marker-4" aria-hidden="true">4</span>
-              <span class="cutaway-marker marker-5" aria-hidden="true">5</span>
-              <span class="cutaway-marker marker-6" aria-hidden="true">6</span>
-              <span class="cutaway-marker marker-7" aria-hidden="true">7</span>
-              <span class="cutaway-marker marker-8" aria-hidden="true">8</span>
-            </div>
-            <figcaption class="cutaway-caption">
-              <div>
-                <p class="section-label">Representative construction</p>
-                <h3>Inside a discrete NPN transistor</h3>
-                <p class="cutaway-note">Realistic TO-92 reconstruction based on the <a href="https://assets.nexperia.com/documents/brochure/nexperia_BJT_Handbook_V2_240425_lowres.pdf">Nexperia vertical BJT process</a>. Lead frame and pin order vary by part.</p>
-              </div>
-              <ol class="cutaway-legend">
-                <li><span>1</span><strong>Molded package</strong></li>
-                <li><span>2</span><strong>Three isolated leads</strong></li>
-                <li><span>3</span><strong>Center collector paddle</strong></li>
-                <li><span>4</span><strong>Two bond wires</strong></li>
-                <li><span>5</span><strong>Silicon die</strong></li>
-                <li><span>6</span><strong>Emitter top pad</strong></li>
-                <li><span>7</span><strong>Base top pad</strong></li>
-                <li><span>8</span><strong>Backside metal and die attach</strong></li>
-              </ol>
-              <p class="model-bridge"><strong>Model boundary:</strong> doped regions are not optically visible. In the real die, emitter and base are formed at the top and collector current leaves through the backside. The solver below uses a distinct lateral teaching geometry.</p>
-            </figcaption>
-          </figure>
-          <p class="abstraction-step">Vertical discrete-device example <span aria-hidden="true">→</span> distinct lateral 2D model</p>
+        <section id="bjtOverview" class="bjt-overview bjt-overview-compact" aria-label="Lateral NPN structure">
           <div class="bjt-schematic" role="img" aria-label="Lateral NPN transistor with emitter and collector side contacts and a top base contact">
             <span class="bjt-contact bjt-contact-base">Base</span>
             <span class="bjt-contact bjt-contact-emitter">Emitter</span>
@@ -134,58 +109,98 @@
             <div class="bjt-region bjt-collector"><strong>N</strong><small>collector</small></div>
             <span class="bjt-contact bjt-contact-collector">Collector</span>
           </div>
-          <article class="teaching-card">
-            <span>Before solving</span>
-            <h3>Forward-active prediction</h3>
-            <p>With V<sub>BE</sub> forward biased and V<sub>CB</sub> reverse biased, electrons injected from the emitter should cross the thin base and be collected. Predict the signs of I<sub>C</sub>, I<sub>B</sub>, and I<sub>E</sub> before calculating them.</p>
-          </article>
+
+          <details class="overview-disclosure">
+            <summary>Real-device context and model boundary</summary>
+            <div class="overview-disclosure-content">
+              <figure class="component-cutaway">
+                <div class="cutaway-stage cutaway-bjt">
+                  <img src="assets/device-cutaways/bjt-to92-cutaway-realistic.png" width="1536" height="1024" alt="Realistic section of a representative TO-92 NPN transistor with three isolated leads, a center collector paddle, backside die attach, and two top-side bond wires">
+                  <span class="cutaway-marker marker-1" aria-hidden="true">1</span><span class="cutaway-marker marker-2" aria-hidden="true">2</span>
+                  <span class="cutaway-marker marker-3" aria-hidden="true">3</span><span class="cutaway-marker marker-4" aria-hidden="true">4</span>
+                  <span class="cutaway-marker marker-5" aria-hidden="true">5</span><span class="cutaway-marker marker-6" aria-hidden="true">6</span>
+                  <span class="cutaway-marker marker-7" aria-hidden="true">7</span><span class="cutaway-marker marker-8" aria-hidden="true">8</span>
+                </div>
+                <figcaption class="cutaway-caption">
+                  <div><p class="section-label">Representative construction</p><h3>Inside a discrete NPN transistor</h3></div>
+                  <ol class="cutaway-legend">
+                    <li><span>1</span><strong>Molded package</strong></li><li><span>2</span><strong>Three isolated leads</strong></li>
+                    <li><span>3</span><strong>Collector paddle</strong></li><li><span>4</span><strong>Two bond wires</strong></li>
+                    <li><span>5</span><strong>Silicon die</strong></li><li><span>6</span><strong>Emitter pad</strong></li>
+                    <li><span>7</span><strong>Base pad</strong></li><li><span>8</span><strong>Backside metal</strong></li>
+                  </ol>
+                  <p class="model-bridge"><strong>Model boundary:</strong> a real discrete BJT is usually vertical. The solver uses a distinct lateral 2D teaching geometry and does not predict a specific packaged transistor.</p>
+                </figcaption>
+              </figure>
+            </div>
+          </details>
         </section>
 
-        <section id="bjtResults" class="results-area" hidden aria-labelledby="bjtResultsTitle">
-          <div class="results-toolbar">
-            <div>
-              <p class="section-label">Converged three-terminal solution</p>
-              <h2 id="bjtResultsTitle" tabindex="-1">Electrical behavior</h2>
-            </div>
-            <div class="view-tabs" role="tablist" aria-label="NPN result views">
-              <button id="bjtOutputTab" type="button" role="tab" aria-selected="true" aria-controls="bjtOutputView" data-bjt-view="output">Output characteristics</button>
-              <button id="bjtMapsTab" type="button" role="tab" aria-selected="false" aria-controls="bjtMapsView" data-bjt-view="maps">2D maps</button>
-              <button id="bjtValidationTab" type="button" role="tab" aria-selected="false" aria-controls="bjtValidationView" data-bjt-view="validation">Validate</button>
-            </div>
-          </div>
-          <dl id="bjtCircuitMetrics" class="circuit-metrics" aria-label="NPN operating-point metrics"></dl>
+        <section id="bjtResults" class="results-area" aria-labelledby="bjtResultsTitle">
+          <div class="bjt-results-dashboard">
+            <section id="bjtOutputView" class="dashboard-section dashboard-primary dashboard-wide" aria-labelledby="bjtResultsTitle">
+              <div class="bjt-characteristic-layout">
+                <figure id="bjtOutputFigure" class="plot-card" data-plot-state="empty" data-plot-message="Awaiting a converged characteristic grid">
+                  <canvas id="bjtOutputCanvas" width="760" height="520" aria-label="NPN collector current versus collector-emitter voltage"></canvas>
+                </figure>
 
-          <div id="bjtOutputView" class="result-view" role="tabpanel" aria-labelledby="bjtOutputTab">
-            <div id="bjtSweepEmpty" class="jv-empty">
-              <h3>Generate the transistor output family</h3>
-              <p>Three V<sub>BE</sub> values are solved self-consistently from V<sub>CE</sub> = 0 to the selected collector voltage. A default desktop run can take several minutes.</p>
-              <button id="bjtSweepButton" class="primary-button" type="button">Calculate I<sub>C</sub>–V<sub>CE</sub> family</button>
-            </div>
-            <figure id="bjtOutputFigure" class="plot-card plot-wide" hidden>
-              <canvas id="bjtOutputCanvas" width="960" height="480" aria-label="NPN collector current versus collector-emitter voltage with an ideal analytical transport comparison"></canvas>
-              <figcaption>Solid: converged 2D drift–diffusion with SRH. Dashed: parameter-derived ideal 1D low-injection transport, shown only while a neutral base remains; no fitting, base recombination, or high-field effects.</figcaption>
-            </figure>
-          </div>
+                <aside class="bjt-characteristic-panel" aria-label="Transfer characteristic and selected operating point">
+                  <header class="dashboard-section-heading">
+                    <span class="section-label">Terminal behavior</span>
+                    <h2 id="bjtResultsTitle" tabindex="-1">NPN characteristics</h2>
+                  </header>
 
-          <div id="bjtMapsView" class="result-view" role="tabpanel" aria-labelledby="bjtMapsTab" hidden>
-            <div class="bjt-map-grid">
-              <figure class="plot-card"><canvas id="bjtPotentialCanvas" width="760" height="320" aria-label="Two-dimensional electrostatic potential"></canvas><figcaption>Electrostatic potential ψ(x,y)</figcaption></figure>
-              <figure class="plot-card"><canvas id="bjtElectronCanvas" width="760" height="320" aria-label="Two-dimensional electron density"></canvas><figcaption>log₁₀ electron density n(x,y)</figcaption></figure>
-              <figure class="plot-card"><canvas id="bjtCurrentCanvas" width="760" height="320" aria-label="Two-dimensional total current density magnitude"></canvas><figcaption>log₁₀ total current-density magnitude |J(x,y)|</figcaption></figure>
-              <figure class="plot-card"><canvas id="bjtRecombinationCanvas" width="760" height="320" aria-label="Two-dimensional SRH recombination"></canvas><figcaption>Signed SRH recombination R(x,y)</figcaption></figure>
-            </div>
-          </div>
+                  <figure id="bjtTransferFigure" class="bjt-transfer-figure plot-card" data-plot-state="empty" data-plot-message="Awaiting sweep">
+                    <canvas id="bjtTransferCanvas" width="360" height="190" aria-label="NPN transfer characteristic at the selected collector-emitter voltage"></canvas>
+                  </figure>
 
-          <div id="bjtValidationView" class="result-view" role="tabpanel" aria-labelledby="bjtValidationTab" hidden>
-            <div id="bjtValidationBanner" class="message-box" data-state="idle"></div>
-            <dl id="bjtValidationMetrics" class="metric-list"></dl>
-            <h3>Warnings and limitations</h3>
-            <ul id="bjtWarningList" class="warning-list"></ul>
-            <div class="export-row">
-              <button id="bjtExportProfileButton" type="button">Export 2D CSV</button>
-              <button id="bjtExportSweepButton" type="button" disabled>Export sweep CSV</button>
-              <button id="bjtExportPngButton" type="button">Export active PNG</button>
-            </div>
+                  <div class="bjt-point-controls">
+                    <label><span class="label-text">V<sub>BE</sub> curve</span><select id="bjtCurveSelect" disabled></select></label>
+                    <label class="bjt-point-slider"><span class="label-text">Inspect V<sub>CE</sub> <output id="bjtPointOutput">—</output></span><input id="bjtPointInput" type="range" min="0" max="1" step="1" value="0" disabled></label>
+                    <label class="plot-control plot-check"><input id="bjtReferenceInput" type="checkbox" checked>Analytical reference</label>
+                  </div>
+
+                  <dl id="bjtCircuitMetrics" class="circuit-metrics" aria-label="Selected NPN operating-point metrics"></dl>
+                  <p class="interaction-help">The selected maps come from this converged grid point; changing the selector does not run the solver again.</p>
+                </aside>
+              </div>
+            </section>
+
+            <details id="bjtMapsView" class="dashboard-section dashboard-wide validation-view bjt-maps-view">
+              <summary class="validation-summary">
+                <span class="section-label">Optional analysis</span>
+                <h3>Internal 2D fields</h3>
+                <small>Potential, carriers, current density, and SRH recombination</small>
+              </summary>
+              <div class="bjt-map-grid">
+                <figure class="plot-card" data-plot-state="empty" data-plot-message="Select a converged point"><canvas id="bjtPotentialCanvas" width="760" height="320" aria-label="Two-dimensional electrostatic potential"></canvas><figcaption>Electrostatic potential ψ(x,y)</figcaption></figure>
+                <figure class="plot-card" data-plot-state="empty" data-plot-message="Select a converged point"><canvas id="bjtElectronCanvas" width="760" height="320" aria-label="Two-dimensional electron density"></canvas><figcaption>log₁₀ electron density n(x,y)</figcaption></figure>
+                <figure class="plot-card" data-plot-state="empty" data-plot-message="Select a converged point"><canvas id="bjtCurrentCanvas" width="760" height="320" aria-label="Two-dimensional total current density magnitude"></canvas><figcaption>log₁₀ total current-density magnitude |J(x,y)|</figcaption></figure>
+                <figure class="plot-card" data-plot-state="empty" data-plot-message="Select a converged point"><canvas id="bjtRecombinationCanvas" width="760" height="320" aria-label="Two-dimensional SRH recombination"></canvas><figcaption>Signed SRH recombination R(x,y)</figcaption></figure>
+              </div>
+            </details>
+
+            <details id="bjtValidationView" class="dashboard-section dashboard-wide validation-view dashboard-validation">
+              <summary class="validation-summary">
+                <span class="section-label">Optional diagnostics</span>
+                <h3>Numerical confidence</h3>
+                <small>Residuals, terminal balance, mesh, and model warnings</small>
+              </summary>
+              <div class="validation-content">
+                <div id="bjtValidationBanner" class="message-box" data-state="idle">PENDING — calculate the characteristic grid.</div>
+                <dl id="bjtValidationMetrics" class="metric-list"></dl>
+                <ul id="bjtWarningList" class="warning-list"></ul>
+              </div>
+            </details>
+
+            <details class="result-tools">
+              <summary>Export results</summary>
+              <div class="export-row result-exports">
+                <button id="bjtExportProfileButton" type="button" disabled>Selected 2D CSV</button>
+                <button id="bjtExportSweepButton" type="button" disabled>Selected curve CSV</button>
+                <button id="bjtExportPngButton" type="button" disabled>Output PNG</button>
+              </div>
+            </details>
           </div>
         </section>
 

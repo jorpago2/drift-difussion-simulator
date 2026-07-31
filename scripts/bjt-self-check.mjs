@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import {
   DEFAULT_NPN_CONFIG,
   idealNpnTransportCurrentA,
@@ -18,6 +19,25 @@ assert.throws(() => solveNpnBjt2D({ nx: 80 }), RangeError);
 assert.throws(() => solveNpnBjt2D({ ny: 8 }), RangeError);
 assert.throws(() => solveNpnBjt2D({ emitterWidthUm: 1.4, baseWidthUm: 0.5 }), RangeError);
 assert.throws(() => sweepNpnOutputFamily(DEFAULT_NPN_CONFIG, [0.5], []), RangeError);
+assert.throws(() => sweepNpnOutputFamily(DEFAULT_NPN_CONFIG, [], [0, 0.1]), RangeError);
+assert.throws(() => sweepNpnOutputFamily(DEFAULT_NPN_CONFIG, [NaN], [0, 0.1]), RangeError);
+
+const [bjtHtml, bjtApp, bjtWorker] = await Promise.all([
+  readFile(new URL("../bjt.html", import.meta.url), "utf8"),
+  readFile(new URL("../src/bjt-app.js", import.meta.url), "utf8"),
+  readFile(new URL("../src/bjt-worker.js", import.meta.url), "utf8"),
+]);
+for (const id of [
+  "bjtVbeMinInput", "bjtVbeMaxInput", "bjtBasePointCountInput",
+  "bjtVceMaxInput", "bjtCollectorPointCountInput", "bjtTransferCanvas",
+]) assert.ok(bjtHtml.includes(`id="${id}"`), `Missing BJT sweep control #${id}`);
+assert.ok(!bjtHtml.includes('id="bjtVbeInput"'));
+assert.ok(!bjtHtml.includes('id="bjtVceInput"'));
+assert.ok(!bjtHtml.includes("data-bjt-view"));
+assert.ok(bjtApp.includes("solveCharacteristicGrid"));
+assert.ok(!bjtApp.includes("solveOperatingPoint"));
+assert.ok(bjtWorker.includes('data.action === "select"'));
+assert.ok(bjtWorker.includes("cachedFamily"));
 
 assert.equal(idealNpnTransportCurrentA(DEFAULT_NPN_CONFIG, 0.55, 0), 0);
 const idealLowVce = idealNpnTransportCurrentA(DEFAULT_NPN_CONFIG, 0.55, 0.05);

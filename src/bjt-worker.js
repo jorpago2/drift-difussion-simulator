@@ -18,34 +18,47 @@ const solverPromise = loadNpnWasmBackend(
   };
 });
 
+let cachedFamily = null;
+
 self.addEventListener("message", async ({ data }) => {
   try {
     const solver = await solverPromise;
-    if (data.action === "solve") {
-      self.postMessage({ action: "solved", result: solver(data.config, data.previousSolution) });
-      return;
-    }
     if (data.action === "sweep") {
-      const family = sweepNpnOutputFamily(data.config, null, null, solver);
-      const solvedPoints = family.curves.flatMap((curve) =>
+      cachedFamily = sweepNpnOutputFamily(
+        data.config,
+        data.baseVoltages,
+        data.collectorVoltages,
+        solver,
+      );
+      const solvedPoints = cachedFamily.curves.flatMap((curve) =>
         curve.points.map((point) => point.result).filter(Boolean));
       self.postMessage({
         action: "swept",
         result: {
-          config: family.config,
-          converged: family.converged,
+          config: cachedFamily.config,
+          converged: cachedFamily.converged,
           backend: solvedPoints[0]?.diagnostics.backend ?? "Unknown",
           elapsedMs: solvedPoints.reduce(
             (total, result) => total + (result.diagnostics.elapsedMs ?? 0),
             0,
           ),
-          curves: family.curves.map((curve) => ({
+          curves: cachedFamily.curves.map((curve) => ({
             baseEmitterVoltageV: curve.baseEmitterVoltageV,
             converged: curve.converged,
             points: curve.points.map(({ result: _result, ...point }) => point),
           })),
         },
       });
+      return;
+    }
+    if (data.action === "select") {
+      const curveIndex = Number(data.curveIndex);
+      const pointIndex = Number(data.pointIndex);
+      const result = cachedFamily?.curves[curveIndex]?.points[pointIndex]?.result;
+      if (!Number.isInteger(curveIndex) || !Number.isInteger(pointIndex) || !result?.diagnostics.converged) {
+        throw new RangeError("Select a converged point from the current characteristic grid.");
+      }
+      self.postMessage({ action: "selected", curveIndex, pointIndex, result });
       return;
     }
     throw new Error(`Unknown worker action: ${data.action}`);
