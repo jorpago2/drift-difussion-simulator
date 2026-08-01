@@ -22,20 +22,21 @@ assert.throws(() => sweepNpnOutputFamily(DEFAULT_NPN_CONFIG, [0.5], []), RangeEr
 assert.throws(() => sweepNpnOutputFamily(DEFAULT_NPN_CONFIG, [], [0, 0.1]), RangeError);
 assert.throws(() => sweepNpnOutputFamily(DEFAULT_NPN_CONFIG, [NaN], [0, 0.1]), RangeError);
 
-const [bjtHtml, bjtApp, bjtWorker] = await Promise.all([
+const [bjtHtml, bjtLab, bjtWorker] = await Promise.all([
   readFile(new URL("../bjt.html", import.meta.url), "utf8"),
-  readFile(new URL("../src/bjt-app.js", import.meta.url), "utf8"),
-  readFile(new URL("../src/bjt-worker.js", import.meta.url), "utf8"),
+  readFile(new URL("../src/labs/BjtLab.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../src/workers/bjt.worker.ts", import.meta.url), "utf8"),
 ]);
-for (const id of [
-  "bjtVbeMinInput", "bjtVbeMaxInput", "bjtBasePointCountInput",
-  "bjtVceMaxInput", "bjtCollectorPointCountInput", "bjtTransferCanvas",
-]) assert.ok(bjtHtml.includes(`id="${id}"`), `Missing BJT sweep control #${id}`);
-assert.ok(!bjtHtml.includes('id="bjtVbeInput"'));
-assert.ok(!bjtHtml.includes('id="bjtVceInput"'));
-assert.ok(!bjtHtml.includes("data-bjt-view"));
-assert.ok(bjtApp.includes("solveCharacteristicGrid"));
-assert.ok(!bjtApp.includes("solveOperatingPoint"));
+assert.match(bjtHtml, /<div id="root"><\/div>/);
+assert.match(bjtHtml, /src="\/src\/main\.tsx"/);
+assert.match(bjtLab, /minimumVbeV: 0\.49/);
+assert.match(bjtLab, /maximumVbeV: 0\.55/);
+assert.match(bjtLab, /basePointCount: 5/);
+assert.match(bjtLab, /maximumVceV: 0\.8/);
+assert.match(bjtLab, /collectorPointCount: 7/);
+assert.match(bjtLab, /NPN output and transfer characteristics/);
+assert.match(bjtLab, /Internal 2D fields/);
+assert.doesNotMatch(bjtLab, /solveOperatingPoint/);
 assert.ok(bjtWorker.includes('data.action === "select"'));
 assert.ok(bjtWorker.includes("cachedFamily"));
 

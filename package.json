@@ -3,12 +3,27 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@11.9.0",
   "description": "Validated browser laboratories for self-consistent PN and 2D lateral NPN devices.",
   "scripts": {
-    "start": "node scripts/serve-static.mjs",
-    "serve": "node scripts/serve-static.mjs",
+    "dev": "vite",
+    "start": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
     "test": "node scripts/self-check.mjs && node scripts/bjt-self-check.mjs && node scripts/bjt-wasm-self-check.mjs",
     "build:wasm": "powershell -ExecutionPolicy Bypass -File scripts/build-wasm.ps1",
     "build:bjt-wasm": "powershell -ExecutionPolicy Bypass -File scripts/build-wasm.ps1 -SourcePath native/bjt-core/bjt-core.c -WasmPath assets/wasm/bjt-core.wasm -ExportNames npn_solve,npn_array_count,npn_diagnostic_count -UseLibm"
+  },
+  "dependencies": {
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "6.0.5",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "typescript": "7.0.2",
+    "vite": "8.2.0"
   }
 }

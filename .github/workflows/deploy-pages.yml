@@ -23,47 +23,25 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 24
-      - name: Test numerical cores
-        run: npm test
-      - name: Prepare cache-safe static site
-        run: |
-          mkdir _site
-          rsync -a --exclude='.git' --exclude='_site' . _site/
-          python - <<'PY'
-          import os
-          import re
-          from pathlib import Path
-
-          root = Path("_site")
-          version = os.environ["GITHUB_SHA"]
-          for path in root.glob("*.html"):
-              text = path.read_text(encoding="utf-8")
-              text = re.sub(
-                  r'((?:src|href)="[^"]+\.(?:css|js))"',
-                  rf'\1?v={version}"',
-                  text,
-              )
-              path.write_text(text, encoding="utf-8")
-
-          for path in (root / "src").rglob("*.js"):
-              text = path.read_text(encoding="utf-8")
-              text = re.sub(
-                  r'(["\'])([^"\']+\.(?:js|wasm))\1',
-                  lambda match: f'{match.group(1)}{match.group(2)}?v={version}{match.group(1)}',
-                  text,
-              )
-              path.write_text(text, encoding="utf-8")
-          PY
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Test numerical cores and build site
+        run: pnpm test && pnpm build
       - name: Setup Pages
         uses: actions/configure-pages@v6
       - name: Upload static site
         uses: actions/upload-pages-artifact@v5
         with:
-          path: _site
+          path: dist
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5

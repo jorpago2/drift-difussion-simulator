@@ -15,37 +15,33 @@ import {
 import { createBoundedScale, createNiceScale, drawScientificText, formatChartTick } from "../src/plot-utils.js";
 
 const pnHtml = await readFile(new URL("../index.html", import.meta.url), "utf8");
-const pnApp = await readFile(new URL("../src/app.js", import.meta.url), "utf8");
-const pnStyles = await readFile(new URL("../styles.css", import.meta.url), "utf8");
-assert.match(pnHtml, /id="resultsArea" class="results-area" aria-labelledby=/);
-assert.match(pnHtml, /<details id="validationView"[^>]*dashboard-validation/);
-assert.match(pnHtml, /<details class="dashboard-section dashboard-wide validation-view physics-view">/);
-assert.match(pnHtml, /<details class="result-tools">/);
-assert.doesNotMatch(pnHtml, /id="resultExplanation"/);
-assert.match(pnHtml, /id="jvView"[^>]*dashboard-primary dashboard-wide/);
-assert.match(pnHtml, /id="minimumBiasInput"[^>]*value="-1"/);
-assert.match(pnHtml, /id="maximumBiasInput"[^>]*value="0.65"/);
-assert.match(pnHtml, /id="jvPointCountInput"[^>]*min="17" max="201"[^>]*value="67"/);
-assert.match(pnHtml, /id="jvQuantitySelect"/);
-assert.match(pnHtml, /id="jvScaleSelect"/);
-assert.match(pnHtml, /id="jvReferenceInput"[^>]*checked/);
-assert.match(pnHtml, /id="profilePointInput"[^>]*type="range"/);
-assert.match(pnHtml, /id="xAxisMinInput"[^>]*placeholder="Auto"/);
-assert.match(pnHtml, /id="yAxisMaxInput"[^>]*placeholder="Auto"/);
-assert.match(pnHtml, /id="resetPlotViewButton"/);
-assert.match(pnHtml, /<details class="axis-limits">/);
-assert.doesNotMatch(pnHtml, /id="sweepMessage"|Move the slider/);
-assert.doesNotMatch(pnHtml, /id="biasInput"|id="generateJvButton"/);
-assert.match(pnApp, /async function solveVoltageSweep\(\)/);
-assert.match(pnApp, /addEventListener\("wheel", zoomJvPlot, \{ passive: false \}\)/);
-assert.match(pnApp, /addEventListener\("pointerdown", startJvPan\)/);
-assert.doesNotMatch(pnApp, /solveCurrentConfiguration|generateJvSweep/);
-assert.match(pnHtml, /class="space-charge space-charge-p"/);
-assert.match(pnHtml, /class="space-charge space-charge-n"/);
-assert.equal(pnHtml.match(/data-plot-state="empty"/g)?.length, 6);
-assert.doesNotMatch(pnApp, /resultsArea\.hidden|deviceOverview\.hidden/);
-assert.equal(pnApp.match(/\["Scaled residuals \(ψ \/ n \/ p\)"/g)?.length, 2);
-assert.match(pnStyles, /#electrostaticsView \.plot-grid \{[\s\S]{0,120}repeat\(3/);
+const [pnLab, pnWorker, lineChart, pnStyles, appShell, viteConfig] = await Promise.all([
+  readFile(new URL("../src/labs/PnLab.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../src/workers/pn.worker.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/components/LineChart.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../src/styles.css", import.meta.url), "utf8"),
+  readFile(new URL("../src/App.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../vite.config.ts", import.meta.url), "utf8"),
+]);
+assert.match(pnHtml, /<div id="root"><\/div>/);
+assert.match(pnHtml, /src="\/src\/main\.tsx"/);
+assert.match(appShell, /pathname\.toLowerCase\(\)\.endsWith\("bjt\.html"\)/);
+assert.match(viteConfig, /pn: "index\.html"/);
+assert.match(viteConfig, /bjt: "bjt\.html"/);
+assert.match(pnLab, /minimumV: -1/);
+assert.match(pnLab, /maximumV: 0\.65/);
+assert.match(pnLab, /pointCount: 67/);
+assert.match(pnLab, /Calculate I–V sweep/);
+assert.match(pnLab, /Internal device profiles/);
+assert.match(pnLab, /Numerical confidence/);
+assert.doesNotMatch(pnLab, /solveCurrentConfiguration|generateJvSweep/);
+assert.match(pnWorker, /data\.action === "select"/);
+assert.match(pnWorker, /cachedResults/);
+assert.match(lineChart, /onWheel=\{zoom\}/);
+assert.match(lineChart, /onPointerDown=\{pointerDown\}/);
+assert.match(lineChart, /setDomain\(domain\)/);
+assert.match(pnStyles, /@media \(max-width: 600px\)/);
+assert.match(pnStyles, /\.primary-dashboard \{ display: grid/);
 
 const voltageScale = createNiceScale([-1, 0.65], 8);
 assert.deepEqual(voltageScale.ticks, [-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75]);

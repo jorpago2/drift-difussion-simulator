@@ -1,0 +1,337 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  DEFAULT_NPN_CONFIG,
+  idealNpnTransportCurrentA,
+  serializeNpnProfileCsv,
+  serializeNpnSweepCsv,
+  validateNpnConfig,
+} from "../bjt-core.js";
+import { Heatmap } from "../components/Heatmap";
+import { LineChart, type ChartSeries } from "../components/LineChart";
+import { AppHeader, Disclosure, Field, LabLayout, Message, MetricGrid } from "../components/ui";
+import { downloadCanvas, downloadText } from "../lib/download";
+import { fixed, linearGrid, nearestIndex, percent, scientific } from "../lib/format";
+import type { NpnConfig, NpnDerived, NpnFamily, NpnResult, SolverState, Validation } from "../types";
+
+interface Inputs extends NpnConfig {
+  minimumVbeV: number;
+  maximumVbeV: number;
+  basePointCount: number;
+  maximumVceV: number;
+  collectorPointCount: number;
+}
+
+const initialInputs: Inputs = {
+  ...(DEFAULT_NPN_CONFIG as NpnConfig),
+  minimumVbeV: 0.49,
+  maximumVbeV: 0.55,
+  basePointCount: 5,
+  maximumVceV: 0.8,
+  collectorPointCount: 7,
+};
+const bjtCutaway = new URL("../../assets/device-cutaways/bjt-to92-cutaway-realistic.png", import.meta.url).href;
+
+const curveColors = ["#704aa1", "#4d72b8", "#087e8b", "#2d936c", "#c57a00", "#c4483f", "#9a4268", "#52676e", "#846d35"];
+const analyticalCurrent = idealNpnTransportCurrentA as unknown as (
+  config: NpnConfig,
+  baseEmitterVoltageV: number,
+  collectorEmitterVoltageV: number,
+) => number;
+
+export function BjtLab() {
+  const [inputs, setInputs] = useState(initialInputs);
+  const [solverState, setSolverState] = useState<SolverState>("idle");
+  const [message, setMessage] = useState("Ready to calculate the V_BE × V_CE grid.");
+  const [family, setFamily] = useState<NpnFamily | null>(null);
+  const [result, setResult] = useState<NpnResult | null>(null);
+  const [curveIndex, setCurveIndex] = useState(-1);
+  const [pointIndex, setPointIndex] = useState(-1);
+  const [showReference, setShowReference] = useState(true);
+  const workerRef = useRef<Worker | null>(null);
+  const selectionRef = useRef({ curve: -1, point: -1 });
+  const outputCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const config = useMemo<NpnConfig>(() => ({
+    ...inputs,
+    baseEmitterVoltageV: inputs.maximumVbeV,
+    collectorEmitterVoltageV: inputs.maximumVceV,
+  }), [inputs]);
+  const validation = useMemo(() => validateNpnConfig(config) as Validation<NpnConfig, NpnDerived>, [config]);
+  const sweepErrors = useMemo(() => validateSweep(inputs), [inputs]);
+  const errors = [...validation.errors, ...sweepErrors];
+
+  useEffect(() => {
+    const worker = new Worker(new URL("../workers/bjt.worker.ts", import.meta.url), { type: "module" });
+    workerRef.current = worker;
+    worker.onmessage = ({ data }) => {
+      if (data.action === "failed") {
+        setSolverState("failed");
+        setMessage(data.message);
+        setFamily(null);
+        setResult(null);
+      }
+      if (data.action === "swept") {
+        const nextFamily = data.result as NpnFamily;
+        if (!nextFamily.converged) {
+          setSolverState("failed");
+          setMessage("The characteristic grid contains an unconverged point.");
+          return;
+        }
+        const nextCurve = nextFamily.curves.length - 1;
+        const nextPoint = (nextFamily.curves[0]?.points.length ?? 1) - 1;
+        setFamily(nextFamily);
+        setCurveIndex(nextCurve);
+        setPointIndex(nextPoint);
+        setSolverState("converged");
+        setMessage(`${nextFamily.curves.length * (nextFamily.curves[0]?.points.length ?? 0)} bias points converged with ${nextFamily.backend} (${fixed(nextFamily.elapsedMs, 0)} ms kernel time).`);
+        requestPoint(nextCurve, nextPoint, worker);
+      }
+      if (data.action === "selected" && data.curveIndex === selectionRef.current.curve && data.pointIndex === selectionRef.current.point) {
+        setResult(data.result as NpnResult);
+      }
+    };
+    return () => {
+      worker.terminate();
+      workerRef.current = null;
+    };
+  }, []);
+
+  function update<K extends keyof Inputs>(key: K, value: Inputs[K]) {
+    setInputs((current) => ({ ...current, [key]: value }));
+    setFamily(null);
+    setResult(null);
+    setCurveIndex(-1);
+    setPointIndex(-1);
+    selectionRef.current = { curve: -1, point: -1 };
+    setSolverState("idle");
+    setMessage("Configuration changed. Calculate a new characteristic grid.");
+  }
+
+  function solve() {
+    if (errors.length || solverState === "solving") return;
+    setSolverState("solving");
+    setMessage(`Solving ${inputs.basePointCount} × ${inputs.collectorPointCount} coupled bias points…`);
+    setFamily(null);
+    setResult(null);
+    workerRef.current?.postMessage({
+      action: "sweep",
+      config: validation.config,
+      baseVoltages: linearGrid(inputs.minimumVbeV, inputs.maximumVbeV, inputs.basePointCount),
+      collectorVoltages: linearGrid(0, inputs.maximumVceV, inputs.collectorPointCount),
+    });
+  }
+
+  function requestPoint(nextCurve: number, nextPoint: number, worker = workerRef.current) {
+    const point = family?.curves[nextCurve]?.points[nextPoint];
+    if (family && !point?.converged) return;
+    selectionRef.current = { curve: nextCurve, point: nextPoint };
+    setCurveIndex(nextCurve);
+    setPointIndex(nextPoint);
+    setResult(null);
+    worker?.postMessage({ action: "select", curveIndex: nextCurve, pointIndex: nextPoint });
+  }
+
+  const selectedCurve = family?.curves[curveIndex] ?? null;
+  const selectedPoint = selectedCurve?.points[pointIndex] ?? null;
+  const outputX = useMemo(() => Float64Array.from(family?.curves[0]?.points ?? [], (point) => point.collectorEmitterVoltageV), [family]);
+  const outputSeries = useMemo<ChartSeries[]>(() => {
+    if (!family) return [];
+    return family.curves.flatMap((curve, index) => {
+      const color = curveColors[index % curveColors.length]!;
+      const numerical: ChartSeries = {
+        label: `V_BE = ${fixed(curve.baseEmitterVoltageV)} V`,
+        values: Float64Array.from(curve.points, (point) => point.collectorCurrentA * 1e3),
+        color,
+        lineWidth: index === curveIndex ? 3.2 : 2,
+      };
+      if (!showReference) return [numerical];
+      return [numerical, {
+        label: `1D ${fixed(curve.baseEmitterVoltageV)} V`,
+        values: Float64Array.from(curve.points, (point) => analyticalCurrent(family.config, curve.baseEmitterVoltageV, point.collectorEmitterVoltageV) * 1e3),
+        color,
+        dash: [7, 4],
+        lineWidth: 1.5,
+        showInLegend: false,
+      }];
+    });
+  }, [curveIndex, family, showReference]);
+  const transferX = useMemo(() => Float64Array.from(family?.curves ?? [], (curve) => curve.baseEmitterVoltageV), [family]);
+  const transferSeries = useMemo<ChartSeries[]>(() => {
+    if (!family || pointIndex < 0) return [];
+    const selectedVce = family.curves[0]?.points[pointIndex]?.collectorEmitterVoltageV ?? 0;
+    const values: ChartSeries[] = [{
+      label: "2D DD",
+      values: Float64Array.from(family.curves, (curve) => curve.points[pointIndex]!.collectorCurrentA * 1e3),
+      color: "#087e8b",
+      lineWidth: 2.6,
+    }];
+    if (showReference) values.push({
+      label: "Ideal 1D",
+      values: Float64Array.from(family.curves, (curve) => analyticalCurrent(family.config, curve.baseEmitterVoltageV, selectedVce) * 1e3),
+      color: "#c57a00",
+      dash: [6, 4],
+      lineWidth: 1.7,
+    });
+    return values;
+  }, [family, pointIndex, showReference]);
+
+  const plotState = solverState === "failed" ? "error" : solverState === "solving" ? "loading" : family ? "ready" : "empty";
+  const collector = result?.terminalCurrents.collector.currentIntoDeviceA ?? NaN;
+  const base = result?.terminalCurrents.base.currentIntoDeviceA ?? NaN;
+  const emitter = result?.terminalCurrents.emitter.currentIntoDeviceA ?? NaN;
+  const beta = base > 0 ? collector / base : NaN;
+  const setOutputCanvas = useCallback((canvas: HTMLCanvasElement | null) => { outputCanvasRef.current = canvas; }, []);
+
+  return (
+    <>
+      <AppHeader device="bjt" state={solverState} />
+      <LabLayout controls={
+        <>
+          <div className="panel-heading"><span className="eyebrow">Characteristic grid</span><h1>Lateral NPN</h1><p>Calculate a voltage-driven output family and inspect any converged operating point without rerunning the solver.</p></div>
+          <div className="field-grid two">
+            <Field label={<>V<sub>BE,min</sub> (V)</>}><input type="number" value={inputs.minimumVbeV} min="-0.2" max="0.75" step="0.01" onChange={(event) => update("minimumVbeV", Number(event.target.value))} /></Field>
+            <Field label={<>V<sub>BE,max</sub> (V)</>}><input type="number" value={inputs.maximumVbeV} min="-0.2" max="0.75" step="0.01" onChange={(event) => update("maximumVbeV", Number(event.target.value))} /></Field>
+          </div>
+          <div className="field-grid three">
+            <Field label={<>V<sub>BE</sub> curves</>}><input type="number" value={inputs.basePointCount} min="3" max="9" step="1" onChange={(event) => update("basePointCount", Number(event.target.value))} /></Field>
+            <Field label={<>V<sub>CE,max</sub> (V)</>}><input type="number" value={inputs.maximumVceV} min="0.1" max="5" step="0.05" onChange={(event) => update("maximumVceV", Number(event.target.value))} /></Field>
+            <Field label={<>V<sub>CE</sub> points</>}><input type="number" value={inputs.collectorPointCount} min="5" max="21" step="1" onChange={(event) => update("collectorPointCount", Number(event.target.value))} /></Field>
+          </div>
+          <p className="field-note">Each curve holds V<sub>BE</sub> constant. This is not a constant-I<sub>B</sub> family.</p>
+          <details className="advanced-panel">
+            <summary>Doping, geometry, and numerics</summary>
+            <div className="field-grid two">
+              <Field label={<>Emitter N<sub>D</sub> (cm⁻³)</>}><input type="number" value={inputs.emitterDopingCm3} min="1e14" max="5e17" step="any" onChange={(event) => update("emitterDopingCm3", Number(event.target.value))} /></Field>
+              <Field label={<>Base N<sub>A</sub> (cm⁻³)</>}><input type="number" value={inputs.baseDopingCm3} min="1e14" max="5e17" step="any" onChange={(event) => update("baseDopingCm3", Number(event.target.value))} /></Field>
+              <Field label={<>Collector N<sub>D</sub> (cm⁻³)</>}><input type="number" value={inputs.collectorDopingCm3} min="1e14" max="5e17" step="any" onChange={(event) => update("collectorDopingCm3", Number(event.target.value))} /></Field>
+              <Field label="Length (µm)"><input type="number" value={inputs.lengthUm} min="1.5" max="10" step="0.1" onChange={(event) => update("lengthUm", Number(event.target.value))} /></Field>
+              <Field label="Height (µm)"><input type="number" value={inputs.heightUm} min="0.2" max="3" step="0.05" onChange={(event) => update("heightUm", Number(event.target.value))} /></Field>
+              <Field label="Device depth (µm)"><input type="number" value={inputs.deviceDepthUm} min="1" max="1e5" step="any" onChange={(event) => update("deviceDepthUm", Number(event.target.value))} /></Field>
+              <Field label="Emitter width (µm)"><input type="number" value={inputs.emitterWidthUm} min="0.2" max="4" step="0.05" onChange={(event) => update("emitterWidthUm", Number(event.target.value))} /></Field>
+              <Field label="Base width (µm)"><input type="number" value={inputs.baseWidthUm} min="0.1" max="2" step="0.05" onChange={(event) => update("baseWidthUm", Number(event.target.value))} /></Field>
+              <Field label="x nodes"><input type="number" value={inputs.nx} min="41" max="501" step="2" onChange={(event) => update("nx", Number(event.target.value))} /></Field>
+              <Field label="y nodes"><input type="number" value={inputs.ny} min="9" max="121" step="2" onChange={(event) => update("ny", Number(event.target.value))} /></Field>
+              <Field label={<>τ<sub>n</sub> (s)</>}><input type="number" value={inputs.electronLifetimeS} min="1e-12" max="1e-3" step="any" onChange={(event) => update("electronLifetimeS", Number(event.target.value))} /></Field>
+              <Field label={<>τ<sub>p</sub> (s)</>}><input type="number" value={inputs.holeLifetimeS} min="1e-12" max="1e-3" step="any" onChange={(event) => update("holeLifetimeS", Number(event.target.value))} /></Field>
+            </div>
+          </details>
+          <Message state={errors.length ? "error" : validation.warnings.length ? "warning" : "ready"}>{errors[0] ?? validation.warnings[0] ?? "Configuration and mesh checks passed."}</Message>
+          <button className="primary-action" type="button" disabled={Boolean(errors.length) || solverState === "solving"} onClick={solve}>Calculate characteristic grid</button>
+          <output className="solver-line" aria-live="polite">{message}</output>
+        </>
+      }>
+        <header className="workspace-heading">
+          <div><span className="eyebrow">2D bipolar drift–diffusion</span><h1>NPN output and transfer characteristics</h1></div>
+          <span className="bias-badge">{fixed(inputs.minimumVbeV, 2)} ≤ V<sub>BE</sub> ≤ {fixed(inputs.maximumVbeV, 2)} V · 0 ≤ V<sub>CE</sub> ≤ {fixed(inputs.maximumVceV, 2)} V</span>
+        </header>
+
+        <div className="device-strip bjt-strip" aria-label="Lateral NPN transistor geometry">
+          <span className="contact">Emitter</span><div className="region region-n"><strong>N</strong><small>Emitter</small></div><div className="region region-p"><span className="base-contact">Base</span><strong>P</strong><small>Base</small></div><div className="region region-n"><strong>N</strong><small>Collector</small></div><span className="contact">Collector</span>
+        </div>
+        <details className="device-context">
+          <summary>Real-device context</summary>
+          <div><img src={bjtCutaway} alt="Cutaway of a TO-92 bipolar transistor showing its silicon die, bond wires, lead frame, and encapsulation" /><p>The solver uses a lateral NPN cross-section to expose 2D transport. A commercial discrete BJT commonly uses a vertical die, so geometry-dependent gain and current crowding are not claimed to match the package illustration.</p></div>
+        </details>
+
+        <section className="primary-dashboard bjt-dashboard" aria-labelledby="bjt-result-title">
+          <div className="main-chart">
+            <LineChart
+              x={outputX}
+              series={outputSeries}
+              xLabel="V_CE (V)"
+              yLabel="I_C (mA)"
+              markerX={selectedPoint?.collectorEmitterVoltageV}
+              includeZero
+              height={430}
+              state={plotState}
+              message={solverState === "solving" ? "Calculating the characteristic grid" : "Awaiting a V_BE × V_CE grid"}
+              interactive
+              onCanvas={setOutputCanvas}
+              onSelectX={(value) => selectedCurve && requestPoint(curveIndex, nearestIndex(selectedCurve.points, value, (point) => point.collectorEmitterVoltageV))}
+            />
+          </div>
+          <aside className="result-inspector bjt-inspector">
+            <div><span className="eyebrow">Terminal behavior</span><h2 id="bjt-result-title">NPN characteristics</h2></div>
+            <LineChart
+              x={transferX}
+              series={transferSeries}
+              xLabel="V_BE (V)"
+              yLabel="I_C (mA)"
+              markerX={selectedCurve?.baseEmitterVoltageV}
+              includeZero
+              height={205}
+              state={plotState}
+              message="Awaiting characteristic grid"
+              interactive
+              onSelectX={(value) => family && requestPoint(nearestIndex(family.curves, value, (curve) => curve.baseEmitterVoltageV), pointIndex)}
+            />
+            <div className="control-row">
+              <Field label={<>V<sub>BE</sub> curve</>}><select disabled={!family} value={Math.max(0, curveIndex)} onChange={(event) => requestPoint(Number(event.target.value), pointIndex)}>{family?.curves.map((curve, index) => <option key={curve.baseEmitterVoltageV} value={index}>{fixed(curve.baseEmitterVoltageV)} V</option>)}</select></Field>
+              <Field label={<>Inspect V<sub>CE</sub> = {selectedPoint ? fixed(selectedPoint.collectorEmitterVoltageV) : "—"} V</>}><input type="range" min="0" max={Math.max(0, (selectedCurve?.points.length ?? 1) - 1)} step="1" value={Math.max(0, pointIndex)} disabled={!family} onChange={(event) => requestPoint(curveIndex, Number(event.target.value))} /></Field>
+            </div>
+            <label className="check"><input type="checkbox" checked={showReference} onChange={(event) => setShowReference(event.target.checked)} /> Low-injection analytical reference</label>
+            <MetricGrid compact entries={[
+              ["Region", result ? classifyRegion(result.config.baseEmitterVoltageV, result.config.collectorEmitterVoltageV) : "—"],
+              [<>V<sub>BE</sub> / V<sub>CE</sub></>, result ? `${fixed(result.config.baseEmitterVoltageV)} / ${fixed(result.config.collectorEmitterVoltageV)} V` : "—"],
+              [<>I<sub>C</sub></>, result ? `${scientific(collector * 1e3)} mA` : "—"],
+              [<>I<sub>B</sub></>, result ? `${scientific(base * 1e6)} µA` : "—"],
+              [<>I<sub>E</sub></>, result ? `${scientific(-emitter * 1e3)} mA` : "—"],
+              [<>β = I<sub>C</sub>/I<sub>B</sub></>, Number.isFinite(beta) ? fixed(beta, 2) : "—"],
+            ]} />
+          </aside>
+        </section>
+
+        <Disclosure eyebrow="Optional analysis" title="Internal 2D fields" summary="Potential, carriers, current density, and SRH recombination">
+          <div className="heatmap-grid">
+            <Map title="Electrostatic potential ψ(x,y)"><Heatmap values={result?.potentialV} nx={result?.nx} ny={result?.ny} lengthUm={result?.derived.lengthM ? result.derived.lengthM * 1e6 : 1} heightUm={result?.derived.heightM ? result.derived.heightM * 1e6 : 1} label="ψ (V)" /></Map>
+            <Map title="Electron density n(x,y)"><Heatmap values={result?.electronM3} nx={result?.nx} ny={result?.ny} lengthUm={result?.derived.lengthM ? result.derived.lengthM * 1e6 : 1} heightUm={result?.derived.heightM ? result.derived.heightM * 1e6 : 1} label="log₁₀ n (cm⁻³)" transform={(value) => Math.log10(value / 1e6)} /></Map>
+            <Map title="Total current-density magnitude"><Heatmap values={result?.totalCurrentDensityXAm2} nx={result?.nx} ny={result?.ny} lengthUm={result?.derived.lengthM ? result.derived.lengthM * 1e6 : 1} heightUm={result?.derived.heightM ? result.derived.heightM * 1e6 : 1} label="log₁₀ |J| (A/m²)" transform={(value, index) => Math.log10(Math.max(1e-30, Math.hypot(value, Number(result?.totalCurrentDensityYAm2[index]))))} /></Map>
+            <Map title="Signed SRH recombination"><Heatmap values={result?.recombinationM3s} nx={result?.nx} ny={result?.ny} lengthUm={result?.derived.lengthM ? result.derived.lengthM * 1e6 : 1} heightUm={result?.derived.heightM ? result.derived.heightM * 1e6 : 1} label="signed R" diverging transform={(value) => Math.sign(value) * Math.log10(1 + Math.abs(value))} /></Map>
+          </div>
+        </Disclosure>
+
+        <Disclosure eyebrow="Optional diagnostics" title="Numerical confidence" summary="Residuals, terminal balance, mesh, and model limits">
+          {result ? <>
+            <Message state="pass">PASS — the selected grid point satisfies residual, KCL, carrier-balance, positivity, and contact constraints.</Message>
+            <MetricGrid entries={[
+              ["Backend", result.diagnostics.backend],
+              ["Gummel iterations", result.diagnostics.totalIterations],
+              ["Scaled residuals (ψ / n / p)", `${scientific(result.diagnostics.poissonResidual)} / ${scientific(result.diagnostics.electronResidual)} / ${scientific(result.diagnostics.holeResidual)}`],
+              ["Terminal KCL error", percent(result.diagnostics.terminalKclError)],
+              ["Carrier balance (n / p)", `${percent(result.diagnostics.electronBalanceError)} / ${percent(result.diagnostics.holeBalanceError)}`],
+              ["Mesh", `${result.nx} × ${result.ny} nodes`],
+            ]} />
+            <WarningList warnings={result.warnings} />
+          </> : <Message state="idle">Calculate the characteristic grid before interpreting numerical confidence.</Message>}
+        </Disclosure>
+
+        <details className="export-panel"><summary>Export converged results</summary><div className="button-row"><button disabled={!result} onClick={() => result && downloadText(serializeNpnProfileCsv(result), "npn-selected-2d.csv")}>Selected 2D CSV</button><button disabled={!selectedCurve || !family} onClick={() => selectedCurve && family && downloadText(serializeNpnSweepCsv({ ...selectedCurve, config: { ...family.config, baseEmitterVoltageV: selectedCurve.baseEmitterVoltageV } }), "npn-output-curve.csv")}>Selected curve CSV</button><button disabled={!family} onClick={() => downloadCanvas(outputCanvasRef.current, "npn-output-characteristics.png")}>Plot PNG</button></div></details>
+        <p className="model-boundary"><strong>Model boundary:</strong> lateral 2D homogeneous silicon, Boltzmann statistics, constant mobility, ohmic contacts, and midgap SRH. Breakdown, tunneling, high-field mobility, contact resistance, and self-heating are excluded.</p>
+      </LabLayout>
+    </>
+  );
+}
+
+function validateSweep(input: Inputs): string[] {
+  const errors: string[] = [];
+  if (!Number.isFinite(input.minimumVbeV) || input.minimumVbeV < -0.2 || input.minimumVbeV > 0.75) errors.push("V_BE,min must be between −0.2 and 0.75 V.");
+  if (!Number.isFinite(input.maximumVbeV) || input.maximumVbeV < -0.2 || input.maximumVbeV > 0.75) errors.push("V_BE,max must be between −0.2 and 0.75 V.");
+  if (input.minimumVbeV >= input.maximumVbeV) errors.push("V_BE,min must be smaller than V_BE,max.");
+  if (!Number.isInteger(input.basePointCount) || input.basePointCount < 3 || input.basePointCount > 9) errors.push("V_BE curves must be an integer between 3 and 9.");
+  if (!Number.isFinite(input.maximumVceV) || input.maximumVceV < 0.1 || input.maximumVceV > 5) errors.push("V_CE,max must be between 0.1 and 5 V.");
+  if (!Number.isInteger(input.collectorPointCount) || input.collectorPointCount < 5 || input.collectorPointCount > 21) errors.push("V_CE points must be an integer between 5 and 21.");
+  return errors;
+}
+
+function classifyRegion(vbe: number, vce: number) {
+  if (vbe < 0.3) return "Cutoff";
+  return vce <= vbe ? "Saturation" : "Forward active";
+}
+
+function Map({ title, children }: { title: string; children: React.ReactNode }) {
+  return <figure className="profile-card"><figcaption>{title}</figcaption>{children}</figure>;
+}
+
+function WarningList({ warnings }: { warnings: string[] }) {
+  return warnings.length ? <ul className="warning-list">{[...new Set(warnings)].map((warning) => <li key={warning}>{warning}</li>)}</ul> : null;
+}
