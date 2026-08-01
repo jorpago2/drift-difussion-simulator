@@ -94,7 +94,7 @@ export function Heatmap({ values, nx = 0, ny = 0, lengthUm = 1, heightUm = 1, la
     return () => observer.disconnect();
   }, [diverging, heightUm, label, lengthUm, nx, ny, transform, values]);
 
-  return <canvas ref={canvasRef} className="heatmap-canvas" aria-label={label} />;
+  return <canvas ref={canvasRef} className="heatmap-canvas" role="img" aria-label={label} />;
 }
 
 function sequentialColor(value: number) {

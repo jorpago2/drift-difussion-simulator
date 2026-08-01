@@ -153,7 +153,7 @@ export function PnLab() {
       <AppHeader device="pn" state={solverState} />
       <LabLayout controls={
         <>
-          <div className="panel-heading"><span className="eyebrow">Terminal sweep</span><h1>PN diode</h1><p>Compute one complete I–V characteristic, then inspect the internal state at any solved voltage.</p></div>
+          <div className="panel-heading"><span className="eyebrow">Terminal sweep</span><h2>PN diode</h2><p>Sweep the terminal characteristic and inspect the device at any solved bias.</p></div>
           <div className="field-grid two">
             <Field label={<>N<sub>A</sub> (cm⁻³)</>}><input type="number" value={inputs.acceptorCm3} min="1e14" max="1e18" step="1e15" onChange={(event) => update("acceptorCm3", Number(event.target.value))} /></Field>
             <Field label={<>N<sub>D</sub> (cm⁻³)</>}><input type="number" value={inputs.donorCm3} min="1e14" max="1e18" step="1e15" onChange={(event) => update("donorCm3", Number(event.target.value))} /></Field>
@@ -185,7 +185,7 @@ export function PnLab() {
         </>
       }>
         <header className="workspace-heading">
-          <div><span className="eyebrow">1D bipolar drift–diffusion</span><h1>PN junction characteristics</h1></div>
+          <div><span className="eyebrow">1D drift–diffusion</span><h1>PN diode I–V characteristic</h1></div>
           <span className="bias-badge">{fixed(inputs.minimumV, 2)} ≤ V<sub>D</sub> ≤ {fixed(inputs.maximumV, 2)} V</span>
         </header>
 

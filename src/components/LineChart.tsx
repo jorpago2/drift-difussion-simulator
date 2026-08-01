@@ -332,6 +332,7 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
     <div className={`chart-frame chart-${state}`} data-message={message} style={{ "--chart-height": `${height}px` } as React.CSSProperties}>
       <canvas
         ref={canvasRef}
+        role="img"
         aria-label={`${yLabel} versus ${xLabel}`}
         tabIndex={interactive ? 0 : -1}
         onWheel={zoom}

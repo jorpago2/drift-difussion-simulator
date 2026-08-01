@@ -47,6 +47,8 @@ export function BjtLab() {
   const [curveIndex, setCurveIndex] = useState(-1);
   const [pointIndex, setPointIndex] = useState(-1);
   const [showReference, setShowReference] = useState(true);
+  const [progress, setProgress] = useState({ completed: 0, total: initialInputs.basePointCount * initialInputs.collectorPointCount });
+  const [cancelPending, setCancelPending] = useState(false);
   const workerRef = useRef<Worker | null>(null);
   const selectionRef = useRef({ curve: -1, point: -1 });
   const outputCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -66,12 +68,27 @@ export function BjtLab() {
     worker.onmessage = ({ data }) => {
       if (data.action === "failed") {
         setSolverState("failed");
+        setCancelPending(false);
         setMessage(data.message);
         setFamily(null);
         setResult(null);
       }
+      if (data.action === "progress") {
+        setProgress({ completed: data.completed, total: data.total });
+        const bias = Number.isFinite(data.baseEmitterVoltageV) && Number.isFinite(data.collectorEmitterVoltageV)
+          ? ` at V_BE = ${fixed(data.baseEmitterVoltageV)} V, V_CE = ${fixed(data.collectorEmitterVoltageV)} V`
+          : "";
+        setMessage(`${data.completed} of ${data.total} bias points converged${bias}.`);
+      }
+      if (data.action === "cancelled") {
+        setSolverState("idle");
+        setCancelPending(false);
+        setProgress({ completed: data.completed, total: data.total });
+        setMessage(`Calculation cancelled after ${data.completed} of ${data.total} bias points. Partial data were not presented as a valid family.`);
+      }
       if (data.action === "swept") {
         const nextFamily = data.result as NpnFamily;
+        setCancelPending(false);
         if (!nextFamily.converged) {
           setSolverState("failed");
           setMessage("The characteristic grid contains an unconverged point.");
@@ -83,7 +100,11 @@ export function BjtLab() {
         setCurveIndex(nextCurve);
         setPointIndex(nextPoint);
         setSolverState("converged");
-        setMessage(`${nextFamily.curves.length * (nextFamily.curves[0]?.points.length ?? 0)} bias points converged with ${nextFamily.backend} (${fixed(nextFamily.elapsedMs, 0)} ms kernel time).`);
+        const pointCount = nextFamily.curves.length * (nextFamily.curves[0]?.points.length ?? 0);
+        setProgress({ completed: pointCount, total: pointCount });
+        setMessage(data.cached
+          ? `${pointCount} bias points restored from the in-memory cache.`
+          : `${pointCount} bias points converged with ${nextFamily.backend} (${fixed(nextFamily.elapsedMs, 0)} ms kernel time).`);
         requestPoint(nextCurve, nextPoint, worker);
       }
       if (data.action === "selected" && data.curveIndex === selectionRef.current.curve && data.pointIndex === selectionRef.current.point) {
@@ -97,19 +118,24 @@ export function BjtLab() {
   }, []);
 
   function update<K extends keyof Inputs>(key: K, value: Inputs[K]) {
-    setInputs((current) => ({ ...current, [key]: value }));
+    if (solverState === "solving") return;
+    const nextInputs = { ...inputs, [key]: value };
+    setInputs(nextInputs);
     setFamily(null);
     setResult(null);
     setCurveIndex(-1);
     setPointIndex(-1);
     selectionRef.current = { curve: -1, point: -1 };
     setSolverState("idle");
+    setProgress({ completed: 0, total: nextInputs.basePointCount * nextInputs.collectorPointCount });
     setMessage("Configuration changed. Calculate a new characteristic grid.");
   }
 
   function solve() {
     if (errors.length || solverState === "solving") return;
     setSolverState("solving");
+    setCancelPending(false);
+    setProgress({ completed: 0, total: inputs.basePointCount * inputs.collectorPointCount });
     setMessage(`Solving ${inputs.basePointCount} × ${inputs.collectorPointCount} coupled bias points…`);
     setFamily(null);
     setResult(null);
@@ -119,6 +145,13 @@ export function BjtLab() {
       baseVoltages: linearGrid(inputs.minimumVbeV, inputs.maximumVbeV, inputs.basePointCount),
       collectorVoltages: linearGrid(0, inputs.maximumVceV, inputs.collectorPointCount),
     });
+  }
+
+  function cancel() {
+    if (solverState !== "solving" || cancelPending) return;
+    setCancelPending(true);
+    setMessage("Cancellation requested. The current nonlinear bias point will finish before the sweep stops.");
+    workerRef.current?.postMessage({ action: "cancel" });
   }
 
   function requestPoint(nextCurve: number, nextPoint: number, worker = workerRef.current) {
@@ -187,7 +220,8 @@ export function BjtLab() {
       <AppHeader device="bjt" state={solverState} />
       <LabLayout controls={
         <>
-          <div className="panel-heading"><span className="eyebrow">Characteristic grid</span><h1>Lateral NPN</h1><p>Calculate a voltage-driven output family and inspect any converged operating point without rerunning the solver.</p></div>
+          <div className="panel-heading"><span className="eyebrow">Characteristic grid</span><h2>Lateral NPN</h2><p>Sweep output and transfer characteristics on one reusable bias grid.</p></div>
+          <fieldset className="configuration-fields" disabled={solverState === "solving"}>
           <div className="field-grid two">
             <Field label={<>V<sub>BE,min</sub> (V)</>}><input type="number" value={inputs.minimumVbeV} min="-0.2" max="0.75" step="0.01" onChange={(event) => update("minimumVbeV", Number(event.target.value))} /></Field>
             <Field label={<>V<sub>BE,max</sub> (V)</>}><input type="number" value={inputs.maximumVbeV} min="-0.2" max="0.75" step="0.01" onChange={(event) => update("maximumVbeV", Number(event.target.value))} /></Field>
@@ -215,13 +249,15 @@ export function BjtLab() {
               <Field label={<>τ<sub>p</sub> (s)</>}><input type="number" value={inputs.holeLifetimeS} min="1e-12" max="1e-3" step="any" onChange={(event) => update("holeLifetimeS", Number(event.target.value))} /></Field>
             </div>
           </details>
+          </fieldset>
           <Message state={errors.length ? "error" : validation.warnings.length ? "warning" : "ready"}>{errors[0] ?? validation.warnings[0] ?? "Configuration and mesh checks passed."}</Message>
-          <button className="primary-action" type="button" disabled={Boolean(errors.length) || solverState === "solving"} onClick={solve}>Calculate characteristic grid</button>
+          <button className="primary-action" data-action={solverState === "solving" ? "cancel" : "solve"} type="button" disabled={solverState === "solving" ? cancelPending : Boolean(errors.length)} onClick={solverState === "solving" ? cancel : solve}>{solverState === "solving" ? (cancelPending ? "Cancellingâ€¦" : "Cancel calculation") : "Calculate characteristic grid"}</button>
+          <div className="solver-progress"><progress max={Math.max(1, progress.total)} value={progress.completed} aria-label="Characteristic grid progress" /><span>{progress.completed} / {progress.total} bias points</span></div>
           <output className="solver-line" aria-live="polite">{message}</output>
         </>
       }>
         <header className="workspace-heading">
-          <div><span className="eyebrow">2D bipolar drift–diffusion</span><h1>NPN output and transfer characteristics</h1></div>
+          <div><span className="eyebrow">2D drift–diffusion</span><h1>Lateral NPN characteristics</h1></div>
           <span className="bias-badge">{fixed(inputs.minimumVbeV, 2)} ≤ V<sub>BE</sub> ≤ {fixed(inputs.maximumVbeV, 2)} V · 0 ≤ V<sub>CE</sub> ≤ {fixed(inputs.maximumVceV, 2)} V</span>
         </header>
 
@@ -259,7 +295,7 @@ export function BjtLab() {
               yLabel="I_C (mA)"
               markerX={selectedCurve?.baseEmitterVoltageV}
               includeZero
-              height={205}
+              height={155}
               state={plotState}
               message="Awaiting characteristic grid"
               interactive

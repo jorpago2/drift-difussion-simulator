@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { SolverState } from "../types";
 
 export function AppHeader({ device, state }: { device: "pn" | "bjt"; state: SolverState }) {
@@ -8,8 +8,8 @@ export function AppHeader({ device, state }: { device: "pn" | "bjt"; state: Solv
       <div className="brand-lockup">
         <span className="brand-mark">DD</span>
         <div>
-          <span className="eyebrow">Semiconductor device physics</span>
-          <strong>Drift–diffusion laboratory</strong>
+          <span className="eyebrow">Drift–diffusion</span>
+          <strong>Semiconductor Devices Lab</strong>
         </div>
       </div>
       <nav className="device-switcher" aria-label="Device laboratories">
@@ -55,8 +55,12 @@ export function Disclosure({ eyebrow, title, summary, children, open = false }: 
   children: ReactNode;
   open?: boolean;
 }) {
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    if (open && detailsRef.current) detailsRef.current.open = true;
+  }, [open]);
   return (
-    <details className="result-disclosure" open={open}>
+    <details ref={detailsRef} className="result-disclosure">
       <summary><span className="eyebrow">{eyebrow}</span><strong>{title}</strong><small>{summary}</small></summary>
       <div className="disclosure-content">{children}</div>
     </details>

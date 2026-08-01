@@ -40,8 +40,10 @@ assert.match(pnWorker, /cachedResults/);
 assert.match(lineChart, /onWheel=\{zoom\}/);
 assert.match(lineChart, /onPointerDown=\{pointerDown\}/);
 assert.match(lineChart, /setDomain\(domain\)/);
+assert.match(lineChart, /role="img"/);
 assert.match(pnStyles, /@media \(max-width: 600px\)/);
 assert.match(pnStyles, /\.primary-dashboard \{ display: grid/);
+assert.match(pnStyles, /\.control-panel \{[^\n]*overflow: auto/);
 
 const voltageScale = createNiceScale([-1, 0.65], 8);
 assert.deepEqual(voltageScale.ticks, [-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75]);

@@ -179,6 +179,11 @@ VBE is held constant along each curve, this is a voltage-driven family rather
 than the constant-IB family often shown in introductory circuit texts. A default
 browser grid can take several minutes.
 
+The worker reports progress after every converged bias point. Cancellation
+finishes the active nonlinear point and then discards the incomplete family;
+partial data are never presented as valid. Repeating an identical grid during
+the same browser session restores the last converged family from memory.
+
 Each IC–VCE curve also includes a dashed, parameter-derived 1D low-injection
 transport reference. It uses the minority-electron diffusion solution in the
 neutral base, including finite diffusion length and depletion-width modulation.

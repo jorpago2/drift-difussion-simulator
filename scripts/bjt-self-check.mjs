@@ -34,11 +34,17 @@ assert.match(bjtLab, /maximumVbeV: 0\.55/);
 assert.match(bjtLab, /basePointCount: 5/);
 assert.match(bjtLab, /maximumVceV: 0\.8/);
 assert.match(bjtLab, /collectorPointCount: 7/);
-assert.match(bjtLab, /NPN output and transfer characteristics/);
+assert.match(bjtLab, /Lateral NPN characteristics/);
 assert.match(bjtLab, /Internal 2D fields/);
+assert.match(bjtLab, /Cancel calculation/);
+assert.match(bjtLab, /<progress/);
 assert.doesNotMatch(bjtLab, /solveOperatingPoint/);
 assert.ok(bjtWorker.includes('data.action === "select"'));
+assert.ok(bjtWorker.includes('data.action === "cancel"'));
+assert.ok(bjtWorker.includes('action: "progress"'));
+assert.ok(bjtWorker.includes('action: "cancelled"'));
 assert.ok(bjtWorker.includes("cachedFamily"));
+assert.ok(bjtWorker.includes("cachedKey"));
 
 assert.equal(idealNpnTransportCurrentA(DEFAULT_NPN_CONFIG, 0.55, 0), 0);
 const idealLowVce = idealNpnTransportCurrentA(DEFAULT_NPN_CONFIG, 0.55, 0.05);
