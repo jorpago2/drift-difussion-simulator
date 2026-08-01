@@ -204,8 +204,8 @@ export function PnLab() {
               ref={chartRef}
               x={voltage}
               series={series}
-              xLabel="V_D (V)"
-              yLabel={quantity === "density" ? (scale === "log" ? "|J_D| (A/cm²)" : "J_D (A/cm²)") : (scale === "log" ? "|I_D| (mA)" : "I_D (mA)")}
+              xLabel="V<sub>D</sub> (V)"
+              yLabel={quantity === "density" ? (scale === "log" ? "|J<sub>D</sub>| (A/cm²)" : "J<sub>D</sub> (A/cm²)") : (scale === "log" ? "|I<sub>D</sub>| (mA)" : "I<sub>D</sub> (mA)")}
               markerX={selectedPoint?.voltageV}
               includeZero={scale === "linear"}
               scale={scale}
@@ -273,9 +273,9 @@ export function PnLab() {
 
 function validateSweep(input: Inputs): string[] {
   const errors: string[] = [];
-  if (!Number.isFinite(input.minimumV) || input.minimumV < -1 || input.minimumV > 0.8) errors.push("V_D,min must be between −1 and 0.8 V.");
-  if (!Number.isFinite(input.maximumV) || input.maximumV < -1 || input.maximumV > 0.8) errors.push("V_D,max must be between −1 and 0.8 V.");
-  if (input.minimumV >= input.maximumV) errors.push("V_D,min must be smaller than V_D,max.");
+  if (!Number.isFinite(input.minimumV) || input.minimumV < -1 || input.minimumV > 0.8) errors.push("Minimum diode voltage must be between −1 and 0.8 V.");
+  if (!Number.isFinite(input.maximumV) || input.maximumV < -1 || input.maximumV > 0.8) errors.push("Maximum diode voltage must be between −1 and 0.8 V.");
+  if (input.minimumV >= input.maximumV) errors.push("Minimum diode voltage must be smaller than maximum diode voltage.");
   if (!Number.isInteger(input.pointCount) || input.pointCount < 17 || input.pointCount > 201) errors.push("Sweep points must be an integer between 17 and 201.");
   return errors;
 }
@@ -300,11 +300,11 @@ function carrierSeries(result: PnResult | null): ChartSeries[] {
 function bandSeries(result: PnResult | null): ChartSeries[] {
   if (!result) return [];
   return [
-    { label: "E_c", values: result.conductionBandEv, color: "#2162a7" },
-    { label: "E_i", values: result.intrinsicBandEv, color: "#6a787e", dash: [5, 4] },
-    { label: "E_v", values: result.valenceBandEv, color: "#b6314b" },
-    { label: "F_n", values: result.electronQuasiFermiEv, color: "#0a8876", dash: [8, 3] },
-    { label: "F_p", values: result.holeQuasiFermiEv, color: "#c57a00", dash: [8, 3] },
+    { label: "E<sub>c</sub>", values: result.conductionBandEv, color: "#2162a7" },
+    { label: "E<sub>i</sub>", values: result.intrinsicBandEv, color: "#6a787e", dash: [5, 4] },
+    { label: "E<sub>v</sub>", values: result.valenceBandEv, color: "#b6314b" },
+    { label: "F<sub>n</sub>", values: result.electronQuasiFermiEv, color: "#0a8876", dash: [8, 3] },
+    { label: "F<sub>p</sub>", values: result.holeQuasiFermiEv, color: "#c57a00", dash: [8, 3] },
   ];
 }
 

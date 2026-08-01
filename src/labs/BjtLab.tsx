@@ -41,7 +41,7 @@ const analyticalCurrent = idealNpnTransportCurrentA as unknown as (
 export function BjtLab() {
   const [inputs, setInputs] = useState(initialInputs);
   const [solverState, setSolverState] = useState<SolverState>("idle");
-  const [message, setMessage] = useState("Ready to calculate the V_BE × V_CE grid.");
+  const [message, setMessage] = useState("Ready to calculate the base–emitter × collector–emitter voltage grid.");
   const [family, setFamily] = useState<NpnFamily | null>(null);
   const [result, setResult] = useState<NpnResult | null>(null);
   const [curveIndex, setCurveIndex] = useState(-1);
@@ -76,7 +76,7 @@ export function BjtLab() {
       if (data.action === "progress") {
         setProgress({ completed: data.completed, total: data.total });
         const bias = Number.isFinite(data.baseEmitterVoltageV) && Number.isFinite(data.collectorEmitterVoltageV)
-          ? ` at V_BE = ${fixed(data.baseEmitterVoltageV)} V, V_CE = ${fixed(data.collectorEmitterVoltageV)} V`
+          ? ` at base–emitter bias ${fixed(data.baseEmitterVoltageV)} V and collector–emitter bias ${fixed(data.collectorEmitterVoltageV)} V`
           : "";
         setMessage(`${data.completed} of ${data.total} bias points converged${bias}.`);
       }
@@ -172,14 +172,14 @@ export function BjtLab() {
     return family.curves.flatMap((curve, index) => {
       const color = curveColors[index % curveColors.length]!;
       const numerical: ChartSeries = {
-        label: `V_BE = ${fixed(curve.baseEmitterVoltageV)} V`,
+        label: `V<sub>BE</sub> = ${fixed(curve.baseEmitterVoltageV)} V`,
         values: Float64Array.from(curve.points, (point) => point.collectorCurrentA * 1e3),
         color,
         lineWidth: index === curveIndex ? 3.2 : 2,
       };
       if (!showReference) return [numerical];
       return [numerical, {
-        label: `1D ${fixed(curve.baseEmitterVoltageV)} V`,
+        label: `1D, V<sub>BE</sub> = ${fixed(curve.baseEmitterVoltageV)} V`,
         values: Float64Array.from(curve.points, (point) => analyticalCurrent(family.config, curve.baseEmitterVoltageV, point.collectorEmitterVoltageV) * 1e3),
         color,
         dash: [7, 4],
@@ -273,13 +273,13 @@ export function BjtLab() {
               ref={outputChartRef}
               x={outputX}
               series={outputSeries}
-              xLabel="V_CE (V)"
-              yLabel="I_C (mA)"
+              xLabel="V<sub>CE</sub> (V)"
+              yLabel="I<sub>C</sub> (mA)"
               markerX={selectedPoint?.collectorEmitterVoltageV}
               includeZero
               height={430}
               state={plotState}
-              message={solverState === "solving" ? "Calculating the characteristic grid" : "Awaiting a V_BE × V_CE grid"}
+              message={solverState === "solving" ? "Calculating the characteristic grid" : "Awaiting a base–emitter × collector–emitter voltage grid"}
               interactive
               onSelectX={(value) => selectedCurve && requestPoint(curveIndex, nearestIndex(selectedCurve.points, value, (point) => point.collectorEmitterVoltageV))}
             />
@@ -289,8 +289,8 @@ export function BjtLab() {
             <LineChart
               x={transferX}
               series={transferSeries}
-              xLabel="V_BE (V)"
-              yLabel="I_C (mA)"
+              xLabel="V<sub>BE</sub> (V)"
+              yLabel="I<sub>C</sub> (mA)"
               markerX={selectedCurve?.baseEmitterVoltageV}
               includeZero
               height={155}
@@ -348,12 +348,12 @@ export function BjtLab() {
 
 function validateSweep(input: Inputs): string[] {
   const errors: string[] = [];
-  if (!Number.isFinite(input.minimumVbeV) || input.minimumVbeV < -0.2 || input.minimumVbeV > 0.75) errors.push("V_BE,min must be between −0.2 and 0.75 V.");
-  if (!Number.isFinite(input.maximumVbeV) || input.maximumVbeV < -0.2 || input.maximumVbeV > 0.75) errors.push("V_BE,max must be between −0.2 and 0.75 V.");
-  if (input.minimumVbeV >= input.maximumVbeV) errors.push("V_BE,min must be smaller than V_BE,max.");
-  if (!Number.isInteger(input.basePointCount) || input.basePointCount < 3 || input.basePointCount > 9) errors.push("V_BE curves must be an integer between 3 and 9.");
-  if (!Number.isFinite(input.maximumVceV) || input.maximumVceV < 0.1 || input.maximumVceV > 5) errors.push("V_CE,max must be between 0.1 and 5 V.");
-  if (!Number.isInteger(input.collectorPointCount) || input.collectorPointCount < 5 || input.collectorPointCount > 21) errors.push("V_CE points must be an integer between 5 and 21.");
+  if (!Number.isFinite(input.minimumVbeV) || input.minimumVbeV < -0.2 || input.minimumVbeV > 0.75) errors.push("Minimum base–emitter voltage must be between −0.2 and 0.75 V.");
+  if (!Number.isFinite(input.maximumVbeV) || input.maximumVbeV < -0.2 || input.maximumVbeV > 0.75) errors.push("Maximum base–emitter voltage must be between −0.2 and 0.75 V.");
+  if (input.minimumVbeV >= input.maximumVbeV) errors.push("Minimum base–emitter voltage must be smaller than maximum base–emitter voltage.");
+  if (!Number.isInteger(input.basePointCount) || input.basePointCount < 3 || input.basePointCount > 9) errors.push("The number of base–emitter curves must be an integer between 3 and 9.");
+  if (!Number.isFinite(input.maximumVceV) || input.maximumVceV < 0.1 || input.maximumVceV > 5) errors.push("Maximum collector–emitter voltage must be between 0.1 and 5 V.");
+  if (!Number.isInteger(input.collectorPointCount) || input.collectorPointCount < 5 || input.collectorPointCount > 21) errors.push("The number of collector–emitter points must be an integer between 5 and 21.");
   return errors;
 }
 

@@ -188,13 +188,17 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
 
   return (
     <div className={`chart-frame chart-${state}`} data-message={message} style={{ "--chart-height": `${height}px` } as React.CSSProperties}>
-      <div ref={plotRef} className="plotly-chart" role="img" aria-label={`${yLabel} versus ${xLabel}`} />
+      <div ref={plotRef} className="plotly-chart" role="img" aria-label={`${plainPlotText(yLabel)} versus ${plainPlotText(xLabel)}`} />
     </div>
   );
 });
 
 function symlog(value: number): number {
   return Math.sign(value) * Math.log10(1 + Math.abs(value));
+}
+
+function plainPlotText(value: string): string {
+  return value.replace(/<sub>(.*?)<\/sub>/g, " $1").replace(/<[^>]+>/g, "");
 }
 
 function symlogTicks(series: ChartSeries[], domain: ChartDomain | null): Partial<Layout["yaxis"]> {
