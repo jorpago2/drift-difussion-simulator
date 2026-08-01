@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DEFAULT_NPN_CONFIG,
   idealNpnTransportCurrentA,
@@ -7,9 +7,9 @@ import {
   validateNpnConfig,
 } from "../bjt-core.js";
 import { Heatmap } from "../components/Heatmap";
-import { LineChart, type ChartSeries } from "../components/LineChart";
+import { LineChart, type ChartSeries, type LineChartHandle } from "../components/LineChart";
 import { AppHeader, Disclosure, Field, LabLayout, Message, MetricGrid } from "../components/ui";
-import { downloadCanvas, downloadText } from "../lib/download";
+import { downloadText } from "../lib/download";
 import { fixed, linearGrid, nearestIndex, percent, scientific } from "../lib/format";
 import type { NpnConfig, NpnDerived, NpnFamily, NpnResult, SolverState, Validation } from "../types";
 
@@ -51,7 +51,7 @@ export function BjtLab() {
   const [cancelPending, setCancelPending] = useState(false);
   const workerRef = useRef<Worker | null>(null);
   const selectionRef = useRef({ curve: -1, point: -1 });
-  const outputCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const outputChartRef = useRef<LineChartHandle>(null);
 
   const config = useMemo<NpnConfig>(() => ({
     ...inputs,
@@ -213,8 +213,6 @@ export function BjtLab() {
   const base = result?.terminalCurrents.base.currentIntoDeviceA ?? NaN;
   const emitter = result?.terminalCurrents.emitter.currentIntoDeviceA ?? NaN;
   const beta = base > 0 ? collector / base : NaN;
-  const setOutputCanvas = useCallback((canvas: HTMLCanvasElement | null) => { outputCanvasRef.current = canvas; }, []);
-
   return (
     <>
       <AppHeader device="bjt" state={solverState} />
@@ -272,6 +270,7 @@ export function BjtLab() {
         <section className="primary-dashboard bjt-dashboard" aria-labelledby="bjt-result-title">
           <div className="main-chart">
             <LineChart
+              ref={outputChartRef}
               x={outputX}
               series={outputSeries}
               xLabel="V_CE (V)"
@@ -282,7 +281,6 @@ export function BjtLab() {
               state={plotState}
               message={solverState === "solving" ? "Calculating the characteristic grid" : "Awaiting a V_BE × V_CE grid"}
               interactive
-              onCanvas={setOutputCanvas}
               onSelectX={(value) => selectedCurve && requestPoint(curveIndex, nearestIndex(selectedCurve.points, value, (point) => point.collectorEmitterVoltageV))}
             />
           </div>
@@ -341,7 +339,7 @@ export function BjtLab() {
           </> : <Message state="idle">Calculate the characteristic grid before interpreting numerical confidence.</Message>}
         </Disclosure>
 
-        <details className="export-panel"><summary>Export converged results</summary><div className="button-row"><button disabled={!result} onClick={() => result && downloadText(serializeNpnProfileCsv(result), "npn-selected-2d.csv")}>Selected 2D CSV</button><button disabled={!selectedCurve || !family} onClick={() => selectedCurve && family && downloadText(serializeNpnSweepCsv({ ...selectedCurve, config: { ...family.config, baseEmitterVoltageV: selectedCurve.baseEmitterVoltageV } }), "npn-output-curve.csv")}>Selected curve CSV</button><button disabled={!family} onClick={() => downloadCanvas(outputCanvasRef.current, "npn-output-characteristics.png")}>Plot PNG</button></div></details>
+        <details className="export-panel"><summary>Export converged results</summary><div className="button-row"><button disabled={!result} onClick={() => result && downloadText(serializeNpnProfileCsv(result), "npn-selected-2d.csv")}>Selected 2D CSV</button><button disabled={!selectedCurve || !family} onClick={() => selectedCurve && family && downloadText(serializeNpnSweepCsv({ ...selectedCurve, config: { ...family.config, baseEmitterVoltageV: selectedCurve.baseEmitterVoltageV } }), "npn-output-curve.csv")}>Selected curve CSV</button><button disabled={!family} onClick={() => outputChartRef.current?.downloadPng("npn-output-characteristics.png")}>Plot PNG</button></div></details>
         <p className="model-boundary"><strong>Model boundary:</strong> lateral 2D homogeneous silicon, Boltzmann statistics, constant mobility, ohmic contacts, and midgap SRH. Breakdown, tunneling, high-field mobility, contact resistance, and self-heating are excluded.</p>
       </LabLayout>
     </>

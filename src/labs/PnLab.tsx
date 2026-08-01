@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DEFAULT_PN_CONFIG,
   serializePnProfileCsv,
@@ -7,7 +7,7 @@ import {
 } from "../ddm-core.js";
 import { LineChart, type ChartSeries, type LineChartHandle } from "../components/LineChart";
 import { AppHeader, Disclosure, Field, LabLayout, Message, MetricGrid } from "../components/ui";
-import { downloadCanvas, downloadText } from "../lib/download";
+import { downloadText } from "../lib/download";
 import { fixed, nearestIndex, percent, scientific } from "../lib/format";
 import type { PnConfig, PnDerived, PnResult, PnSweep, SolverState, Validation } from "../types";
 
@@ -40,7 +40,6 @@ export function PnLab() {
   const workerRef = useRef<Worker | null>(null);
   const selectedIndexRef = useRef(-1);
   const chartRef = useRef<LineChartHandle>(null);
-  const chartCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const config = useMemo<PnConfig>(() => ({
     ...inputs,
@@ -146,8 +145,6 @@ export function PnLab() {
   const plotState = solverState === "failed" ? "error" : solverState === "solving" ? "loading" : sweep ? "ready" : "empty";
   const depletionPercent = Math.min(62, Math.max(5, 100 * (result?.derived.depletionWidthM ?? validation.derived?.depletionWidthM ?? 0) / config.lengthUm / 1e-6));
 
-  const setChartCanvas = useCallback((canvas: HTMLCanvasElement | null) => { chartCanvasRef.current = canvas; }, []);
-
   return (
     <>
       <AppHeader device="pn" state={solverState} />
@@ -216,7 +213,6 @@ export function PnLab() {
               state={plotState}
               message={solverState === "solving" ? `Calculating ${inputs.pointCount} bias points` : "Awaiting an I–V sweep"}
               interactive
-              onCanvas={setChartCanvas}
               onSelectX={(value) => sweep && selectPoint(nearestIndex(sweep.points, value, (point) => point.voltageV))}
             />
           </div>
@@ -268,7 +264,7 @@ export function PnLab() {
           </> : <Message state="idle">Calculate the sweep before interpreting numerical confidence.</Message>}
         </Disclosure>
 
-        <details className="export-panel"><summary>Export converged results</summary><div className="button-row"><button disabled={!result} onClick={() => result && downloadText(serializePnProfileCsv(result), "pn-profile.csv")}>Profile CSV</button><button disabled={!sweep} onClick={() => sweep && downloadText(serializePnSweepCsv(sweep), "pn-iv.csv")}>Sweep CSV</button><button disabled={!sweep} onClick={() => downloadCanvas(chartCanvasRef.current, "pn-iv.png")}>Plot PNG</button></div></details>
+        <details className="export-panel"><summary>Export converged results</summary><div className="button-row"><button disabled={!result} onClick={() => result && downloadText(serializePnProfileCsv(result), "pn-profile.csv")}>Profile CSV</button><button disabled={!sweep} onClick={() => sweep && downloadText(serializePnSweepCsv(sweep), "pn-iv.csv")}>Sweep CSV</button><button disabled={!sweep} onClick={() => chartRef.current?.downloadPng("pn-iv.png")}>Plot PNG</button></div></details>
         <p className="model-boundary"><strong>Model boundary:</strong> homogeneous silicon, Boltzmann statistics, constant mobility, ohmic contacts, and midgap SRH. Breakdown, tunneling, degeneracy, self-heating, and high-field mobility are excluded.</p>
       </LabLayout>
     </>

@@ -159,8 +159,8 @@ input[type="range"] { min-height: 1rem; padding: 0; border: 0; background: trans
 .metric-grid-compact dd { font-size: 0.76rem; }
 
 .chart-frame { position: relative; width: 100%; min-width: 0; }
-.chart-frame canvas { display: block; width: 100%; height: var(--chart-height); border-radius: 0.45rem; background: #fff; touch-action: none; }
-.chart-frame:not(.chart-ready) canvas { opacity: 0.5; background-color: #fbfcfc; background-image: linear-gradient(to right, rgb(145 174 181 / 0.18) 1px, transparent 1px), linear-gradient(to bottom, rgb(145 174 181 / 0.18) 1px, transparent 1px); background-size: 20% 100%, 100% 25%; }
+.chart-frame .plotly-chart { display: block; width: 100%; height: var(--chart-height); border-radius: 0.45rem; background: #fff; touch-action: none; }
+.chart-frame:not(.chart-ready) .plotly-chart { opacity: 0.5; background-color: #fbfcfc; background-image: linear-gradient(to right, rgb(145 174 181 / 0.18) 1px, transparent 1px), linear-gradient(to bottom, rgb(145 174 181 / 0.18) 1px, transparent 1px); background-size: 20% 100%, 100% 25%; }
 .chart-frame:not(.chart-ready)::after { content: attr(data-message); position: absolute; top: 48%; left: 50%; max-width: 80%; padding: 0.35rem 0.65rem; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: rgb(255 255 255 / 0.94); font-size: 0.7rem; font-weight: 800; text-align: center; transform: translate(-50%, -50%); }
 .chart-loading::after { color: var(--warn); border-color: #d8bd7c; }
 .chart-error::after { color: var(--bad); border-color: #dba7b2; }
@@ -177,7 +177,7 @@ input[type="range"] { min-height: 1rem; padding: 0; border: 0; background: trans
 .profile-card { min-width: 0; margin: 0; padding: 0.4rem; border: 1px solid var(--line); border-radius: 0.45rem; background: #fff; }
 .profile-card figcaption { padding: 0.25rem 0.4rem 0.4rem; color: var(--ink); font-size: 0.72rem; font-weight: 850; }
 .profile-wide { grid-column: 1 / -1; }
-.heatmap-canvas { display: block; width: 100%; height: 260px; }
+.heatmap-plot { display: block; width: 100%; height: 260px; }
 .warning-list { display: grid; gap: 0.4rem; margin: 0.6rem 0 0; padding: 0; list-style: none; }
 .warning-list li { padding: 0.45rem 0.55rem; border-left: 3px solid #cf941b; border-radius: 0.25rem; color: var(--warn); background: var(--warn-soft); font-size: 0.7rem; }
 .export-panel { margin-top: 0.45rem; border-top: 1px solid var(--line); }
@@ -221,9 +221,9 @@ input[type="range"] { min-height: 1rem; padding: 0; border: 0; background: trans
   .bjt-strip { grid-template-columns: 2rem 1.6fr 2fr 3.2fr 2rem; }
   .device-strip .region strong { font-size: 1.5rem; }
   .device-strip .region small, .mobile-charge { font-size: 0.55rem; }
-  .chart-frame canvas { height: max(320px, var(--chart-height)); }
-  .result-inspector .chart-frame canvas { height: var(--chart-height); }
-  .bjt-inspector .chart-frame canvas { height: 210px; }
+  .chart-frame .plotly-chart { height: max(320px, var(--chart-height)); }
+  .result-inspector .chart-frame .plotly-chart { height: var(--chart-height); }
+  .bjt-inspector .chart-frame .plotly-chart { height: 210px; }
   .profile-grid, .heatmap-grid { grid-template-columns: 1fr; }
   .device-context > div { grid-template-columns: 1fr; }
   .profile-wide { grid-column: auto; }
