@@ -2,15 +2,15 @@
 
 A dependency-free teaching simulator with two validated silicon-device laboratories:
 
-- a stationary 1D PN junction, focused on the diode I–V characteristic; and
-- a stationary 2D lateral NPN transistor, focused on the IC–VCE output family.
+- a stationary 1D PN junction, focused on the diode I?V characteristic; and
+- a stationary 2D lateral NPN transistor, focused on the IC?VCE output family.
 
 The PN interface guides students through four stages:
-**Device → Solve → Results → Validate**. Before the solver runs, the application
+**Device ? Solve ? Results ? Validate**. Before the solver runs, the application
 shows only the physical structure; an initial condition is never presented as a
 converged solution.
 
-The NPN laboratory is a full three-terminal 2D Poisson–continuity calculation,
+The NPN laboratory is a full three-terminal 2D Poisson?continuity calculation,
 not a compact model or a pair of independent junctions. The old generic 2D, MOS,
 and legacy Poisson-only WASM paths remain experimental. The NPN numerical kernel
 uses its own C/WebAssembly implementation.
@@ -19,11 +19,11 @@ On desktop viewports, controls are docked at the right and can be collapsed;
 on smaller screens they open as a modal panel. Plots use a high-density canvas
 backing store so curves and labels remain sharp on HiDPI displays.
 
-The diode laboratory solves one configurable I–V sweep as its primary result.
+The diode laboratory solves one configurable I?V sweep as its primary result.
 It starts at equilibrium, continues toward `V_D,min` and `V_D,max`, and stores
 every converged point. Selecting a point on the completed sweep updates the
 electrostatic, carrier, and band profiles without running another simulation.
-The I–V view supports wheel or trackpad zoom, drag panning, and explicit X/Y
+The I?V view supports wheel or trackpad zoom, drag panning, and explicit X/Y
 limits without altering the converged sweep data.
 
 ## Run
@@ -63,17 +63,17 @@ The core self-consistently solves Poisson's equation and the stationary carrier
 continuity equations:
 
 ```text
-d/dx (ε dψ/dx) = -q (p - n + N_D - N_A)
+d/dx (? d?/dx) = -q (p - n + N_D - N_A)
 dJ_n/dx =  q R_SRH
 dJ_p/dx = -q R_SRH
 ```
 
-Electron and hole fluxes use Scharfetter–Gummel discretization. Recombination
+Electron and hole fluxes use Scharfetter?Gummel discretization. Recombination
 uses a midgap SRH trap:
 
 ```text
-R_SRH = (np - n_i²) /
-        [τ_p (n + n_i) + τ_n (p + n_i)].
+R_SRH = (np - n_i?) /
+        [?_p (n + n_i) + ?_n (p + n_i)].
 ```
 
 The model assumes nondegenerate silicon, complete ionization, Boltzmann
@@ -87,12 +87,12 @@ levels are relative energies with an arbitrary zero.
 - `validatePnConfig(config)` validates ranges and estimates `V_bi`, depletion
   width, Debye lengths, and spatial step.
 - `solvePnJunction1D(config, previousSolution?)` solves one bias point.
-- `sweepPnJunction(config, voltages?)` generates the numerical I–V sweep from
+- `sweepPnJunction(config, voltages?)` generates the numerical I?V sweep from
   the internally computed current density and the defined area.
 - `shockleyReferenceCurrentDensity(config, voltage)` provides an independent
   low-injection diode reference with finite-base `coth(W/L)` corrections.
 
-Equilibrium is solved first using Poisson–Boltzmann. Each requested voltage is
+Equilibrium is solved first using Poisson?Boltzmann. Each requested voltage is
 reached by continuation with steps no larger than 25 mV. Gummel iteration uses
 tridiagonal systems, Slotboom variables for the continuity equations, local SRH
 linearization, and adaptive damping. Each point allows up to 200 iterations and
@@ -114,14 +114,14 @@ zero error. The integrated checks independently verify
 `Jp(right) - Jp(left) = -q integral(R dx)`.
 
 Core quantities use SI units. The one-dimensional solver returns current density
-in A/m². A separately defined device area (10,000 µm² by default) converts it to
+in A/m?. A separately defined device area (10,000 ?m? by default) converts it to
 terminal current through `I = J A`; changing area scales current but does not
-change the one-dimensional solution. The interface retains J in A/cm² for
+change the one-dimensional solution. The interface retains J in A/cm? for
 device-level comparison.
 
 ## 2D lateral NPN model
 
-The NPN domain is a rectangular N–P–N silicon region. The emitter and collector
+The NPN domain is a rectangular N?P?N silicon region. The emitter and collector
 are ohmic contacts on the left and right boundaries; a finite-width base contact
 is centered over the base on the top boundary. Every remaining boundary is
 insulating. Voltages and conventional currents use
@@ -135,7 +135,7 @@ I_E = I_C + I_B  (reported positive out of the emitter).
 equations in WebAssembly on a node-centered Cartesian control-volume mesh.
 `src/bjt-core.js` remains the independent JavaScript reference implementation
 and owns validation, result construction, and exports. Face fluxes use
-Scharfetter–Gummel discretization; SRH recombination, statistics, and material
+Scharfetter?Gummel discretization; SRH recombination, statistics, and material
 assumptions match the PN model. Gummel continuation first establishes
 equilibrium, then advances VCE and VBE in steps no larger than 0.1 V. Each
 nonlinear update uses matrix-free preconditioned conjugate gradients and fails
@@ -149,7 +149,7 @@ fields in SI units. Terminal current is first integrated in A/m for the 2D cross
 section and then multiplied by the explicitly configured device depth. The
 depth therefore scales all terminal currents without changing the 2D fields.
 
-The default 161 × 33 mesh resolves the shortest Debye length with more than
+The default 161 ? 33 mesh resolves the shortest Debye length with more than
 three intervals and each estimated depletion region with more than twenty
 x intervals. Preflight also warns if the base depletion estimates overlap or
 if the collector-side depletion estimate reaches the collector contact.
@@ -166,17 +166,17 @@ hole SRH balance          < 1e-2
 
 The tolerances are looser than in 1D because terminal fluxes are integrated over
 a 2D contact boundary, but they are still checked independently. The default
-lateral teaching geometry has modest current gain; β is a computed outcome,
-not a fitted parameter. The browser treats a configurable VBE × VCE grid as the
+lateral teaching geometry has modest current gain; ? is a computed outcome,
+not a fitted parameter. The browser treats a configurable VBE ? VCE grid as the
 single primary calculation (five VBE curves and seven VCE points by default).
-Its main result is the IC–VCE output family; a linked IC–VBE transfer slice,
+Its main result is the IC?VCE output family; a linked IC?VBE transfer slice,
 terminal metrics, and optional 2D maps are all read from the same converged grid.
 Changing the selected curve or bias point does not run the solver again. Because
 VBE is held constant along each curve, this is a voltage-driven family rather
 than the constant-IB family often shown in introductory circuit texts. A default
 browser grid can take several minutes.
 
-Each IC–VCE curve also includes a dashed, parameter-derived 1D low-injection
+Each IC?VCE curve also includes a dashed, parameter-derived 1D low-injection
 transport reference. It uses the minority-electron diffusion solution in the
 neutral base, including finite diffusion length and depletion-width modulation.
 It is not fitted to the 2D result and is omitted when the injected minority
@@ -195,20 +195,20 @@ The NPN public API is:
 
 ## Parameters and warnings
 
-Defaults: 300 K, εr = 11.7, ni = 10¹⁰ cm⁻³, Eg = 1.12 eV,
-μn = 1350 cm²/(V·s), μp = 480 cm²/(V·s), NA = ND = 10¹⁶ cm⁻³,
-4 µm length, τn = τp = 10 ns, and 801 nodes.
+Defaults: 300 K, ?r = 11.7, ni = 10?? cm??, Eg = 1.12 eV,
+?n = 1350 cm?/(V?s), ?p = 480 cm?/(V?s), NA = ND = 10?? cm??,
+4 ?m length, ?n = ?p = 10 ns, and 801 nodes.
 
 Inputs are restricted to:
 
 | Parameter | Range |
 |---|---:|
-| NA, ND | 10¹⁴–10¹⁸ cm⁻³ |
-| Length | 1–20 µm |
-| Device area | 1–10⁸ µm² |
-| VD | −1–0.8 V |
-| Odd mesh | 101–2001 nodes |
-| τn, τp | 10⁻¹²–10⁻³ s |
+| NA, ND | 10???10?? cm?? |
+| Length | 1?20 ?m |
+| Device area | 1?10? ?m? |
+| VD | ?1?0.8 V |
+| Odd mesh | 101?2001 nodes |
+| ?n, ?p | 10????10?? s |
 
 The preflight warns when the spatial step does not adequately resolve the
 shortest Debye length or estimated depletion width. A warning does not imply
@@ -220,14 +220,14 @@ validity.
 ## Interpretation and validation
 
 The **Validate** stage compares the built-in potential against
-`V_T ln(NA ND / ni²)`, checks spatial current conservation, reports all three
+`V_T ln(NA ND / ni?)`, checks spatial current conservation, reports all three
 residuals, and summarizes mesh adequacy. The analytical diode curve is
 deliberately independent of the solver, includes finite-base correction, and
 appears only in the low-injection range; agreement with it is not a convergence
 criterion.
 
 `scripts/self-check.mjs` verifies the Bernoulli function, neutrality, mass
-action, built-in potential, equilibrium current and SRH, convergence at −0.5,
+action, built-in potential, equilibrium current and SRH, convergence at ?0.5,
 0, 0.3, and 0.6 V, current-density sign and monotonicity, current conservation,
 integrated SRH balance, near-equilibrium bias points, 201/401/801-node
 refinement, invalid-input rejection, and CSV serialization.
@@ -236,8 +236,8 @@ The refinement criterion requires less than 2% difference between the 401- and
 
 `scripts/bjt-self-check.mjs` independently checks NPN input rejection,
 equilibrium mass action and zero terminal current, forward-active current signs,
-all three residuals, KCL and separate carrier balances, positivity, 41 × 9 /
-81 × 17 / 161 × 33 mesh refinement, ordering of the output curves, current-field
+all three residuals, KCL and separate carrier balances, positivity, 41 ? 9 /
+81 ? 17 / 161 ? 33 mesh refinement, ordering of the output curves, current-field
 arrays, and CSV dimensions. Between the two finest meshes, collector current,
 base current, and the sampled potential field must each differ by less than 2%.
 
@@ -252,7 +252,7 @@ converged.
 
 ## Validity limits
 
-Both laboratories omit avalanche and tunneling breakdown, Fermi–Dirac
+Both laboratories omit avalanche and tunneling breakdown, Fermi?Dirac
 degeneracy, bandgap narrowing, Auger recombination, field- or doping-dependent
 mobility, contact resistance, self-heating, heterojunctions, and transients.
 The NPN model is 2D but assumes a uniform extrusion through the configured
@@ -261,3 +261,7 @@ the absence of breakdown and high-field effects is a model property, not a
 prediction for a real device. Results are quantitative only when the solver
 converges, the mesh warnings are resolved, and the assumptions are reasonable;
 the simulator is not equivalent to an industrial TCAD package.
+
+## Citation
+
+If you use this software in a scientific publication, please cite the exact version used. Citation metadata are provided in [`CITATION.cff`](CITATION.cff); GitHub's **Cite this repository** menu exports them in BibTeX and APA formats.
