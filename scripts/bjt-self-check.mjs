@@ -22,10 +22,11 @@ assert.throws(() => sweepNpnOutputFamily(DEFAULT_NPN_CONFIG, [0.5], []), RangeEr
 assert.throws(() => sweepNpnOutputFamily(DEFAULT_NPN_CONFIG, [], [0, 0.1]), RangeError);
 assert.throws(() => sweepNpnOutputFamily(DEFAULT_NPN_CONFIG, [NaN], [0, 0.1]), RangeError);
 
-const [bjtHtml, bjtLab, bjtWorker] = await Promise.all([
+const [bjtHtml, bjtLab, bjtWorker, heatmap] = await Promise.all([
   readFile(new URL("../bjt.html", import.meta.url), "utf8"),
   readFile(new URL("../src/labs/BjtLab.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/workers/bjt.worker.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/components/Heatmap.tsx", import.meta.url), "utf8"),
 ]);
 assert.match(bjtHtml, /<div id="root"><\/div>/);
 assert.match(bjtHtml, /src="\/src\/main\.tsx"/);
@@ -45,6 +46,9 @@ assert.ok(bjtWorker.includes('action: "progress"'));
 assert.ok(bjtWorker.includes('action: "cancelled"'));
 assert.ok(bjtWorker.includes("cachedFamily"));
 assert.ok(bjtWorker.includes("cachedKey"));
+assert.match(heatmap, /plotly\.js-cartesian-dist-min/);
+assert.match(heatmap, /type: "heatmap"/);
+assert.match(heatmap, /plotted\.slice\(row \* nx, \(row \+ 1\) \* nx\)/);
 
 assert.equal(idealNpnTransportCurrentA(DEFAULT_NPN_CONFIG, 0.55, 0), 0);
 const idealLowVce = idealNpnTransportCurrentA(DEFAULT_NPN_CONFIG, 0.55, 0.05);

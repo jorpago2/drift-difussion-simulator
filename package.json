@@ -16,7 +16,7 @@
     "build:bjt-wasm": "powershell -ExecutionPolicy Bypass -File scripts/build-wasm.ps1 -SourcePath native/bjt-core/bjt-core.c -WasmPath assets/wasm/bjt-core.wasm -ExportNames npn_solve,npn_array_count,npn_diagnostic_count -UseLibm"
   },
   "dependencies": {
-    "plotly.js-basic-dist-min": "^3.7.0",
+    "plotly.js-cartesian-dist-min": "3.7.0",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },

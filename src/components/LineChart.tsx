@@ -39,7 +39,7 @@ interface Props {
   onSelectX?: (value: number) => void;
 }
 
-type PlotlyModule = typeof import("plotly.js-basic-dist-min").default;
+type PlotlyModule = typeof import("plotly.js-cartesian-dist-min").default;
 
 export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
   x,
@@ -82,7 +82,7 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
 
   useEffect(() => {
     let cancelled = false;
-    void import("plotly.js-basic-dist-min").then((module) => {
+    void import("plotly.js-cartesian-dist-min").then((module) => {
       if (cancelled) return;
       plotlyRef.current = module.default;
       setPlotly(module.default);

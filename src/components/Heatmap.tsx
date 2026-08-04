@@ -13,7 +13,7 @@ interface Props {
   transform?: (value: number, index: number) => number;
 }
 
-type PlotlyModule = typeof import("plotly.js-basic-dist-min").default;
+type PlotlyModule = typeof import("plotly.js-cartesian-dist-min").default;
 
 export function Heatmap({ values, nx = 0, ny = 0, lengthUm = 1, heightUm = 1, label, diverging = false, transform }: Props) {
   const plotRef = useRef<HTMLDivElement>(null);
@@ -21,7 +21,7 @@ export function Heatmap({ values, nx = 0, ny = 0, lengthUm = 1, heightUm = 1, la
   const [plotly, setPlotly] = useState<PlotlyModule | null>(null);
 
   const data = useMemo<Data[]>(() => {
-    if (!values || !nx || !ny) return [];
+    if (!values || !nx || !ny || values.length !== nx * ny) return [];
     const plotted = Array.from(values, (value, index) => transform ? transform(Number(value), index) : Number(value));
     let minimum = Math.min(...plotted.filter(Number.isFinite));
     let maximum = Math.max(...plotted.filter(Number.isFinite));
@@ -48,7 +48,7 @@ export function Heatmap({ values, nx = 0, ny = 0, lengthUm = 1, heightUm = 1, la
 
   useEffect(() => {
     let cancelled = false;
-    void import("plotly.js-basic-dist-min").then((module) => {
+    void import("plotly.js-cartesian-dist-min").then((module) => {
       if (cancelled) return;
       plotlyRef.current = module.default;
       setPlotly(module.default);

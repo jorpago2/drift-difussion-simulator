@@ -8,8 +8,8 @@ importers:
 
   .:
     dependencies:
-      plotly.js-basic-dist-min:
-        specifier: ^3.7.0
+      plotly.js-cartesian-dist-min:
+        specifier: 3.7.0
         version: 3.7.0
       react:
         specifier: 19.2.8
@@ -409,8 +409,8 @@ packages:
     resolution: {integrity: sha512-RvwwcruNjI1ncT5xRakeyS9Lf8lcItv34KD+aif+VH9kduAyfYBipGh12274xtenIPZ119/R9BdTBa8gAwSh0A==}
     engines: {node: '>=12'}
 
-  plotly.js-basic-dist-min@3.7.0:
-    resolution: {integrity: sha512-84KPQhLTrO5IHu6DCte2KwA4bzSoVIdIs3uDPWid3sgeTX8L5RjpDARjCG3spgOwQ8MYE8PL+MeQ0DQRWA1Emw==}
+  plotly.js-cartesian-dist-min@3.7.0:
+    resolution: {integrity: sha512-kfQjcAXXByRlskP8JsrlGYRPOvB+kOehZk/qBNewgr9SOMEnBN5nwEnUGOAQ0EEgYdQX51z3VZ81aBnDgSr9Bw==}
 
   postcss@8.5.25:
     resolution: {integrity: sha512-DTPx3RWSSnWyzLxQnlH0rJP+EW5ekl16ZU4/psbIhA0e53kJfdgaN5vKM+xP7yJtXVu+nfdVFmlgFDEKAe4Pyw==}
@@ -716,7 +716,7 @@ snapshots:
 
   picomatch@4.0.5: {}
 
-  plotly.js-basic-dist-min@3.7.0: {}
+  plotly.js-cartesian-dist-min@3.7.0: {}
 
   postcss@8.5.25:
     dependencies:
