@@ -65,6 +65,7 @@ h1, h2, h3, p { margin-top: 0; }
 
 .brand-lockup { display: flex; gap: 0.65rem; align-items: center; min-width: 0; }
 .brand-lockup strong { display: block; font-size: 0.92rem; white-space: nowrap; }
+.suite-link { min-height: 36px; display: inline-flex; align-items: center; flex: 0 0 auto; padding: 0 0.45rem; color: var(--accent-dark); font-size: 0.7rem; font-weight: 850; text-underline-offset: 3px; white-space: nowrap; }
 .brand-mark { display: grid; place-items: center; flex: 0 0 2.1rem; width: 2.1rem; height: 2.1rem; border-radius: 0.42rem; color: #fff; background: var(--accent-dark); font-size: 0.72rem; font-weight: 900; letter-spacing: 0.04em; }
 .eyebrow { display: block; color: var(--accent-dark); font-size: 0.66rem; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; }
 
@@ -195,6 +196,7 @@ input[type="range"] { min-height: 1rem; padding: 0; border: 0; background: trans
 
 @media (max-width: 900px) {
   .device-switcher a,
+  .suite-link,
   input:not([type="checkbox"]):not([type="range"]),
   select,
   .button-row button,

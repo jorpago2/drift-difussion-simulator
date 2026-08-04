@@ -13,6 +13,7 @@ export function AppHeader({ device, state }: { device: "pn" | "bjt"; state: Solv
           <span className="eyebrow">Drift–diffusion</span>
           <strong>Semiconductor Devices Lab</strong>
         </div>
+        <a className="suite-link" href="https://jorpago2.github.io/" aria-label="Online Simulators & Tools">All tools</a>
       </div>
       <nav className="device-switcher" aria-label="Device laboratories">
         <a href="./index.html" aria-current={device === "pn" ? "page" : undefined}>PN diode</a>

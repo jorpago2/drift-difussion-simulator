@@ -48,7 +48,9 @@ assert.match(pnStyles, /\.primary-dashboard \{ display: grid/);
 assert.match(pnStyles, /\.control-panel \{[^\n]*overflow: auto/);
 assert.match(pnStyles, /\.skip-link/);
 assert.match(pnStyles, /\.check input \{[^\n]*width: 20px;[^\n]*height: 20px/);
-assert.match(await readFile(new URL("../src/components/ui.tsx", import.meta.url), "utf8"), /id="device-workspace"/);
+const uiComponents = await readFile(new URL("../src/components/ui.tsx", import.meta.url), "utf8");
+assert.match(uiComponents, /id="device-workspace"/);
+assert.match(uiComponents, /href="https:\/\/jorpago2\.github\.io\/"/);
 
 const voltageScale = createNiceScale([-1, 0.65], 8);
 assert.deepEqual(voltageScale.ticks, [-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75]);
