@@ -45,6 +45,9 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 sub { position: relative; bottom: -0.2em; font-size: 0.72em; line-height: 0; vertical-align: baseline; }
 h1, h2, h3, p { margin-top: 0; }
 
+.skip-link { position: fixed; z-index: 100; top: 8px; left: 8px; padding: 10px 14px; color: #fff; background: var(--ink); transform: translateY(-150%); }
+.skip-link:focus { transform: translateY(0); }
+
 .app-header {
   display: grid;
   grid-template-columns: minmax(16rem, 1fr) auto minmax(10rem, 1fr);
@@ -144,12 +147,12 @@ input[type="range"] { min-height: 1rem; padding: 0; border: 0; background: trans
 .result-inspector { display: grid; gap: 0.5rem; align-content: start; min-width: 0; padding: 0.72rem; border-left: 1px solid var(--line); background: #f8fafa; }
 .result-inspector h2 { margin: 0.18rem 0 0; font-size: 1.2rem; }
 .control-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
-.check { display: flex; gap: 0.45rem; align-items: center; color: var(--muted); font-size: 0.72rem; font-weight: 800; }
-.check input { flex: 0 0 1rem; width: 1rem; min-height: 1rem; padding: 0; accent-color: var(--accent); }
+.check { min-height: 36px; display: flex; gap: 0.45rem; align-items: center; color: var(--muted); font-size: 0.72rem; font-weight: 800; }
+.check input { flex: 0 0 20px; width: 20px; height: 20px; min-height: 20px; padding: 0; accent-color: var(--accent); }
 .axis-controls { border-block: 1px solid var(--line); }
 .axis-controls[open] { padding-bottom: 0.6rem; }
 .button-row { display: flex; flex-wrap: wrap; gap: 0.45rem; }
-.button-row button { min-height: 34px; padding: 0.4rem 0.65rem; border: 1px solid var(--line-strong); border-radius: 0.55rem; color: var(--ink); background: #fff; font-size: 0.72rem; font-weight: 800; }
+.button-row button { min-height: 36px; padding: 0.4rem 0.65rem; border: 1px solid var(--line-strong); border-radius: 0.55rem; color: var(--ink); background: #fff; font-size: 0.72rem; font-weight: 800; }
 
 .metric-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 0.8rem; margin: 0; border-top: 1px solid var(--line); }
 .metric-grid div { min-width: 0; padding: 0.48rem 0; border-bottom: 1px solid var(--line); }
@@ -191,6 +194,12 @@ input[type="range"] { min-height: 1rem; padding: 0; border: 0; background: trans
 }
 
 @media (max-width: 900px) {
+  .device-switcher a,
+  input:not([type="checkbox"]):not([type="range"]),
+  select,
+  .button-row button,
+  .control-panel > summary,
+  .check { min-height: 44px; }
   .app-header { grid-template-columns: minmax(0, 1fr) auto; }
   .device-switcher { grid-row: 2; grid-column: 1 / -1; justify-self: stretch; }
   .device-switcher a { flex: 1; text-align: center; }

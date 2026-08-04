@@ -4,6 +4,8 @@ import type { SolverState } from "../types";
 export function AppHeader({ device, state }: { device: "pn" | "bjt"; state: SolverState }) {
   const status = state === "idle" ? "Not solved" : state === "solving" ? "Solving…" : state === "converged" ? "Converged" : "Failed";
   return (
+    <>
+    <a className="skip-link" href="#device-workspace">Skip to device workspace</a>
     <header className="app-header">
       <div className="brand-lockup">
         <span className="brand-mark">DD</span>
@@ -18,6 +20,7 @@ export function AppHeader({ device, state }: { device: "pn" | "bjt"; state: Solv
       </nav>
       <output className="status-pill" data-state={state} aria-live="polite"><span />{status}</output>
     </header>
+    </>
   );
 }
 
@@ -31,7 +34,7 @@ export function LabLayout({ controls, children }: { controls: ReactNode; childre
         <summary><span>Configuration</span><small>Device, sweep, and numerics</small></summary>
         <div className="control-panel-content">{controls}</div>
       </details>
-      <section className="workspace">{children}</section>
+      <section id="device-workspace" className="workspace" tabIndex={-1}>{children}</section>
     </main>
   );
 }
