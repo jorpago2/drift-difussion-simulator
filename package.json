@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.9.0",
+  "engines": { "node": ">=24" },
   "description": "Validated browser laboratories for self-consistent PN and 2D lateral NPN devices.",
   "scripts": {
     "dev": "vite",
@@ -25,7 +26,7 @@
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "@vitejs/plugin-react": "6.0.5",
-    "typescript": "7.0.2",
+    "typescript": "6.0.2",
     "vite": "8.2.0"
   }
 }
