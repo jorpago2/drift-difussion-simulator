@@ -215,7 +215,7 @@ export function BjtLab() {
   const beta = base > 0 ? collector / base : NaN;
   return (
     <>
-      <AppHeader device="bjt" state={solverState} />
+      <AppHeader device="bjt" state={solverState} onRun={solve} onCancel={cancel} />
       <LabLayout controls={
         <>
           <div className="panel-heading"><span className="eyebrow">Characteristic grid</span><h2>Lateral NPN</h2><p>Sweep output and transfer characteristics on one reusable bias grid.</p></div>

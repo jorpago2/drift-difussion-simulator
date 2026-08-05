@@ -73,6 +73,17 @@ h1, h2, h3, p { margin-top: 0; }
 .device-switcher a { padding: 0.38rem 0.75rem; border-radius: 0.36rem; color: var(--muted); font-size: 0.75rem; font-weight: 800; text-decoration: none; }
 .device-switcher a[aria-current="page"] { color: #fff; background: var(--accent); }
 
+.header-actions { display: flex; gap: 0.55rem; align-items: center; justify-self: end; }
+.app-help { position: relative; }
+.app-help > summary { min-height: 36px; display: inline-flex; align-items: center; padding: 0.35rem 0.65rem; border: 1px solid var(--line); border-radius: 999px; color: var(--accent-dark); background: var(--surface); cursor: pointer; font-size: 0.72rem; font-weight: 850; list-style: none; }
+.app-help > summary::-webkit-details-marker { display: none; }
+.app-help-panel { position: absolute; top: calc(100% + 0.55rem); right: 0; width: min(21rem, calc(100vw - 1.4rem)); padding: 0.9rem; border: 1px solid var(--line-strong); border-radius: 0.65rem; background: var(--surface); box-shadow: var(--shadow); color: var(--ink); }
+.app-help-panel p { margin: 0.35rem 0 0.7rem; color: var(--muted); font-size: 0.72rem; line-height: 1.45; }
+.app-help-panel dl, .app-help-panel dl div { display: grid; gap: 0.4rem; margin: 0; }
+.app-help-panel dl div { grid-template-columns: minmax(7.5rem, auto) 1fr; align-items: center; }
+.app-help-panel dt, .app-help-panel dd { margin: 0; font-size: 0.7rem; }
+.app-help-panel kbd { padding: 0.12rem 0.3rem; border: 1px solid var(--line-strong); border-radius: 0.25rem; background: var(--surface-soft); font: 700 0.66rem ui-monospace, monospace; }
+
 .status-pill { display: inline-flex; gap: 0.45rem; align-items: center; justify-self: end; min-height: 34px; padding: 0.35rem 0.7rem; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--muted); font-size: 0.75rem; font-weight: 850; }
 .status-pill span { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: #96a8ad; }
 .status-pill[data-state="solving"] span { background: #d29115; animation: pulse 1s infinite alternate; }
@@ -209,7 +220,7 @@ input[type="range"] { min-height: 1rem; padding: 0; border: 0; background: trans
   .app-header { grid-template-columns: minmax(0, 1fr) auto; }
   .device-switcher { grid-row: 2; grid-column: 1 / -1; justify-self: stretch; }
   .device-switcher a { flex: 1; text-align: center; }
-  .status-pill { grid-column: 2; grid-row: 1; }
+  .header-actions { grid-column: 2; grid-row: 1; }
   .lab-layout { grid-template-columns: 1fr; padding: 0.6rem; }
   .control-panel { position: static; max-height: none; overflow: hidden; }
   .control-panel > summary { display: grid; gap: 0.1rem; position: relative; padding: 0.75rem 2.5rem 0.75rem 0.9rem; cursor: pointer; list-style: none; }
@@ -224,6 +235,7 @@ input[type="range"] { min-height: 1rem; padding: 0; border: 0; background: trans
 }
 
 @media (max-width: 600px) {
+  .app-help-panel { position: fixed; top: 64px; right: 12px; left: 12px; width: auto; }
   .app-header { gap: 0.5rem; min-height: 62px; padding: 0.55rem 0.65rem; }
   .brand-mark, .brand-lockup .eyebrow { display: none; }
   .brand-lockup strong { max-width: 10rem; font-size: 0.83rem; white-space: normal; }

@@ -158,7 +158,7 @@ export function PnLab() {
 
   return (
     <>
-      <AppHeader device="pn" state={solverState} />
+      <AppHeader device="pn" state={solverState} onRun={solve} onCancel={cancel} />
       <LabLayout controls={
         <>
           <div className="panel-heading"><span className="eyebrow">Terminal sweep</span><h2>PN diode</h2><p>Sweep the terminal characteristic and inspect the device at any solved bias.</p></div>

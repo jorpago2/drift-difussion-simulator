@@ -1,8 +1,26 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { SolverState } from "../types";
 
-export function AppHeader({ device, state }: { device: "pn" | "bjt"; state: SolverState }) {
+export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "bjt"; state: SolverState; onRun: () => void; onCancel: () => void }) {
   const status = state === "idle" ? "Not solved" : state === "solving" ? "Solving…" : state === "converged" ? "Converged" : "Failed";
+  const helpRef = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      if (event.repeat) return;
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
+        if (state !== "solving") onRun();
+      } else if (event.key === "Escape") {
+        if (helpRef.current) helpRef.current.open = false;
+        if (state === "solving") onCancel();
+      } else if (event.key === "?" && !isEditableTarget(event.target)) {
+        event.preventDefault();
+        if (helpRef.current) helpRef.current.open = !helpRef.current.open;
+      }
+    };
+    document.addEventListener("keydown", handleShortcut);
+    return () => document.removeEventListener("keydown", handleShortcut);
+  }, [onCancel, onRun, state]);
   return (
     <>
     <a className="skip-link" href="#device-workspace">Skip to device workspace</a>
@@ -19,10 +37,24 @@ export function AppHeader({ device, state }: { device: "pn" | "bjt"; state: Solv
         <a href="./index.html" aria-current={device === "pn" ? "page" : undefined}>PN diode</a>
         <a href="./bjt.html" aria-current={device === "bjt" ? "page" : undefined}>NPN transistor</a>
       </nav>
-      <output className="status-pill" data-state={state} aria-live="polite"><span />{status}</output>
+      <div className="header-actions">
+        <details className="app-help" ref={helpRef}>
+          <summary aria-keyshortcuts="?">Help</summary>
+          <div className="app-help-panel">
+            <strong>Quick workflow</strong>
+            <p>Set the device and sweep inputs, calculate, then inspect profiles and numerical diagnostics before exporting.</p>
+            <dl><div><dt><kbd>Ctrl/⌘</kbd> + <kbd>Enter</kbd></dt><dd>Calculate</dd></div><div><dt><kbd>Esc</kbd></dt><dd>Cancel calculation</dd></div><div><dt><kbd>?</kbd></dt><dd>Toggle this help</dd></div></dl>
+          </div>
+        </details>
+        <output className="status-pill" data-state={state} aria-live="polite"><span />{status}</output>
+      </div>
     </header>
     </>
   );
+}
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  return target instanceof HTMLElement && (target.matches("input, select, textarea") || target.isContentEditable);
 }
 
 export function LabLayout({ controls, children }: { controls: ReactNode; children: ReactNode }) {
