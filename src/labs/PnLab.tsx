@@ -37,6 +37,7 @@ export function PnLab() {
   const [scale, setScale] = useState<"linear" | "log">("linear");
   const [showReference, setShowReference] = useState(true);
   const [axis, setAxis] = useState({ xMin: "", xMax: "", yMin: "", yMax: "" });
+  const [workerGeneration, setWorkerGeneration] = useState(0);
   const workerRef = useRef<Worker | null>(null);
   const selectedIndexRef = useRef(-1);
   const chartRef = useRef<LineChartHandle>(null);
@@ -80,7 +81,7 @@ export function PnLab() {
       worker.terminate();
       workerRef.current = null;
     };
-  }, []);
+  }, [workerGeneration]);
 
   function update<K extends keyof Inputs>(key: K, value: Inputs[K]) {
     if (solverState === "solving") return;
@@ -107,6 +108,15 @@ export function PnLab() {
       maximumV: inputs.maximumV,
       pointCount: inputs.pointCount,
     });
+  }
+
+  function cancel() {
+    if (solverState !== "solving") return;
+    workerRef.current?.terminate();
+    workerRef.current = null;
+    setWorkerGeneration((current) => current + 1);
+    setSolverState("idle");
+    setMessage("Calculation cancelled. No partial sweep was kept.");
   }
 
   function selectPoint(index: number) {
@@ -180,7 +190,7 @@ export function PnLab() {
           </details>
           </fieldset>
           <Message state={errors.length ? "error" : validation.warnings.length ? "warning" : "ready"}>{errors[0] ?? validation.warnings[0] ?? "Configuration and mesh checks passed."}</Message>
-          <button className="primary-action" type="button" disabled={Boolean(errors.length) || solverState === "solving"} onClick={solve}>{solverState === "solving" ? "Calculating I–V sweep…" : "Calculate I–V sweep"}</button>
+          <button className="primary-action" data-action={solverState === "solving" ? "cancel" : undefined} type="button" disabled={solverState !== "solving" && Boolean(errors.length)} onClick={solverState === "solving" ? cancel : solve}>{solverState === "solving" ? "Cancel calculation" : "Calculate I–V sweep"}</button>
           <output className="solver-line" aria-live="polite">{message}</output>
         </>
       }>
