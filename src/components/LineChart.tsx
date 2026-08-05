@@ -21,7 +21,7 @@ export interface ChartDomain {
 export interface LineChartHandle {
   reset: () => void;
   setDomain: (domain: ChartDomain) => boolean;
-  downloadPng: (filename: string) => void;
+  downloadSvg: (filename: string) => void;
 }
 
 interface Props {
@@ -69,11 +69,11 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
       setManualDomain(domain);
       return true;
     },
-    downloadPng(filename) {
+    downloadSvg(filename) {
       if (!plotlyRef.current || !plotRef.current) return;
       void plotlyRef.current.downloadImage(plotRef.current, {
-        format: "png",
-        filename: filename.replace(/\.png$/i, ""),
+        format: "svg",
+        filename: filename.replace(/\.svg$/i, ""),
         width: 1400,
         height: 800,
       });
@@ -107,7 +107,7 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
       customdata: scale === "symlog" ? values : undefined,
       connectgaps: false,
       showlegend: line.showInLegend !== false,
-      line: { color: line.color, width: line.lineWidth ?? 2.5, dash: line.dash?.length ? "dash" : "solid" },
+      line: { color: line.color, width: line.lineWidth ?? 2.25, dash: line.dash?.length ? "dash" : "solid" },
       hovertemplate: scale === "symlog"
         ? `${line.label}: %{customdata:.4g}<extra></extra>`
         : `${line.label}: %{y:.4g}<extra></extra>`,
@@ -124,7 +124,7 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
     return {
       autosize: true,
       height,
-      margin: { l: 76, r: 18, t: 42, b: 58 },
+      margin: { l: 68, r: 20, t: 32, b: 56 },
       paper_bgcolor: "rgba(0,0,0,0)",
       plot_bgcolor: "#ffffff",
       font: { family: "Inter, Arial, sans-serif", size: 11, color: "#40555c" },
@@ -136,7 +136,7 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
         gridcolor: "#e7edef",
         zerolinecolor: "#b7c6ca",
         showline: true,
-        linecolor: "#334a51",
+        linecolor: "#9fb0b5",
         fixedrange: !interactive,
         ...(manualDomain ? { range: [manualDomain.xMin, manualDomain.xMax], autorange: false } : { autorange: true }),
       },
@@ -146,13 +146,13 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
         gridcolor: "#e7edef",
         zerolinecolor: "#b7c6ca",
         showline: true,
-        linecolor: "#334a51",
+        linecolor: "#9fb0b5",
         fixedrange: !interactive,
         rangemode: includeZero && scale === "linear" ? "tozero" : "normal",
         ...(yRange ? { range: yRange, autorange: false } : { autorange: true }),
         ...(symlogAxis ?? {}),
       },
-      legend: { orientation: "h", x: 0, y: 1.16 },
+      legend: { orientation: "h", x: 0, y: 1.14 },
       shapes: Number.isFinite(markerX) ? [{
         type: "line",
         x0: markerX,
@@ -173,8 +173,9 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
       responsive: true,
       scrollZoom: interactive,
       displayModeBar: interactive,
+      modeBarButtonsToRemove: ["lasso2d", "select2d"],
       doubleClick: "reset",
-      toImageButtonOptions: { format: "png", filename: "scientific-plot", width: 1400, height: 800, scale: 1 },
+      toImageButtonOptions: { format: "svg", filename: "scientific-plot", width: 1400, height: 800, scale: 1 },
     };
     void plotly.react(element, state === "ready" ? data : [], layout, config).then((plot) => {
       const interactivePlot = plot as PlotlyHTMLElement;

@@ -39,8 +39,8 @@ export function Heatmap({ values, nx = 0, ny = 0, lengthUm = 1, heightUm = 1, la
       zmax: maximum > minimum ? maximum : minimum + 1,
       zmid: diverging ? 0 : undefined,
       colorscale: diverging
-        ? [[0, "#2e699b"], [0.5, "#ffffff"], [1, "#ff533d"]]
-        : [[0, "#edf6f8"], [1, "#25a4a0"]],
+        ? [[0, "#053061"], [0.2, "#4393c3"], [0.4, "#d1e5f0"], [0.5, "#f7f7f7"], [0.6, "#fddbc7"], [0.8, "#d6604d"], [1, "#67001f"]]
+        : "Cividis",
       colorbar: { title: { text: label }, thickness: 12 },
       hovertemplate: `x: %{x:.4g} µm<br>y: %{y:.4g} µm<br>${label}: %{z:.4g}<extra></extra>`,
     }];
@@ -69,10 +69,10 @@ export function Heatmap({ values, nx = 0, ny = 0, lengthUm = 1, heightUm = 1, la
       paper_bgcolor: "rgba(0,0,0,0)",
       plot_bgcolor: "#ffffff",
       font: { family: "Inter, Arial, sans-serif", size: 10, color: "#40555c" },
-      xaxis: { title: { text: "x (µm)" }, gridcolor: "rgba(255,255,255,.35)", showline: true, linecolor: "#334a51" },
-      yaxis: { title: { text: "y (µm)" }, autorange: "reversed", gridcolor: "rgba(255,255,255,.35)", showline: true, linecolor: "#334a51" },
+      xaxis: { title: { text: "x (µm)" }, gridcolor: "rgba(255,255,255,.35)", showline: true, linecolor: "#9fb0b5" },
+      yaxis: { title: { text: "y (µm)" }, autorange: "reversed", gridcolor: "rgba(255,255,255,.35)", showline: true, linecolor: "#9fb0b5" },
     };
-    const config: Partial<Config> = { displaylogo: false, responsive: true, scrollZoom: true };
+    const config: Partial<Config> = { displaylogo: false, responsive: true, scrollZoom: true, modeBarButtonsToRemove: ["lasso2d", "select2d"], toImageButtonOptions: { format: "png", filename: "field-map", width: 1200, height: 700, scale: 1 } };
     void plotly.react(element, data, layout, config);
   }, [data, plotly]);
 

@@ -254,7 +254,7 @@ the same biased operating point, checks normalized potential and terminal-curren
 parity, and verifies continuation from a previously converged WASM state.
 
 CSV files contain model and area metadata plus both terminal-current and
-current-density columns with units in their headers. PNG export captures the
+current-density columns with units in their headers. SVG export captures the
 active plot. Both exports remain disabled unless the current result has
 converged.
 

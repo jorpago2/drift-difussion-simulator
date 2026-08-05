@@ -47,7 +47,7 @@ assert.match(lineChart, /plotly\.react/);
 assert.match(lineChart, /scrollZoom: interactive/);
 assert.match(lineChart, /plotly_click/);
 assert.match(lineChart, /setDomain\(domain\)/);
-assert.match(lineChart, /downloadPng/);
+assert.match(lineChart, /downloadSvg/);
 assert.match(lineChart, /role="img"/);
 assert.match(pnStyles, /@media \(max-width: 600px\)/);
 assert.match(pnStyles, /\.primary-dashboard \{ display: grid/);
