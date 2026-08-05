@@ -158,10 +158,12 @@ for (let curve = 1; curve < family.curves.length; curve += 1) {
 const profileCsv = serializeNpnProfileCsv(active[0]);
 assert.ok(profileCsv.includes("charge_C_m-3"));
 assert.ok(profileCsv.includes("Jn_x_A_m-2"));
-assert.equal(profileCsv.trim().split("\n").length, active[0].nx * active[0].ny + 6);
+assert.ok(profileCsv.includes('# config_json={"'));
+assert.equal(profileCsv.trim().split("\n").length, active[0].nx * active[0].ny + 7);
 const sweepCsv = serializeNpnSweepCsv(family.curves[0]);
 assert.ok(sweepCsv.includes("V_CE_V,I_C_A,I_B_A,I_E_A"));
-assert.equal(sweepCsv.trim().split("\n").length, family.curves[0].points.length + 4);
+assert.ok(sweepCsv.includes('# config_json={"'));
+assert.equal(sweepCsv.trim().split("\n").length, family.curves[0].points.length + 5);
 
 console.log("2D NPN self-check passed: equilibrium, active operation, conservation, three-mesh refinement, output family, and CSV.");
 

@@ -267,7 +267,7 @@ export function PnLab() {
           </> : <Message state="idle">Calculate the sweep before interpreting numerical confidence.</Message>}
         </Disclosure>
 
-        <details className="export-panel"><summary>Export converged results</summary><div className="button-row"><button disabled={!result} onClick={() => result && downloadText(serializePnProfileCsv(result), "pn-profile.csv")}>Profile CSV</button><button disabled={!sweep} onClick={() => sweep && downloadText(serializePnSweepCsv(sweep), "pn-iv.csv")}>Sweep CSV</button><button disabled={!sweep} onClick={() => chartRef.current?.downloadPng("pn-iv.png")}>Plot PNG</button></div></details>
+        <details className="export-panel"><summary>Export converged results</summary><div className="button-row"><button disabled={!result} onClick={() => { if (!result) return; downloadText(serializePnProfileCsv(result), "pn-profile.csv"); setMessage("Profile exported as pn-profile.csv."); }}>Profile CSV</button><button disabled={!sweep} onClick={() => { if (!sweep) return; downloadText(serializePnSweepCsv(sweep), "pn-iv.csv"); setMessage("Sweep exported as pn-iv.csv."); }}>Sweep CSV</button><button disabled={!sweep} onClick={() => { chartRef.current?.downloadPng("pn-iv.png"); setMessage("Plot exported as pn-iv.png."); }}>Plot PNG</button></div></details>
         <p className="model-boundary"><strong>Model boundary:</strong> homogeneous silicon, Boltzmann statistics, constant mobility, ohmic contacts, and midgap SRH. Breakdown, tunneling, degeneracy, self-heating, and high-field mobility are excluded.</p>
       </LabLayout>
     </>

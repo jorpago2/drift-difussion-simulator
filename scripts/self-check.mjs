@@ -189,11 +189,13 @@ assert.ok(sweep.points[0].currentDensityAm2 < 0);
 assert.ok(sweep.points.at(-1).currentDensityAm2 > sweep.points.at(-2).currentDensityAm2);
 
 const profileCsv = serializePnProfileCsv(equilibrium);
-assert.equal(profileCsv.trimEnd().split("\n").length, equilibrium.xM.length + 5);
+assert.equal(profileCsv.trimEnd().split("\n").length, equilibrium.xM.length + 6);
+assert.match(profileCsv, /# config_json=.*"acceptorCm3"/);
 assert.match(profileCsv, /x_um,doping_cm-3,potential_V/);
 assert.match(profileCsv, /Jn_A_cm-2,Jp_A_cm-2,Jtotal_A_cm-2,In_A,Ip_A,Itotal_A/);
 const sweepCsv = serializePnSweepCsv(sweep);
-assert.equal(sweepCsv.trimEnd().split("\n").length, sweep.points.length + 3);
+assert.equal(sweepCsv.trimEnd().split("\n").length, sweep.points.length + 4);
+assert.match(sweepCsv, /# config_json=.*"acceptorCm3"/);
 assert.match(sweepCsv, /voltage_V,I_A,J_A_cm-2,I_Shockley_A,J_Shockley_A_cm-2/);
 const firstSweepRow = sweepCsv.trimEnd().split("\n").at(-sweep.points.length).split(",");
 assert.equal(Number(firstSweepRow[1]), sweep.points[0].currentDensityAm2 * 1e-8);

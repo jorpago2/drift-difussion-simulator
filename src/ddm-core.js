@@ -1019,6 +1019,7 @@ export function serializePnProfileCsv(result) {
   if (!result?.diagnostics?.converged) throw new Error("Only converged results can be exported.");
   const lines = [
     `# model=1D Poisson-continuity Scharfetter-Gummel SRH`,
+    `# config_json=${JSON.stringify(result.config)}`,
     `# bias_V=${result.config.biasV}`,
     `# cells=${result.config.cells}`,
     `# device_area_um2=${result.config.deviceAreaUm2}`,
@@ -1054,6 +1055,7 @@ export function serializePnSweepCsv(sweep) {
   if (!sweep?.converged) throw new Error("Only converged sweeps can be exported.");
   const lines = [
     "# model=1D Poisson-continuity Scharfetter-Gummel SRH",
+    `# config_json=${JSON.stringify(sweep.config)}`,
     `# device_area_um2=${sweep.config.deviceAreaUm2}`,
     "voltage_V,I_A,J_A_cm-2,I_Shockley_A,J_Shockley_A_cm-2",
     ...sweep.points.map((point) => [

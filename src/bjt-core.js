@@ -400,6 +400,7 @@ export function serializeNpnProfileCsv(result) {
   if (!result?.diagnostics?.converged) throw new Error("Only converged NPN results can be exported.");
   const lines = [
     "# model=2D lateral NPN Poisson-continuity Scharfetter-Gummel SRH",
+    `# config_json=${JSON.stringify(result.config)}`,
     `# V_BE_V=${result.config.baseEmitterVoltageV}`,
     `# V_CE_V=${result.config.collectorEmitterVoltageV}`,
     `# nx=${result.config.nx},ny=${result.config.ny}`,
@@ -437,6 +438,7 @@ export function serializeNpnSweepCsv(sweep) {
   if (!sweep?.converged) throw new Error("Only converged NPN sweeps can be exported.");
   const lines = [
     "# model=2D lateral NPN Poisson-continuity Scharfetter-Gummel SRH",
+    `# config_json=${JSON.stringify(sweep.config)}`,
     `# V_BE_V=${sweep.config.baseEmitterVoltageV}`,
     `# device_depth_um=${sweep.config.deviceDepthUm}`,
     "V_CE_V,I_C_A,I_B_A,I_E_A",
