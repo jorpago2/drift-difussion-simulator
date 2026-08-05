@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import type { Config, Data, Layout, PlotlyHTMLElement } from "plotly.js";
 import type { NumericArray } from "../types";
+import { cssToken } from "../lib/theme";
 
 export interface ChartSeries {
   label: string;
@@ -59,6 +60,14 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
   const plotlyRef = useRef<PlotlyModule | null>(null);
   const [plotly, setPlotly] = useState<PlotlyModule | null>(null);
   const [manualDomain, setManualDomain] = useState<ChartDomain | null>(null);
+  const plotTheme = useMemo(() => ({
+    panel: cssToken("--color-panel"),
+    ink: cssToken("--color-ink-2"),
+    grid: cssToken("--color-plot-grid"),
+    axis: cssToken("--color-plot-axis"),
+    marker: cssToken("--color-danger"),
+    font: cssToken("--font-body"),
+  }), []);
 
   useImperativeHandle(forwardedRef, () => ({
     reset: () => setManualDomain(null),
@@ -125,28 +134,28 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
       autosize: true,
       height,
       margin: { l: 68, r: 20, t: 32, b: 56 },
-      paper_bgcolor: "rgba(0,0,0,0)",
-      plot_bgcolor: "#ffffff",
-      font: { family: "Inter, Arial, sans-serif", size: 11, color: "#40555c" },
+      paper_bgcolor: "transparent",
+      plot_bgcolor: plotTheme.panel,
+      font: { family: plotTheme.font, size: 12, color: plotTheme.ink },
       hovermode: "x unified",
       dragmode: interactive ? "pan" : false,
       uirevision: `${xLabel}-${yLabel}-${scale}`,
       xaxis: {
         title: { text: xLabel },
-        gridcolor: "#e7edef",
-        zerolinecolor: "#b7c6ca",
+        gridcolor: plotTheme.grid,
+        zerolinecolor: plotTheme.axis,
         showline: true,
-        linecolor: "#9fb0b5",
+        linecolor: plotTheme.axis,
         fixedrange: !interactive,
         ...(manualDomain ? { range: [manualDomain.xMin, manualDomain.xMax], autorange: false } : { autorange: true }),
       },
       yaxis: {
         title: { text: yLabel },
         type: scale === "log" ? "log" : "linear",
-        gridcolor: "#e7edef",
-        zerolinecolor: "#b7c6ca",
+        gridcolor: plotTheme.grid,
+        zerolinecolor: plotTheme.axis,
         showline: true,
-        linecolor: "#9fb0b5",
+        linecolor: plotTheme.axis,
         fixedrange: !interactive,
         rangemode: includeZero && scale === "linear" ? "tozero" : "normal",
         ...(yRange ? { range: yRange, autorange: false } : { autorange: true }),
@@ -160,10 +169,10 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
         y0: 0,
         y1: 1,
         yref: "paper",
-        line: { color: "#c23853", width: 1.4, dash: "dash" },
+        line: { color: plotTheme.marker, width: 1.4, dash: "dash" },
       }] : [],
     };
-  }, [height, includeZero, interactive, manualDomain, markerX, scale, series, xLabel, yLabel]);
+  }, [height, includeZero, interactive, manualDomain, markerX, plotTheme, scale, series, xLabel, yLabel]);
 
   useEffect(() => {
     const element = plotRef.current;

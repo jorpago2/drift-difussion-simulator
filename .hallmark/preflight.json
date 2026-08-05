@@ -1,0 +1,9 @@
+{
+  "date": "2026-08-06",
+  "font_stack": "Inter, Aptos, and system UI",
+  "palette": "Hex-based teal with P/N semantic colours",
+  "motion": "CSS-only status pulse; no motion library",
+  "spacing": "No named spacing scale",
+  "framework": "React 19 and Vite 8",
+  "pages": ["index.html", "bjt.html"]
+}

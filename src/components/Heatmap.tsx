@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Config, Data, Layout } from "plotly.js";
 import type { NumericArray } from "../types";
+import { cssToken } from "../lib/theme";
 
 interface Props {
   values?: NumericArray;
@@ -19,6 +20,21 @@ export function Heatmap({ values, nx = 0, ny = 0, lengthUm = 1, heightUm = 1, la
   const plotRef = useRef<HTMLDivElement>(null);
   const plotlyRef = useRef<PlotlyModule | null>(null);
   const [plotly, setPlotly] = useState<PlotlyModule | null>(null);
+  const plotTheme = useMemo(() => ({
+    panel: cssToken("--color-panel"),
+    ink: cssToken("--color-ink-2"),
+    axis: cssToken("--color-plot-axis"),
+    font: cssToken("--font-body"),
+    diverging: [
+      cssToken("--color-map-cold-3"),
+      cssToken("--color-map-cold-2"),
+      cssToken("--color-map-cold-1"),
+      cssToken("--color-map-zero"),
+      cssToken("--color-map-warm-1"),
+      cssToken("--color-map-warm-2"),
+      cssToken("--color-map-warm-3"),
+    ],
+  }), []);
 
   const data = useMemo<Data[]>(() => {
     if (!values || !nx || !ny || values.length !== nx * ny) return [];
@@ -39,12 +55,12 @@ export function Heatmap({ values, nx = 0, ny = 0, lengthUm = 1, heightUm = 1, la
       zmax: maximum > minimum ? maximum : minimum + 1,
       zmid: diverging ? 0 : undefined,
       colorscale: diverging
-        ? [[0, "#053061"], [0.2, "#4393c3"], [0.4, "#d1e5f0"], [0.5, "#f7f7f7"], [0.6, "#fddbc7"], [0.8, "#d6604d"], [1, "#67001f"]]
+        ? [[0, plotTheme.diverging[0]!], [0.2, plotTheme.diverging[1]!], [0.4, plotTheme.diverging[2]!], [0.5, plotTheme.diverging[3]!], [0.6, plotTheme.diverging[4]!], [0.8, plotTheme.diverging[5]!], [1, plotTheme.diverging[6]!]]
         : "Cividis",
       colorbar: { title: { text: label }, thickness: 12 },
       hovertemplate: `x: %{x:.4g} µm<br>y: %{y:.4g} µm<br>${label}: %{z:.4g}<extra></extra>`,
     }];
-  }, [diverging, heightUm, label, lengthUm, nx, ny, transform, values]);
+  }, [diverging, heightUm, label, lengthUm, nx, ny, plotTheme, transform, values]);
 
   useEffect(() => {
     let cancelled = false;
@@ -66,15 +82,15 @@ export function Heatmap({ values, nx = 0, ny = 0, lengthUm = 1, heightUm = 1, la
       autosize: true,
       height: 260,
       margin: { l: 58, r: 68, t: 12, b: 48 },
-      paper_bgcolor: "rgba(0,0,0,0)",
-      plot_bgcolor: "#ffffff",
-      font: { family: "Inter, Arial, sans-serif", size: 10, color: "#40555c" },
-      xaxis: { title: { text: "x (µm)" }, gridcolor: "rgba(255,255,255,.35)", showline: true, linecolor: "#9fb0b5" },
-      yaxis: { title: { text: "y (µm)" }, autorange: "reversed", gridcolor: "rgba(255,255,255,.35)", showline: true, linecolor: "#9fb0b5" },
+      paper_bgcolor: "transparent",
+      plot_bgcolor: plotTheme.panel,
+      font: { family: plotTheme.font, size: 11, color: plotTheme.ink },
+      xaxis: { title: { text: "x (µm)" }, gridcolor: plotTheme.panel, showline: true, linecolor: plotTheme.axis },
+      yaxis: { title: { text: "y (µm)" }, autorange: "reversed", gridcolor: plotTheme.panel, showline: true, linecolor: plotTheme.axis },
     };
     const config: Partial<Config> = { displaylogo: false, responsive: true, scrollZoom: true, modeBarButtonsToRemove: ["lasso2d", "select2d"], toImageButtonOptions: { format: "png", filename: "field-map", width: 1200, height: 700, scale: 1 } };
     void plotly.react(element, data, layout, config);
-  }, [data, plotly]);
+  }, [data, plotTheme, plotly]);
 
   return <div ref={plotRef} className="heatmap-plot" role="img" aria-label={label} />;
 }

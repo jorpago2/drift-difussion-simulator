@@ -1,0 +1,87 @@
+:root {
+  --color-paper: oklch(98% 0.008 170);
+  --color-paper-2: oklch(96% 0.011 170);
+  --color-paper-3: oklch(93% 0.014 170);
+  --color-panel: oklch(99% 0.006 170);
+  --color-ink: oklch(21% 0.018 170);
+  --color-ink-2: oklch(33% 0.018 170);
+  --color-muted: oklch(46% 0.014 170);
+  --color-neutral: oklch(38% 0.016 170);
+  --color-rule: oklch(87% 0.012 170);
+  --color-rule-2: oklch(76% 0.018 170);
+  --color-accent: oklch(44% 0.12 178);
+  --color-accent-strong: oklch(36% 0.105 178);
+  --color-accent-soft: oklch(94% 0.035 178);
+  --color-accent-ink: oklch(98% 0.008 170);
+  --color-focus: oklch(31% 0.13 178);
+  --color-p: oklch(45% 0.14 15);
+  --color-p-soft: oklch(95% 0.035 15);
+  --color-n: oklch(43% 0.12 250);
+  --color-n-soft: oklch(94% 0.03 250);
+  --color-contact: oklch(34% 0.025 210);
+  --color-success: oklch(43% 0.095 165);
+  --color-success-soft: oklch(95% 0.03 165);
+  --color-warning: oklch(48% 0.09 68);
+  --color-warning-strong: oklch(61% 0.12 72);
+  --color-warning-soft: oklch(95% 0.035 75);
+  --color-danger: oklch(45% 0.16 25);
+  --color-danger-soft: oklch(95% 0.035 25);
+  --color-plot-grid: oklch(91% 0.012 190);
+  --color-plot-axis: oklch(69% 0.018 190);
+  --color-plot-teal: oklch(48% 0.11 190);
+  --color-plot-gold: oklch(58% 0.11 72);
+  --color-plot-violet: oklch(48% 0.12 305);
+  --color-plot-blue: oklch(51% 0.12 255);
+  --color-plot-green: oklch(52% 0.1 155);
+  --color-plot-red: oklch(52% 0.14 28);
+  --color-plot-magenta: oklch(48% 0.1 345);
+  --color-plot-slate: oklch(48% 0.025 205);
+  --color-plot-ochre: oklch(52% 0.07 85);
+  --color-map-cold-3: oklch(30% 0.1 250);
+  --color-map-cold-2: oklch(58% 0.12 235);
+  --color-map-cold-1: oklch(88% 0.035 220);
+  --color-map-zero: oklch(96% 0.01 170);
+  --color-map-warm-1: oklch(88% 0.055 55);
+  --color-map-warm-2: oklch(58% 0.14 35);
+  --color-map-warm-3: oklch(30% 0.11 20);
+
+  --font-display: 'JetBrains Mono', ui-monospace, monospace;
+  --font-body: 'IBM Plex Sans', ui-sans-serif, sans-serif;
+
+  --space-3xs: 0.125rem;
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+  --space-2xl: 4rem;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-md: 1.125rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5625rem;
+  --text-2xl: 1.953rem;
+
+  --rule-hair: 1px;
+  --rule-fine: 2px;
+  --radius-input: 6px;
+  --radius-card: 8px;
+  --radius-pill: 999px;
+  --shadow-whisper: 0 1px 2px oklch(20% 0.015 170 / 0.06);
+  --shadow-float: 0 12px 28px oklch(20% 0.02 170 / 0.12);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-micro: 120ms;
+  --dur-short: 220ms;
+  --dur-long: 420ms;
+
+  --z-base: 1;
+  --z-raised: 10;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+}

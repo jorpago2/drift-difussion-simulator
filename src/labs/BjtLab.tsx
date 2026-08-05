@@ -11,6 +11,7 @@ import { LineChart, type ChartSeries, type LineChartHandle } from "../components
 import { AppHeader, Disclosure, Field, LabLayout, Message, MetricGrid } from "../components/ui";
 import { downloadText } from "../lib/download";
 import { fixed, linearGrid, nearestIndex, percent, scientific } from "../lib/format";
+import { cssToken } from "../lib/theme";
 import type { NpnConfig, NpnDerived, NpnFamily, NpnResult, SolverState, Validation } from "../types";
 
 interface Inputs extends NpnConfig {
@@ -31,7 +32,6 @@ const initialInputs: Inputs = {
 };
 const bjtCutaway = new URL("../../assets/device-cutaways/bjt-to92-cutaway-realistic.png", import.meta.url).href;
 
-const curveColors = ["#704aa1", "#4d72b8", "#087e8b", "#2d936c", "#c57a00", "#c4483f", "#9a4268", "#52676e", "#846d35"];
 const analyticalCurrent = idealNpnTransportCurrentA as unknown as (
   config: NpnConfig,
   baseEmitterVoltageV: number,
@@ -49,6 +49,17 @@ export function BjtLab() {
   const [showReference, setShowReference] = useState(true);
   const [progress, setProgress] = useState({ completed: 0, total: initialInputs.basePointCount * initialInputs.collectorPointCount });
   const [cancelPending, setCancelPending] = useState(false);
+  const curveColors = useMemo(() => [
+    cssToken("--color-plot-violet"),
+    cssToken("--color-plot-blue"),
+    cssToken("--color-plot-teal"),
+    cssToken("--color-plot-green"),
+    cssToken("--color-plot-gold"),
+    cssToken("--color-plot-red"),
+    cssToken("--color-plot-magenta"),
+    cssToken("--color-plot-slate"),
+    cssToken("--color-plot-ochre"),
+  ], []);
   const workerRef = useRef<Worker | null>(null);
   const selectionRef = useRef({ curve: -1, point: -1 });
   const outputChartRef = useRef<LineChartHandle>(null);
@@ -187,7 +198,7 @@ export function BjtLab() {
         showInLegend: false,
       }];
     });
-  }, [curveIndex, family, showReference]);
+  }, [curveColors, curveIndex, family, showReference]);
   const transferX = useMemo(() => Float64Array.from(family?.curves ?? [], (curve) => curve.baseEmitterVoltageV), [family]);
   const transferSeries = useMemo<ChartSeries[]>(() => {
     if (!family || pointIndex < 0) return [];
@@ -195,13 +206,13 @@ export function BjtLab() {
     const values: ChartSeries[] = [{
       label: "2D DD",
       values: Float64Array.from(family.curves, (curve) => curve.points[pointIndex]!.collectorCurrentA * 1e3),
-      color: "#087e8b",
+      color: cssToken("--color-plot-teal"),
       lineWidth: 2.6,
     }];
     if (showReference) values.push({
       label: "Ideal 1D",
       values: Float64Array.from(family.curves, (curve) => analyticalCurrent(family.config, curve.baseEmitterVoltageV, selectedVce) * 1e3),
-      color: "#c57a00",
+      color: cssToken("--color-plot-gold"),
       dash: [6, 4],
       lineWidth: 1.7,
     });
@@ -218,7 +229,7 @@ export function BjtLab() {
       <AppHeader device="bjt" state={solverState} onRun={solve} onCancel={cancel} />
       <LabLayout controls={
         <>
-          <div className="panel-heading"><span className="eyebrow">Characteristic grid</span><h2>Lateral NPN</h2><p>Sweep output and transfer characteristics on one reusable bias grid.</p></div>
+          <div className="panel-heading"><h2>Lateral NPN</h2><p>Sweep output and transfer characteristics on one reusable bias grid.</p></div>
           <fieldset className="configuration-fields" disabled={solverState === "solving"}>
           <div className="field-grid two">
             <Field label={<>V<sub>BE,min</sub> (V)</>}><input type="number" value={inputs.minimumVbeV} min="-0.2" max="0.75" step="0.01" onChange={(event) => update("minimumVbeV", Number(event.target.value))} /></Field>
@@ -255,7 +266,7 @@ export function BjtLab() {
         </>
       }>
         <header className="workspace-heading">
-          <div><span className="eyebrow">2D drift–diffusion</span><h1>Lateral NPN characteristics</h1></div>
+          <div><h1>Lateral NPN characteristics</h1><p>Two-dimensional drift–diffusion with SRH recombination</p></div>
           <span className="bias-badge">{fixed(inputs.minimumVbeV, 2)} ≤ V<sub>BE</sub> ≤ {fixed(inputs.maximumVbeV, 2)} V · 0 ≤ V<sub>CE</sub> ≤ {fixed(inputs.maximumVceV, 2)} V</span>
         </header>
 
@@ -264,7 +275,7 @@ export function BjtLab() {
         </div>
         <details className="device-context">
           <summary>Real-device context</summary>
-          <div><img src={bjtCutaway} alt="Cutaway of a TO-92 bipolar transistor showing its silicon die, bond wires, lead frame, and encapsulation" /><p>The solver uses a lateral NPN cross-section to expose 2D transport. A commercial discrete BJT commonly uses a vertical die, so geometry-dependent gain and current crowding are not claimed to match the package illustration.</p></div>
+          <div><img src={bjtCutaway} width="1536" height="1024" loading="lazy" alt="Cutaway of a TO-92 bipolar transistor showing its silicon die, bond wires, lead frame, and encapsulation" /><p>The solver uses a lateral NPN cross-section to expose 2D transport. A commercial discrete BJT commonly uses a vertical die, so geometry-dependent gain and current crowding are not claimed to match the package illustration.</p></div>
         </details>
 
         <section className="primary-dashboard bjt-dashboard" aria-labelledby="bjt-result-title">
@@ -285,7 +296,7 @@ export function BjtLab() {
             />
           </div>
           <aside className="result-inspector bjt-inspector">
-            <div><span className="eyebrow">Terminal behavior</span><h2 id="bjt-result-title">NPN characteristics</h2></div>
+            <div><h2 id="bjt-result-title">NPN characteristics</h2></div>
             <LineChart
               x={transferX}
               series={transferSeries}
@@ -315,7 +326,7 @@ export function BjtLab() {
           </aside>
         </section>
 
-        <Disclosure eyebrow="Optional analysis" title="Internal 2D fields" summary="Potential, carriers, current density, and SRH recombination">
+        <Disclosure title="Internal 2D fields" summary="Potential, carriers, current density, and SRH recombination">
           <div className="heatmap-grid">
             <Map title="Electrostatic potential ψ(x,y)"><Heatmap values={result?.potentialV} nx={result?.nx} ny={result?.ny} lengthUm={result?.derived.lengthM ? result.derived.lengthM * 1e6 : 1} heightUm={result?.derived.heightM ? result.derived.heightM * 1e6 : 1} label="ψ (V)" /></Map>
             <Map title="Electron density n(x,y)"><Heatmap values={result?.electronM3} nx={result?.nx} ny={result?.ny} lengthUm={result?.derived.lengthM ? result.derived.lengthM * 1e6 : 1} heightUm={result?.derived.heightM ? result.derived.heightM * 1e6 : 1} label="log₁₀ n (cm⁻³)" transform={(value) => Math.log10(value / 1e6)} /></Map>
@@ -324,7 +335,7 @@ export function BjtLab() {
           </div>
         </Disclosure>
 
-        <Disclosure eyebrow="Optional diagnostics" title="Numerical confidence" summary="Residuals, terminal balance, mesh, and model limits">
+        <Disclosure title="Numerical confidence" summary="Residuals, terminal balance, mesh, and model limits">
           {result ? <>
             <Message state="pass">PASS — the selected grid point satisfies residual, KCL, carrier-balance, positivity, and contact constraints.</Message>
             <MetricGrid entries={[

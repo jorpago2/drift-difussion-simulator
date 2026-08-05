@@ -26,10 +26,10 @@ export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "
     <a className="skip-link" href="#device-workspace">Skip to device workspace</a>
     <header className="app-header">
       <div className="brand-lockup">
-        <span className="brand-mark">DD</span>
-        <div>
-          <span className="eyebrow">Drift–diffusion</span>
+        <span className="brand-mark">SD</span>
+        <div className="brand-copy">
           <strong>Semiconductor Devices Lab</strong>
+          <span>Drift–diffusion</span>
         </div>
         <a className="suite-link" href="https://jorpago2.github.io/" aria-label="Online Simulators & Tools">All tools</a>
       </div>
@@ -84,8 +84,7 @@ export function Field({ label, children, help }: { label: ReactNode; children: R
   return <label className="field"><span>{label}</span>{children}{help && <small>{help}</small>}</label>;
 }
 
-export function Disclosure({ eyebrow, title, summary, children, open = false }: {
-  eyebrow: string;
+export function Disclosure({ title, summary, children, open = false }: {
   title: string;
   summary: string;
   children: ReactNode;
@@ -97,7 +96,7 @@ export function Disclosure({ eyebrow, title, summary, children, open = false }: 
   }, [open]);
   return (
     <details ref={detailsRef} className="result-disclosure">
-      <summary><span className="eyebrow">{eyebrow}</span><strong>{title}</strong><small>{summary}</small></summary>
+      <summary><strong>{title}</strong><small>{summary}</small></summary>
       <div className="disclosure-content">{children}</div>
     </details>
   );

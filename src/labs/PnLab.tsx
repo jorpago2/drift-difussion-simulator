@@ -9,6 +9,7 @@ import { LineChart, type ChartSeries, type LineChartHandle } from "../components
 import { AppHeader, Disclosure, Field, LabLayout, Message, MetricGrid } from "../components/ui";
 import { downloadText } from "../lib/download";
 import { fixed, nearestIndex, percent, scientific } from "../lib/format";
+import { cssToken } from "../lib/theme";
 import type { PnConfig, PnDerived, PnResult, PnSweep, SolverState, Validation } from "../types";
 
 interface Inputs extends PnConfig {
@@ -145,8 +146,8 @@ export function PnLab() {
     return scale === "log" ? Math.abs(value) : value;
   }), [chartScale, scale, sweep]);
   const series = useMemo<ChartSeries[]>(() => {
-    const values: ChartSeries[] = [{ label: "DD + SRH", values: numerical, color: "#087e8b", lineWidth: 2.8 }];
-    if (showReference) values.push({ label: "Finite-base analytical", values: reference, color: "#c57a00", dash: [7, 4], lineWidth: 2 });
+    const values: ChartSeries[] = [{ label: "DD + SRH", values: numerical, color: cssToken("--color-plot-teal"), lineWidth: 2.8 }];
+    if (showReference) values.push({ label: "Finite-base analytical", values: reference, color: cssToken("--color-plot-gold"), dash: [7, 4], lineWidth: 2 });
     return values;
   }, [numerical, reference, showReference]);
 
@@ -161,7 +162,7 @@ export function PnLab() {
       <AppHeader device="pn" state={solverState} onRun={solve} onCancel={cancel} />
       <LabLayout controls={
         <>
-          <div className="panel-heading"><span className="eyebrow">Terminal sweep</span><h2>PN diode</h2><p>Sweep the terminal characteristic and inspect the device at any solved bias.</p></div>
+          <div className="panel-heading"><h2>PN diode</h2><p>Sweep the terminal characteristic and inspect the device at any solved bias.</p></div>
           <fieldset className="configuration-fields" disabled={solverState === "solving"}>
           <div className="field-grid two">
             <Field label={<>N<sub>A</sub> (cm⁻³)</>}><input type="number" value={inputs.acceptorCm3} min="1e14" max="1e18" step="1e15" onChange={(event) => update("acceptorCm3", Number(event.target.value))} /></Field>
@@ -195,7 +196,7 @@ export function PnLab() {
         </>
       }>
         <header className="workspace-heading">
-          <div><span className="eyebrow">1D drift–diffusion</span><h1>PN diode I–V characteristic</h1></div>
+          <div><h1>PN diode I–V characteristic</h1><p>One-dimensional drift–diffusion with SRH recombination</p></div>
           <span className="bias-badge">{fixed(inputs.minimumV, 2)} ≤ V<sub>D</sub> ≤ {fixed(inputs.maximumV, 2)} V</span>
         </header>
 
@@ -208,7 +209,7 @@ export function PnLab() {
         </div>
         <details className="device-context">
           <summary>Real-device context</summary>
-          <div><img src={diodeCutaway} alt="Cutaway of an axial silicon diode showing the semiconductor die, contacts, bond connection, and encapsulation" /><p>The simulated 1D junction represents the active silicon die. Package leads, metallization, contact resistance, edge fields, and thermal effects are outside this model.</p></div>
+          <div><img src={diodeCutaway} width="1774" height="887" loading="lazy" alt="Cutaway of an axial silicon diode showing the semiconductor die, contacts, bond connection, and encapsulation" /><p>The simulated 1D junction represents the active silicon die. Package leads, metallization, contact resistance, edge fields, and thermal effects are outside this model.</p></div>
         </details>
 
         <section className="primary-dashboard" aria-labelledby="pn-result-title">
@@ -230,7 +231,7 @@ export function PnLab() {
             />
           </div>
           <aside className="result-inspector">
-            <div><span className="eyebrow">Terminal characteristic</span><h2 id="pn-result-title">Diode I–V curve</h2></div>
+            <div><h2 id="pn-result-title">Diode I–V curve</h2></div>
             <MetricGrid compact entries={[
               [<>V<sub>D</sub></>, result ? `${fixed(result.config.biasV)} V` : "—"],
               [<>I<sub>D</sub></>, result ? `${scientific(currentA * 1e3)} mA` : "—"],
@@ -254,17 +255,17 @@ export function PnLab() {
           </aside>
         </section>
 
-        <Disclosure eyebrow="Optional analysis" title="Internal device profiles" summary="Potential, field, charge, carriers, and energy bands">
+        <Disclosure title="Internal device profiles" summary="Potential, field, charge, carriers, and energy bands">
           <div className="profile-grid">
-            <Profile title="Electrostatic potential ψ(x)"><LineChart x={xUm} series={[{ label: "ψ", values: result?.potentialV ?? [], color: "#087e8b" }]} xLabel="x (µm)" yLabel="ψ (V)" height={260} state={result ? "ready" : "empty"} /></Profile>
-            <Profile title="Electric field E(x)"><LineChart x={xUm} series={[{ label: "E", values: Float64Array.from(result?.fieldVm ?? [], (value) => value / 1e6), color: "#704aa1" }]} xLabel="x (µm)" yLabel="E (MV/m)" height={260} state={result ? "ready" : "empty"} /></Profile>
-            <Profile title="Space charge ρ(x)"><LineChart x={xUm} series={[{ label: "ρ", values: result?.chargeCm3 ?? [], color: "#b63b52" }]} xLabel="x (µm)" yLabel="ρ (C/m³)" scale="symlog" height={260} state={result ? "ready" : "empty"} /></Profile>
+            <Profile title="Electrostatic potential ψ(x)"><LineChart x={xUm} series={[{ label: "ψ", values: result?.potentialV ?? [], color: cssToken("--color-plot-teal") }]} xLabel="x (µm)" yLabel="ψ (V)" height={260} state={result ? "ready" : "empty"} /></Profile>
+            <Profile title="Electric field E(x)"><LineChart x={xUm} series={[{ label: "E", values: Float64Array.from(result?.fieldVm ?? [], (value) => value / 1e6), color: cssToken("--color-plot-violet") }]} xLabel="x (µm)" yLabel="E (MV/m)" height={260} state={result ? "ready" : "empty"} /></Profile>
+            <Profile title="Space charge ρ(x)"><LineChart x={xUm} series={[{ label: "ρ", values: result?.chargeCm3 ?? [], color: cssToken("--color-plot-red") }]} xLabel="x (µm)" yLabel="ρ (C/m³)" scale="symlog" height={260} state={result ? "ready" : "empty"} /></Profile>
             <Profile title="Carrier concentrations"><LineChart x={xUm} series={carrierSeries(result)} xLabel="x (µm)" yLabel="Concentration (cm⁻³)" scale="log" height={260} state={result ? "ready" : "empty"} /></Profile>
             <Profile title="Bands and quasi-Fermi levels" wide><LineChart x={xUm} series={bandSeries(result)} xLabel="x (µm)" yLabel="Relative energy (eV)" height={280} state={result ? "ready" : "empty"} /></Profile>
           </div>
         </Disclosure>
 
-        <Disclosure eyebrow="Optional diagnostics" title="Numerical confidence" summary="Residuals, conservation, mesh, and model limits">
+        <Disclosure title="Numerical confidence" summary="Residuals, conservation, mesh, and model limits">
           {result ? <>
             <Message state="pass">PASS — all coupled residual and conservation thresholds are satisfied.</Message>
             <MetricGrid entries={[
@@ -304,20 +305,20 @@ function smallSignalResistance(sweep: PnSweep, index: number, areaM2: number): n
 function carrierSeries(result: PnResult | null): ChartSeries[] {
   if (!result) return [];
   return [
-    { label: "n", values: Float64Array.from(result.electronM3, (value) => value / 1e6), color: "#2162a7" },
-    { label: "p", values: Float64Array.from(result.holeM3, (value) => value / 1e6), color: "#b6314b" },
-    { label: "|doping|", values: Float64Array.from(result.dopingM3, (value) => Math.abs(value) / 1e6), color: "#6a787e", dash: [6, 4] },
+    { label: "n", values: Float64Array.from(result.electronM3, (value) => value / 1e6), color: cssToken("--color-plot-blue") },
+    { label: "p", values: Float64Array.from(result.holeM3, (value) => value / 1e6), color: cssToken("--color-plot-red") },
+    { label: "|doping|", values: Float64Array.from(result.dopingM3, (value) => Math.abs(value) / 1e6), color: cssToken("--color-plot-slate"), dash: [6, 4] },
   ];
 }
 
 function bandSeries(result: PnResult | null): ChartSeries[] {
   if (!result) return [];
   return [
-    { label: "E<sub>c</sub>", values: result.conductionBandEv, color: "#2162a7" },
-    { label: "E<sub>i</sub>", values: result.intrinsicBandEv, color: "#6a787e", dash: [5, 4] },
-    { label: "E<sub>v</sub>", values: result.valenceBandEv, color: "#b6314b" },
-    { label: "F<sub>n</sub>", values: result.electronQuasiFermiEv, color: "#0a8876", dash: [8, 3] },
-    { label: "F<sub>p</sub>", values: result.holeQuasiFermiEv, color: "#c57a00", dash: [8, 3] },
+    { label: "E<sub>c</sub>", values: result.conductionBandEv, color: cssToken("--color-plot-blue") },
+    { label: "E<sub>i</sub>", values: result.intrinsicBandEv, color: cssToken("--color-plot-slate"), dash: [5, 4] },
+    { label: "E<sub>v</sub>", values: result.valenceBandEv, color: cssToken("--color-plot-red") },
+    { label: "F<sub>n</sub>", values: result.electronQuasiFermiEv, color: cssToken("--color-plot-green"), dash: [8, 3] },
+    { label: "F<sub>p</sub>", values: result.holeQuasiFermiEv, color: cssToken("--color-plot-gold"), dash: [8, 3] },
   ];
 }
 
