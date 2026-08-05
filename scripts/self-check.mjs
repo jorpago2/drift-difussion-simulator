@@ -15,6 +15,7 @@ import {
 import { createBoundedScale, createNiceScale, drawScientificText, formatChartTick } from "../src/plot-utils.js";
 
 const pnHtml = await readFile(new URL("../index.html", import.meta.url), "utf8");
+const bjtHtml = await readFile(new URL("../bjt.html", import.meta.url), "utf8");
 const [pnLab, pnWorker, lineChart, pnStyles, appShell, viteConfig] = await Promise.all([
   readFile(new URL("../src/labs/PnLab.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/workers/pn.worker.ts", import.meta.url), "utf8"),
@@ -25,6 +26,11 @@ const [pnLab, pnWorker, lineChart, pnStyles, appShell, viteConfig] = await Promi
 ]);
 assert.match(pnHtml, /<div id="root"><\/div>/);
 assert.match(pnHtml, /src="\/src\/main\.tsx"/);
+for (const html of [pnHtml, bjtHtml]) {
+  for (const metadata of ["theme-color", "canonical", "og:site_name", "og:url", "og:image:alt", "twitter:title", "twitter:description", "twitter:image:alt"]) {
+    assert.match(html, new RegExp(metadata));
+  }
+}
 assert.match(appShell, /pathname\.toLowerCase\(\)\.endsWith\("bjt\.html"\)/);
 assert.match(viteConfig, /pn: "index\.html"/);
 assert.match(viteConfig, /bjt: "bjt\.html"/);
