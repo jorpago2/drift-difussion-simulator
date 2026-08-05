@@ -83,6 +83,7 @@ export function PnLab() {
   }, []);
 
   function update<K extends keyof Inputs>(key: K, value: Inputs[K]) {
+    if (solverState === "solving") return;
     setInputs((current) => ({ ...current, [key]: value }));
     setSweep(null);
     setResult(null);
@@ -151,6 +152,7 @@ export function PnLab() {
       <LabLayout controls={
         <>
           <div className="panel-heading"><span className="eyebrow">Terminal sweep</span><h2>PN diode</h2><p>Sweep the terminal characteristic and inspect the device at any solved bias.</p></div>
+          <fieldset className="configuration-fields" disabled={solverState === "solving"}>
           <div className="field-grid two">
             <Field label={<>N<sub>A</sub> (cm⁻³)</>}><input type="number" value={inputs.acceptorCm3} min="1e14" max="1e18" step="1e15" onChange={(event) => update("acceptorCm3", Number(event.target.value))} /></Field>
             <Field label={<>N<sub>D</sub> (cm⁻³)</>}><input type="number" value={inputs.donorCm3} min="1e14" max="1e18" step="1e15" onChange={(event) => update("donorCm3", Number(event.target.value))} /></Field>
@@ -176,8 +178,9 @@ export function PnLab() {
               ["Spatial step", `${scientific(validation.derived.dxM * 1e9)} nm`],
             ]} />}
           </details>
+          </fieldset>
           <Message state={errors.length ? "error" : validation.warnings.length ? "warning" : "ready"}>{errors[0] ?? validation.warnings[0] ?? "Configuration and mesh checks passed."}</Message>
-          <button className="primary-action" type="button" disabled={Boolean(errors.length) || solverState === "solving"} onClick={solve}>Calculate I–V sweep</button>
+          <button className="primary-action" type="button" disabled={Boolean(errors.length) || solverState === "solving"} onClick={solve}>{solverState === "solving" ? "Calculating I–V sweep…" : "Calculate I–V sweep"}</button>
           <output className="solver-line" aria-live="polite">{message}</output>
         </>
       }>
