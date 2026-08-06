@@ -857,6 +857,11 @@ input[type='range'] {
   touch-action: none;
 }
 
+.chart-frame .js-plotly-plot .plotly .modebar-btn {
+  width: 44px;
+  height: 44px;
+}
+
 .chart-frame:not(.chart-ready) .plotly-chart {
   opacity: 0.55;
   background-color: var(--color-panel);
