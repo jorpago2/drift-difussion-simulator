@@ -57,11 +57,10 @@ assert.match(pnStyles, /\.check input \{[^\n]*width: 20px;[^\n]*height: 20px/);
 const uiComponents = await readFile(new URL("../src/components/ui.tsx", import.meta.url), "utf8");
 assert.match(uiComponents, /id="device-workspace"/);
 assert.match(uiComponents, /href="https:\/\/jorpago2\.github\.io\/"/);
-assert.match(pnStyles, /tailwindcss\/theme\.css/);
-assert.match(pnStyles, /tailwindcss\/utilities\.css/);
-assert.match(pnStyles, /@theme inline/);
-assert.doesNotMatch(pnStyles, /tailwindcss\/preflight|@import\s+["']tailwindcss["']/);
-assert.match(uiComponents, /bg-ui-surface/);
+const carbonStyles = await readFile(new URL("../src/carbon.scss", import.meta.url), "utf8");
+assert.match(carbonStyles, /@use ["']@carbon\/react["']/);
+assert.doesNotMatch(pnStyles, /tailwindcss|@theme inline/);
+assert.match(uiComponents, /className="app-header"/);
 
 const voltageScale = createNiceScale([-1, 0.65], 8);
 assert.deepEqual(voltageScale.ticks, [-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75]);

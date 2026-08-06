@@ -24,7 +24,7 @@ export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "
   return (
     <>
     <a className="skip-link" href="#device-workspace">Skip to device workspace</a>
-    <header className="app-header sticky top-0 z-[200] grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 bg-ui-surface px-3 py-2">
+    <header className="app-header">
       <div className="brand-lockup">
         <span className="brand-mark">SD</span>
         <div className="brand-copy">
@@ -62,12 +62,12 @@ export function LabLayout({ controls, children }: { controls: ReactNode; childre
   const [controlsOpen, setControlsOpen] = useState(desktop);
   useEffect(() => setControlsOpen(desktop), [desktop]);
   return (
-    <main className="lab-layout mx-auto grid w-full max-w-[118rem] grid-cols-1 gap-3 p-3">
-      <details className="control-panel min-w-0 rounded-ui-panel bg-ui-surface" open={controlsOpen} onToggle={(event) => setControlsOpen(event.currentTarget.open)}>
+    <main className="lab-layout">
+      <details className="control-panel" open={controlsOpen} onToggle={(event) => setControlsOpen(event.currentTarget.open)}>
         <summary><span>Configuration</span><small>Device, sweep, and numerics</small></summary>
         <div className="control-panel-content">{controls}</div>
       </details>
-      <section id="device-workspace" className="workspace min-w-0 rounded-ui-panel bg-ui-surface p-3" tabIndex={-1}>{children}</section>
+      <section id="device-workspace" className="workspace" tabIndex={-1}>{children}</section>
     </main>
   );
 }

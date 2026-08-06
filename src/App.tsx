@@ -1,7 +1,8 @@
+import { Column, Grid } from "@carbon/react";
 import { BjtLab } from "./labs/BjtLab";
 import { PnLab } from "./labs/PnLab";
 
 export default function App() {
   const Lab = location.pathname.toLowerCase().endsWith("bjt.html") ? BjtLab : PnLab;
-  return <div className="min-h-dvh bg-ui-canvas-muted font-ui-body text-ui-ink"><Lab /></div>;
+  return <Grid fullWidth condensed className="app-shell"><Column sm={4} md={8} lg={16} className="app-shell-column"><Lab /></Column></Grid>;
 }

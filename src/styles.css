@@ -1,32 +1,15 @@
 /* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V4 · genre: modern-minimal · tone: clean layered semiconductor precision · anchor: teal 178 · macrostructure: Workbench · theme: custom-clean-layered · design-system: design.md · contrast: pass (40–41) · nav: app-workbench · footer: none · slop: pass (42–45) · honest: pass (46) · chrome: pass (47) · tokens: pass (48) · responsive: pass (49) · icons: pass (30) · mobile: pass (34, 49, 50–57) · designed-as-app */
 @import url('../tokens.css');
-@layer theme, base, components, utilities;
-@import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/utilities.css" layer(utilities);
-
-@theme inline {
-  --color-ui-canvas: var(--color-paper);
-  --color-ui-canvas-muted: var(--color-paper-2);
-  --color-ui-surface: var(--color-panel);
-  --color-ui-surface-raised: var(--color-paper);
-  --color-ui-ink: var(--color-ink);
-  --color-ui-muted: var(--color-muted);
-  --color-ui-border: var(--color-rule);
-  --color-ui-border-strong: var(--color-rule-2);
-  --color-ui-accent: var(--color-accent);
-  --color-ui-focus: var(--color-focus);
-  --color-ui-danger: var(--color-danger);
-  --color-ui-success: var(--color-success);
-  --font-ui-body: var(--font-body);
-  --font-ui-display: var(--font-display);
-  --radius-ui-control: var(--radius-input);
-  --radius-ui-panel: var(--radius-card);
-  --shadow-ui-raised: var(--shadow-float);
-}
 
 *,
 *::before,
 *::after { box-sizing: border-box; }
+.app-shell.cds--grid { min-height: 100dvh; max-width: none; padding: 0; color: var(--color-ink); background: var(--color-paper-2); font-family: var(--font-body); }
+.app-shell-column { min-width: 0; max-width: none; padding: 0; }
+.app-header { position: sticky; z-index: 200; top: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .5rem; padding: .5rem .75rem; background: var(--color-panel); }
+.lab-layout { width: 100%; max-width: 118rem; margin-inline: auto; display: grid; grid-template-columns: 1fr; gap: .75rem; padding: .75rem; }
+.control-panel, .workspace { min-width: 0; border-radius: 0; background: var(--color-panel); }
+.workspace { padding: .75rem; }
 
 html,
 body {
