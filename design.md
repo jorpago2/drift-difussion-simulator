@@ -23,7 +23,7 @@ Modern-minimal technical.
 
 ## Typography
 
-- Display: JetBrains Mono, weight 700, normal style.
+- Display: Space Grotesk, weights 600â€“700, normal style.
 - Body: IBM Plex Sans, weights 400 and 700.
 - Display tracking: `-0.025em`.
 - Numerical content uses tabular figures.
@@ -87,7 +87,7 @@ physical plot dimensions and unavoidable third-party integration details.
   --color-muted: oklch(46% 0.014 170);
   --color-accent: oklch(44% 0.12 178);
   --color-focus: oklch(31% 0.13 178);
-  --font-display: 'JetBrains Mono', ui-monospace, monospace;
+  --font-display: 'Space Grotesk', ui-sans-serif, sans-serif;
   --font-body: 'IBM Plex Sans', ui-sans-serif, sans-serif;
   --spacing-xs: 0.5rem;
   --spacing-sm: 0.75rem;
@@ -113,7 +113,7 @@ physical plot dimensions and unavoidable third-party integration details.
     "focus": { "$value": "oklch(31% 0.13 178)", "$type": "color" }
   },
   "font": {
-    "display": { "$value": "JetBrains Mono, ui-monospace, monospace", "$type": "fontFamily" },
+    "display": { "$value": "Space Grotesk, ui-sans-serif, sans-serif", "$type": "fontFamily" },
     "body": { "$value": "IBM Plex Sans, ui-sans-serif, sans-serif", "$type": "fontFamily" }
   },
   "space": {

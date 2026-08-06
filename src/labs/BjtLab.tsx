@@ -265,7 +265,7 @@ export function BjtLab() {
           <output className="solver-line" aria-live="polite">{message}</output>
         </>
       }>
-        <header className="workspace-heading">
+        <header className="workspace-heading grid items-end gap-2 pb-3">
           <div><h1>Lateral NPN characteristics</h1><p>Two-dimensional drift–diffusion with SRH recombination</p></div>
           <span className="bias-badge">{fixed(inputs.minimumVbeV, 2)} ≤ V<sub>BE</sub> ≤ {fixed(inputs.maximumVbeV, 2)} V · 0 ≤ V<sub>CE</sub> ≤ {fixed(inputs.maximumVceV, 2)} V</span>
         </header>

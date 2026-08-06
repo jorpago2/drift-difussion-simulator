@@ -195,7 +195,7 @@ export function PnLab() {
           <output className="solver-line" aria-live="polite">{message}</output>
         </>
       }>
-        <header className="workspace-heading">
+        <header className="workspace-heading grid items-end gap-2 pb-3">
           <div><h1>PN diode I–V characteristic</h1><p>One-dimensional drift–diffusion with SRH recombination</p></div>
           <span className="bias-badge">{fixed(inputs.minimumV, 2)} ≤ V<sub>D</sub> ≤ {fixed(inputs.maximumV, 2)} V</span>
         </header>

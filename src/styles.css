@@ -1,5 +1,28 @@
 /* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V4 · genre: modern-minimal · tone: clean layered semiconductor precision · anchor: teal 178 · macrostructure: Workbench · theme: custom-clean-layered · design-system: design.md · contrast: pass (40–41) · nav: app-workbench · footer: none · slop: pass (42–45) · honest: pass (46) · chrome: pass (47) · tokens: pass (48) · responsive: pass (49) · icons: pass (30) · mobile: pass (34, 49, 50–57) · designed-as-app */
 @import url('../tokens.css');
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme inline {
+  --color-ui-canvas: var(--color-paper);
+  --color-ui-canvas-muted: var(--color-paper-2);
+  --color-ui-surface: var(--color-panel);
+  --color-ui-surface-raised: var(--color-paper);
+  --color-ui-ink: var(--color-ink);
+  --color-ui-muted: var(--color-muted);
+  --color-ui-border: var(--color-rule);
+  --color-ui-border-strong: var(--color-rule-2);
+  --color-ui-accent: var(--color-accent);
+  --color-ui-focus: var(--color-focus);
+  --color-ui-danger: var(--color-danger);
+  --color-ui-success: var(--color-success);
+  --font-ui-body: var(--font-body);
+  --font-ui-display: var(--font-display);
+  --radius-ui-control: var(--radius-input);
+  --radius-ui-panel: var(--radius-card);
+  --shadow-ui-raised: var(--shadow-float);
+}
 
 *,
 *::before,
@@ -96,16 +119,7 @@ sub {
 .skip-link:focus { transform: translateY(0); }
 
 .app-header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-xs);
-  align-items: center;
-  position: sticky;
-  z-index: var(--z-sticky);
-  inset-block-start: 0;
-  padding: var(--space-xs) var(--space-sm);
   border-block-end: var(--rule-hair) solid var(--color-rule);
-  background: var(--color-panel);
 }
 
 .brand-lockup,
@@ -294,21 +308,9 @@ sub {
 .status-pill[data-state='converged'] span { background: var(--color-success); }
 .status-pill[data-state='failed'] span { background: var(--color-danger); }
 
-.lab-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-sm);
-  width: min(118rem, 100%);
-  margin-inline: auto;
-  padding: var(--space-sm);
-}
-
 .control-panel,
 .workspace {
-  min-width: 0;
   border: var(--rule-hair) solid var(--color-rule);
-  border-radius: var(--radius-card);
-  background: var(--color-panel);
 }
 
 .control-panel { overflow: clip; }
@@ -553,13 +555,7 @@ input[type='range'] {
   line-height: 1.45;
 }
 
-.workspace { padding: var(--space-sm); }
-
 .workspace-heading {
-  display: grid;
-  gap: var(--space-xs);
-  align-items: end;
-  padding-block-end: var(--space-sm);
   border-block-end: var(--rule-hair) solid var(--color-rule);
 }
 
