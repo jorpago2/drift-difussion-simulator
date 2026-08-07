@@ -16,7 +16,9 @@
     "typecheck": "tsc --noEmit",
     "test": "node scripts/self-check.mjs && node scripts/bjt-self-check.mjs && node scripts/bjt-wasm-self-check.mjs",
     "build:wasm": "powershell -ExecutionPolicy Bypass -File scripts/build-wasm.ps1",
-    "build:bjt-wasm": "powershell -ExecutionPolicy Bypass -File scripts/build-wasm.ps1 -SourcePath native/bjt-core/bjt-core.c -WasmPath assets/wasm/bjt-core.wasm -ExportNames npn_solve,npn_array_count,npn_diagnostic_count -UseLibm"
+    "build:bjt-wasm": "powershell -ExecutionPolicy Bypass -File scripts/build-wasm.ps1 -SourcePath native/bjt-core/bjt-core.c -WasmPath assets/wasm/bjt-core.wasm -ExportNames npn_solve,npn_array_count,npn_diagnostic_count -UseLibm",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@carbon/react": "1.113.0",
@@ -32,6 +34,8 @@
     "@vitejs/plugin-react": "6.0.5",
     "sass": "1.102.0",
     "typescript": "6.0.2",
-    "vite": "8.2.0"
+    "vite": "8.2.0",
+    "storybook": "^10.5.7",
+    "@storybook/react-vite": "^10.5.7"
   }
 }
