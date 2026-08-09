@@ -4,7 +4,7 @@
 *,
 *::before,
 *::after { box-sizing: border-box; }
-.app-shell.cds--grid { min-height: 100dvh; max-width: none; padding: 0; color: var(--color-ink); background: var(--color-paper-2); font-family: var(--font-body); }
+.app-shell.app-shell { min-height: 100dvh; inline-size: 100%; max-width: none; margin: 0; padding: 0; color: var(--color-ink); background: var(--color-paper-2); font-family: var(--font-body); }
 .app-shell-column { min-width: 0; max-width: none; padding: 0; }
 .app-header { position: sticky; z-index: 200; top: 0; display: grid; grid-template-columns: 4rem minmax(0, 1fr) 4rem; align-items: center; gap: .5rem; min-height: 4rem; padding: 0 .75rem; background: var(--color-panel); }
 .lab-layout { width: 100%; max-width: 118rem; margin-inline: auto; display: grid; grid-template-columns: 1fr; gap: .75rem; padding: .75rem .75rem calc(var(--scientific-ui-mobile-nav-block-size) + .75rem); }
@@ -23,7 +23,7 @@
 
 html,
 body {
-  min-width: 320px;
+  min-width: 0;
   overflow-x: clip;
   background: var(--color-paper-2);
 }
@@ -1074,7 +1074,7 @@ input[type='range'] {
   .device-switcher { grid-column: 2; }
 }
 
-@media (min-width: 60rem) {
+@media (min-width: 66rem) {
   .app-header {
     grid-template-columns: minmax(21rem, 1fr) auto minmax(15rem, 1fr);
     gap: var(--space-md);
@@ -1092,7 +1092,8 @@ input[type='range'] {
   .lab-layout {
     grid-template-columns: var(--scientific-ui-rail-inline-size) minmax(0, 1fr);
     grid-template-areas: 'rail workspace';
-    padding: var(--space-sm);
+    gap: 0;
+    padding: 0;
   }
 
   .lab-layout[data-panel-open='true'] {
@@ -1104,17 +1105,17 @@ input[type='range'] {
     grid-area: rail;
     align-self: start;
     position: sticky;
-    inset: 5rem auto auto;
+    inset: var(--scientific-ui-header-block-size) auto auto;
     inline-size: var(--scientific-ui-rail-inline-size);
-    max-block-size: calc(100dvh - 5.75rem);
+    max-block-size: calc(100dvh - var(--scientific-ui-header-block-size));
   }
 
   .control-panel {
     grid-area: panel;
     align-self: start;
     position: sticky;
-    inset-block-start: 5rem;
-    max-height: calc(100dvh - 5.75rem);
+    inset-block-start: var(--scientific-ui-header-block-size);
+    max-height: calc(100dvh - var(--scientific-ui-header-block-size));
     overflow-y: auto;
   }
 
