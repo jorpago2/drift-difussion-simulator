@@ -6,7 +6,7 @@
 *::after { box-sizing: border-box; }
 .app-shell.app-shell { min-height: 100dvh; inline-size: 100%; max-width: none; margin: 0; padding: 0; color: var(--color-ink); background: var(--color-paper-2); font-family: var(--font-body); }
 .app-shell-column { min-width: 0; max-width: none; padding: 0; }
-.app-header { position: sticky; z-index: 200; top: 0; display: grid; grid-template-columns: 4rem minmax(0, 1fr) 4rem; align-items: center; gap: .5rem; min-height: 4rem; padding: 0 .75rem; background: var(--color-panel); }
+.app-header { position: sticky; z-index: 200; top: 0; display: grid; grid-template-columns: 3rem minmax(0, 1fr) 3rem; align-items: center; gap: .5rem; min-height: var(--scientific-ui-header-block-size); padding: 0 .75rem; background: var(--cds-background); }
 .lab-layout { width: 100%; max-width: 118rem; margin-inline: auto; display: grid; grid-template-columns: 1fr; gap: .75rem; padding: .75rem .75rem calc(var(--scientific-ui-mobile-nav-block-size) + .75rem); }
 .control-panel, .workspace { min-width: 0; border-radius: 0; background: var(--color-panel); }
 .workspace { padding: .75rem; }
@@ -234,7 +234,7 @@ sub {
 .app-help-panel {
   position: fixed;
   z-index: var(--z-dropdown);
-  inset-block-start: 4rem;
+  inset-block-start: var(--scientific-ui-header-block-size);
   inset-inline: var(--space-sm);
   width: auto;
   padding: var(--space-md);
@@ -1078,7 +1078,7 @@ input[type='range'] {
   .app-header {
     grid-template-columns: minmax(21rem, 1fr) auto minmax(15rem, 1fr);
     gap: var(--space-md);
-    min-height: 4rem;
+    min-height: var(--scientific-ui-header-block-size);
     padding-inline: var(--space-lg);
   }
 
