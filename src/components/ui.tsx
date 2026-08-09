@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChartLine, SettingsAdjust } from "@carbon/react/icons";
-import { ScientificHeader, ScientificToolRail } from "@jorpago2/scientific-ui";
+import { ScientificHeader, ScientificTaskPanel, ScientificToolRail } from "@jorpago2/scientific-ui";
 import type { SolverState } from "../types";
 
 export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "bjt"; state: SolverState; onRun: () => void; onCancel: () => void }) {
@@ -94,11 +94,18 @@ export function LabLayout({ controls, children }: { controls: ReactNode; childre
           },
         ]}
       />
-      <details id="configuration-panel" className="control-panel" open={controlsOpen} onToggle={(event) => setControlsOpen(event.currentTarget.open)}>
-        <summary>Configuration</summary>
-        <div className="control-panel-content">{controls}</div>
-      </details>
-      <section id="device-workspace" className="workspace" tabIndex={-1}>{children}</section>
+      <ScientificTaskPanel
+        id="configuration-panel"
+        className="control-panel"
+        title="Configuration"
+        titleId="configuration-panel-title"
+        eyebrow="Device inputs"
+        bodyClassName="control-panel-content"
+        hidden={!controlsOpen}
+      >
+        {controls}
+      </ScientificTaskPanel>
+      <section id="device-workspace" className="workspace scientific-stage" tabIndex={-1}>{children}</section>
     </main>
   );
 }

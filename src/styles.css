@@ -6,8 +6,9 @@
 *::after { box-sizing: border-box; }
 .app-shell.app-shell { min-height: 100dvh; inline-size: 100%; max-width: none; margin: 0; padding: 0; color: var(--color-ink); background: var(--color-paper-2); font-family: var(--font-body); }
 .app-shell-column { min-width: 0; max-width: none; padding: 0; }
-.lab-layout { width: 100%; max-width: 118rem; margin-inline: auto; display: grid; grid-template-columns: 1fr; gap: .75rem; padding: .75rem .75rem calc(var(--scientific-ui-mobile-nav-block-size) + .75rem); }
-.control-panel, .workspace { min-width: 0; border-radius: 0; background: var(--color-panel); }
+.lab-layout { width: 100%; max-width: 118rem; margin-inline: auto; display: grid; grid-template-columns: 1fr; gap: 0; padding: 0 0 var(--scientific-ui-mobile-nav-block-size); }
+.control-panel, .workspace { min-width: 0; }
+.workspace { border-radius: 0; background: var(--color-panel); }
 .workspace { padding: .75rem; }
 
 .lab-tool-rail {
@@ -227,49 +228,15 @@ sub {
   font-weight: 700;
 }
 
-.control-panel,
 .workspace {
   border: var(--rule-hair) solid var(--color-rule);
 }
 
-.control-panel { overflow: clip; }
-
-.control-panel > summary {
-  display: none;
-}
-
 .device-label-short { display: none; }
-
-.control-panel > summary::-webkit-details-marker { display: none; }
-
-.control-panel > summary::after {
-  content: '+';
-  position: absolute;
-  inset-block-start: 50%;
-  inset-inline-end: var(--space-md);
-  color: var(--color-accent-strong);
-  font-family: var(--font-display);
-  font-size: var(--text-md);
-  transform: translateY(-50%);
-}
-
-.control-panel[open] > summary::after { content: '−'; }
-
-.control-panel > summary span {
-  font-family: var(--font-display);
-  font-size: var(--text-sm);
-  font-weight: 700;
-}
-
-.control-panel > summary small {
-  color: var(--color-muted);
-  font-size: var(--text-xs);
-}
 
 .control-panel-content {
   display: grid;
   gap: var(--space-sm);
-  padding: 0 var(--space-md) var(--space-md);
 }
 
 .configuration-fields {
@@ -1031,12 +998,8 @@ input[type='range'] {
     align-self: start;
     position: sticky;
     inset-block-start: var(--scientific-ui-header-block-size);
-    max-height: calc(100dvh - var(--scientific-ui-header-block-size));
-    overflow-y: auto;
+    block-size: calc(100dvh - var(--scientific-ui-header-block-size));
   }
-
-  .control-panel > summary { display: none; }
-  .control-panel-content { padding: var(--space-md); }
 
   .workspace {
     display: block !important;
@@ -1077,7 +1040,6 @@ input[type='range'] {
 }
 
 .primary-dashboard { display: grid; }
-.control-panel { overflow: auto; }
 .check input { width: 20px; height: 20px; }
 
 @media (max-width: 600px) {
