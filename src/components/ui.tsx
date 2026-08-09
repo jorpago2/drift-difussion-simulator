@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ChartLine, SettingsAdjust } from "@carbon/react/icons";
 import { ScientificHeader, ScientificTaskPanel, ScientificToolRail } from "@jorpago2/scientific-ui";
 import type { SolverState } from "../types";
@@ -61,7 +61,24 @@ function isEditableTarget(target: EventTarget | null): boolean {
 export function LabLayout({ controls, children }: { controls: ReactNode; children: ReactNode }) {
   const desktop = useMediaQuery("(min-width: 66rem)");
   const [controlsOpen, setControlsOpen] = useState(desktop);
+  const configureTriggerRef = useRef<HTMLButtonElement>(null);
   useEffect(() => setControlsOpen(desktop), [desktop]);
+
+  const closeControls = useCallback(() => {
+    setControlsOpen(false);
+    window.requestAnimationFrame(() => configureTriggerRef.current?.focus());
+  }, []);
+
+  useEffect(() => {
+    if (desktop || !controlsOpen) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.key !== "Escape") return;
+      event.preventDefault();
+      closeControls();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [closeControls, controlsOpen, desktop]);
 
   const selectWorkspace = (id: string | null) => {
     const showControls = id === "configure";
@@ -78,6 +95,7 @@ export function LabLayout({ controls, children }: { controls: ReactNode; childre
         label="Laboratory tools"
         activeId={controlsOpen ? "configure" : "results"}
         collapsible={false}
+        registerItemRef={(id, node) => { if (id === "configure") configureTriggerRef.current = node; }}
         onChange={selectWorkspace}
         items={[
           {
@@ -100,6 +118,7 @@ export function LabLayout({ controls, children }: { controls: ReactNode; childre
         title="Configuration"
         titleId="configuration-panel-title"
         eyebrow="Device inputs"
+        onClose={closeControls}
         bodyClassName="control-panel-content"
         hidden={!controlsOpen}
       >

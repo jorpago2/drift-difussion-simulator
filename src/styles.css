@@ -6,7 +6,7 @@
 *::after { box-sizing: border-box; }
 .app-shell.app-shell { min-height: 100dvh; inline-size: 100%; max-width: none; margin: 0; padding: 0; color: var(--color-ink); background: var(--color-paper-2); font-family: var(--font-body); }
 .app-shell-column { min-width: 0; max-width: none; padding: 0; }
-.lab-layout { width: 100%; max-width: 118rem; margin-inline: auto; display: grid; grid-template-columns: 1fr; gap: 0; padding: 0 0 var(--scientific-ui-mobile-nav-block-size); }
+.lab-layout { width: 100%; max-width: 118rem; margin-inline: auto; display: grid; grid-template-columns: 1fr; gap: 0; padding: 0 0 var(--scientific-ui-mobile-nav-total-block-size); }
 .control-panel, .workspace { min-width: 0; }
 .workspace { border-radius: 0; background: var(--color-panel); }
 .workspace { padding: .75rem; }
@@ -20,6 +20,26 @@
 
 .lab-layout[data-panel-open='false'] .control-panel { display: none; }
 .lab-layout[data-panel-open='true'] .workspace { display: none; }
+
+@media (max-width: 65.99rem) {
+  .lab-layout {
+    block-size: calc(100dvh - var(--scientific-ui-header-block-size));
+    overflow: hidden;
+  }
+
+  .control-panel {
+    block-size: calc(100dvh - var(--scientific-ui-header-block-size) - var(--scientific-ui-mobile-nav-total-block-size));
+    min-block-size: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .control-panel-content {
+    flex: 1 1 auto;
+    min-block-size: 0;
+    overflow-y: auto;
+  }
+}
 
 html,
 body {
