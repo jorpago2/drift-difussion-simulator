@@ -7,7 +7,7 @@
 .app-shell.cds--grid { min-height: 100dvh; max-width: none; padding: 0; color: var(--color-ink); background: var(--color-paper-2); font-family: var(--font-body); }
 .app-shell-column { min-width: 0; max-width: none; padding: 0; }
 .app-header { position: sticky; z-index: 200; top: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .5rem; padding: .5rem .75rem; background: var(--color-panel); }
-.lab-layout { width: 100%; max-width: 118rem; margin-inline: auto; display: grid; grid-template-columns: 1fr; gap: .75rem; padding: .75rem .75rem calc(var(--scientific-ui-rail-compact-inline-size) + .75rem); }
+.lab-layout { width: 100%; max-width: 118rem; margin-inline: auto; display: grid; grid-template-columns: 1fr; gap: .75rem; padding: .75rem .75rem calc(var(--scientific-ui-mobile-nav-block-size) + .75rem); }
 .control-panel, .workspace { min-width: 0; border-radius: 0; background: var(--color-panel); }
 .workspace { padding: .75rem; }
 
@@ -1072,13 +1072,13 @@ input[type='range'] {
   .device-switcher a { min-height: 40px; }
 
   .lab-layout {
-    grid-template-columns: var(--scientific-ui-rail-compact-inline-size) minmax(0, 1fr);
+    grid-template-columns: var(--scientific-ui-rail-inline-size) minmax(0, 1fr);
     grid-template-areas: 'rail workspace';
     padding: var(--space-sm);
   }
 
   .lab-layout[data-panel-open='true'] {
-    grid-template-columns: var(--scientific-ui-rail-compact-inline-size) var(--scientific-ui-panel-inline-size) minmax(0, 1fr);
+    grid-template-columns: var(--scientific-ui-rail-inline-size) var(--scientific-ui-panel-inline-size) minmax(0, 1fr);
     grid-template-areas: 'rail panel workspace';
   }
 
@@ -1087,7 +1087,7 @@ input[type='range'] {
     align-self: start;
     position: sticky;
     inset: 5rem auto auto;
-    inline-size: var(--scientific-ui-rail-compact-inline-size);
+    inline-size: var(--scientific-ui-rail-inline-size);
     max-block-size: calc(100dvh - 5.75rem);
   }
 
@@ -1135,7 +1135,7 @@ input[type='range'] {
 
 @media (min-width: 42rem) and (max-width: 59.99rem) {
   .lab-tool-rail {
-    block-size: var(--scientific-ui-rail-compact-inline-size);
+    block-size: var(--scientific-ui-mobile-nav-block-size);
   }
 
   .lab-tool-rail ul {
