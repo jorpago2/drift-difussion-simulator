@@ -60,7 +60,8 @@ assert.match(uiComponents, /href="https:\/\/jorpago2\.github\.io\/"/);
 const carbonStyles = await readFile(new URL("../src/carbon.scss", import.meta.url), "utf8");
 assert.match(carbonStyles, /@use ["']@carbon\/react["']/);
 assert.doesNotMatch(pnStyles, /tailwindcss|@theme inline/);
-assert.match(uiComponents, /className="app-header"/);
+assert.match(uiComponents, /className="app-header scientific-app-header"/);
+assert.match(uiComponents, /className="brand-mark scientific-app-header__brand-mark"/);
 
 const voltageScale = createNiceScale([-1, 0.65], 8);
 assert.deepEqual(voltageScale.ticks, [-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75]);

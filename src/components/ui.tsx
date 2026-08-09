@@ -26,9 +26,9 @@ export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "
   return (
     <>
     <a className="skip-link" href="#device-workspace">Skip to device workspace</a>
-    <header className="app-header">
+    <header className="app-header scientific-app-header">
       <div className="brand-lockup">
-        <span className="brand-mark">SD</span>
+        <span className="brand-mark scientific-app-header__brand-mark">SD</span>
         <div className="brand-copy">
           <strong>Semiconductor Devices Lab</strong>
           <span>Drift–diffusion</span>
@@ -63,7 +63,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
 }
 
 export function LabLayout({ controls, children }: { controls: ReactNode; children: ReactNode }) {
-  const desktop = useMediaQuery("(min-width: 60rem)");
+  const desktop = useMediaQuery("(min-width: 66rem)");
   const [controlsOpen, setControlsOpen] = useState(desktop);
   useEffect(() => setControlsOpen(desktop), [desktop]);
 

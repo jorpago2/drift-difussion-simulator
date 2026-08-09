@@ -1152,40 +1152,6 @@ input[type='range'] {
   .lab-tool-rail { inline-size: var(--scientific-ui-rail-inline-size); }
 }
 
-@media (min-width: 42rem) and (max-width: 59.99rem) {
-  .lab-tool-rail {
-    block-size: var(--scientific-ui-mobile-nav-block-size);
-  }
-
-  .lab-tool-rail ul {
-    flex-direction: row;
-    overflow-x: auto;
-  }
-
-  .lab-tool-rail li {
-    flex: 1 1 0;
-    inline-size: auto;
-    min-inline-size: 7.5rem;
-    block-size: 100%;
-  }
-
-  .lab-tool-rail .scientific-tool-rail__item {
-    inline-size: 100%;
-    min-inline-size: 0;
-    block-size: 100%;
-  }
-
-  .lab-tool-rail .scientific-tool-rail__label {
-    position: static;
-    inline-size: auto;
-    block-size: auto;
-    overflow: visible;
-    clip: auto;
-    clip-path: none;
-    white-space: nowrap;
-  }
-}
-
 @media (min-width: 74rem) {
   .workspace { padding: var(--space-lg); }
 
