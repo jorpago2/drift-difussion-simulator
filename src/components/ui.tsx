@@ -33,11 +33,10 @@ export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "
           <strong>Semiconductor Devices Lab</strong>
           <span>Drift–diffusion</span>
         </div>
-        <a className="suite-link" href="https://jorpago2.github.io/" aria-label="Online Simulators & Tools">All tools</a>
       </div>
       <nav className="device-switcher" aria-label="Device laboratories">
-        <a href="./index.html" aria-current={device === "pn" ? "page" : undefined}>PN diode</a>
-        <a href="./bjt.html" aria-current={device === "bjt" ? "page" : undefined}>NPN transistor</a>
+        <a href="./index.html" aria-current={device === "pn" ? "page" : undefined}><span className="device-label-full">PN diode</span><span className="device-label-short">PN</span></a>
+        <a href="./bjt.html" aria-current={device === "bjt" ? "page" : undefined}><span className="device-label-full">NPN transistor</span><span className="device-label-short">NPN</span></a>
       </nav>
       <div className="header-actions">
         <details className="app-help" ref={helpRef}>
@@ -48,6 +47,7 @@ export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "
             <dl><div><dt><kbd>Ctrl/⌘</kbd> + <kbd>Enter</kbd></dt><dd>Calculate</dd></div><div><dt><kbd>Esc</kbd></dt><dd>Cancel calculation</dd></div><div><dt><kbd>?</kbd></dt><dd>Toggle this help</dd></div></dl>
           </div>
         </details>
+        <a className="suite-link" href="https://jorpago2.github.io/" aria-label="Online Simulators & Tools">All tools</a>
         <ScientificStatus className="status-pill" compact status={{
           state: state === "idle" ? "needs-input" : state === "solving" ? "running" : state === "converged" ? "validated" : "failed",
           label: status,
