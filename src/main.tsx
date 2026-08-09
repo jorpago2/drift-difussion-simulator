@@ -8,5 +8,6 @@ import "@jorpago2/scientific-ui/styles.css";
 
 const root = document.getElementById("root");
 if (!root) throw new Error("The application root is missing.");
+document.documentElement.classList.add("cds--g10");
 
 createRoot(root).render(<StrictMode><GlobalTheme theme="g10"><App /></GlobalTheme></StrictMode>);

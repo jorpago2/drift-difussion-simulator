@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChartLine, SettingsAdjust } from "@carbon/react/icons";
-import { ScientificStatus, ScientificToolRail } from "@jorpago2/scientific-ui";
+import { ScientificHeader, ScientificToolRail } from "@jorpago2/scientific-ui";
 import type { SolverState } from "../types";
 
 export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "bjt"; state: SolverState; onRun: () => void; onCancel: () => void }) {
@@ -26,19 +26,19 @@ export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "
   return (
     <>
     <a className="skip-link" href="#device-workspace">Skip to device workspace</a>
-    <header className="app-header scientific-app-header">
-      <div className="brand-lockup">
-        <span className="brand-mark scientific-app-header__brand-mark">SD</span>
-        <div className="brand-copy">
-          <strong>Semiconductor Devices Lab</strong>
-          <span>Drift–diffusion</span>
-        </div>
-      </div>
-      <nav className="device-switcher" aria-label="Device laboratories">
+    <ScientificHeader
+      aria-label="Semiconductor Devices Lab"
+      product="Semiconductor Devices Lab"
+      productMark="SD"
+      descriptor="Drift–diffusion"
+      href={device === "pn" ? "./index.html" : "./bjt.html"}
+      contextLabel="Device"
+      context={<nav className="device-switcher" aria-label="Device laboratories">
         <a href="./index.html" aria-current={device === "pn" ? "page" : undefined}><span className="device-label-full">PN diode</span><span className="device-label-short">PN</span></a>
         <a href="./bjt.html" aria-current={device === "bjt" ? "page" : undefined}><span className="device-label-full">NPN transistor</span><span className="device-label-short">NPN</span></a>
-      </nav>
-      <div className="header-actions">
+      </nav>}
+      status={{ state: state === "idle" ? "needs-input" : state === "solving" ? "running" : state === "converged" ? "validated" : "failed", label: status }}
+      secondaryActions={<>
         <details className="app-help" ref={helpRef}>
           <summary aria-keyshortcuts="?">Help</summary>
           <div className="app-help-panel">
@@ -48,12 +48,8 @@ export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "
           </div>
         </details>
         <a className="suite-link" href="https://jorpago2.github.io/" aria-label="Online Simulators & Tools">All tools</a>
-        <ScientificStatus className="status-pill" compact status={{
-          state: state === "idle" ? "needs-input" : state === "solving" ? "running" : state === "converged" ? "validated" : "failed",
-          label: status,
-        }} />
-      </div>
-    </header>
+      </>}
+    />
     </>
   );
 }
