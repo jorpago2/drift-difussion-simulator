@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ScientificStatus } from "@jorpago2/scientific-ui";
+import { ChartLine, SettingsAdjust } from "@carbon/react/icons";
+import { ScientificStatus, ScientificToolRail } from "@jorpago2/scientific-ui";
 import type { SolverState } from "../types";
 
 export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "bjt"; state: SolverState; onRun: () => void; onCancel: () => void }) {
@@ -62,13 +63,43 @@ function isEditableTarget(target: EventTarget | null): boolean {
 }
 
 export function LabLayout({ controls, children }: { controls: ReactNode; children: ReactNode }) {
-  const desktop = useMediaQuery("(min-width: 901px)");
+  const desktop = useMediaQuery("(min-width: 60rem)");
   const [controlsOpen, setControlsOpen] = useState(desktop);
   useEffect(() => setControlsOpen(desktop), [desktop]);
+
+  const selectWorkspace = (id: string | null) => {
+    const showControls = id === "configure";
+    setControlsOpen(showControls);
+    if (!showControls) {
+      requestAnimationFrame(() => document.getElementById("device-workspace")?.focus());
+    }
+  };
+
   return (
-    <main className="lab-layout">
-      <details className="control-panel" open={controlsOpen} onToggle={(event) => setControlsOpen(event.currentTarget.open)}>
-        <summary><span>Configuration</span><small>Device, sweep, and numerics</small></summary>
+    <main className="lab-layout" data-panel-open={controlsOpen ? "true" : "false"}>
+      <ScientificToolRail
+        className="lab-tool-rail"
+        label="Laboratory tools"
+        activeId={controlsOpen ? "configure" : "results"}
+        collapsible={false}
+        onChange={selectWorkspace}
+        items={[
+          {
+            id: "configure",
+            label: "Configure",
+            icon: <SettingsAdjust size={20} />,
+            controlsId: "configuration-panel",
+          },
+          {
+            id: "results",
+            label: "Results",
+            icon: <ChartLine size={20} />,
+            controlsId: "device-workspace",
+          },
+        ]}
+      />
+      <details id="configuration-panel" className="control-panel" open={controlsOpen} onToggle={(event) => setControlsOpen(event.currentTarget.open)}>
+        <summary>Configuration</summary>
         <div className="control-panel-content">{controls}</div>
       </details>
       <section id="device-workspace" className="workspace" tabIndex={-1}>{children}</section>
