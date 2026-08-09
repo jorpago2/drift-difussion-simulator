@@ -1,5 +1,9 @@
 # Design — Semiconductor Devices Lab
 
+## Shared contract (normative)
+
+This application consumes `@jorpago2/scientific-ui` and follows the [shared interface contract](https://github.com/jorpago2/jorpago2.github.io/blob/main/docs/interface-contract.md). That contract supersedes conflicting local typography, accent, radius and application-chrome rules below. P/N device colours remain valid only as scientific encodings.
+
 A locked design system for the PN and NPN laboratories. Both pages share one
 visual language; device-specific colour is reserved for physical meaning.
 

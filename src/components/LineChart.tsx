@@ -197,7 +197,15 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
   }, [data, interactive, layout, onSelectX, plotly, state]);
 
   return (
-    <div className={`chart-frame chart-${state}`} data-message={message} style={{ "--chart-height": `${height}px` } as React.CSSProperties}>
+    <div
+      className={`chart-frame chart-${state}`}
+      data-message={message}
+      style={{ "--chart-height": `${height}px` } as React.CSSProperties}
+      role="group"
+      aria-label="Interactive scientific plot"
+      tabIndex={0}
+      onPointerDown={(event) => event.currentTarget.focus({ preventScroll: true })}
+    >
       <div ref={plotRef} className="plotly-chart" role="img" aria-label={`${plainPlotText(yLabel)} versus ${plainPlotText(xLabel)}`} />
     </div>
   );

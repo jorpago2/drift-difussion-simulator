@@ -7,6 +7,7 @@ import {
 } from "../ddm-core.js";
 import { LineChart, type ChartSeries, type LineChartHandle } from "../components/LineChart";
 import { AppHeader, Disclosure, Field, LabLayout, Message, MetricGrid } from "../components/ui";
+import { ScientificNumberField } from "@jorpago2/scientific-ui";
 import { downloadText } from "../lib/download";
 import { fixed, nearestIndex, percent, scientific } from "../lib/format";
 import { cssToken } from "../lib/theme";
@@ -165,8 +166,8 @@ export function PnLab() {
           <div className="panel-heading"><h2>PN diode</h2><p>Sweep the terminal characteristic and inspect the device at any solved bias.</p></div>
           <fieldset className="configuration-fields" disabled={solverState === "solving"}>
           <div className="field-grid two">
-            <Field label={<>N<sub>A</sub> (cm⁻³)</>}><input type="number" value={inputs.acceptorCm3} min="1e14" max="1e18" step="1e15" onChange={(event) => update("acceptorCm3", Number(event.target.value))} /></Field>
-            <Field label={<>N<sub>D</sub> (cm⁻³)</>}><input type="number" value={inputs.donorCm3} min="1e14" max="1e18" step="1e15" onChange={(event) => update("donorCm3", Number(event.target.value))} /></Field>
+            <ScientificNumberField id="acceptor-doping" labelText={<>N<sub>A</sub></>} unit="cm⁻³" value={inputs.acceptorCm3} min={1e14} max={1e18} onValueChange={(value) => { if (value !== null) update("acceptorCm3", value); }} />
+            <ScientificNumberField id="donor-doping" labelText={<>N<sub>D</sub></>} unit="cm⁻³" value={inputs.donorCm3} min={1e14} max={1e18} onValueChange={(value) => { if (value !== null) update("donorCm3", value); }} />
           </div>
           <div className="field-grid three">
             <Field label={<>V<sub>D,min</sub> (V)</>}><input type="number" value={inputs.minimumV} min="-1" max="0.8" step="0.025" onChange={(event) => update("minimumV", Number(event.target.value))} /></Field>
@@ -180,8 +181,8 @@ export function PnLab() {
               <Field label="Area (µm²)"><input type="number" value={inputs.deviceAreaUm2} min="1" max="1e8" step="any" onChange={(event) => update("deviceAreaUm2", Number(event.target.value))} /></Field>
               <Field label="Length (µm)"><input type="number" value={inputs.lengthUm} min="1" max="20" step="0.1" onChange={(event) => update("lengthUm", Number(event.target.value))} /></Field>
               <Field label="Mesh nodes"><input type="number" value={inputs.cells} min="101" max="2001" step="2" onChange={(event) => update("cells", Number(event.target.value))} /></Field>
-              <Field label={<>τ<sub>n</sub> (s)</>}><input type="number" value={inputs.electronLifetimeS} min="1e-12" max="1e-3" step="any" onChange={(event) => update("electronLifetimeS", Number(event.target.value))} /></Field>
-              <Field label={<>τ<sub>p</sub> (s)</>}><input type="number" value={inputs.holeLifetimeS} min="1e-12" max="1e-3" step="any" onChange={(event) => update("holeLifetimeS", Number(event.target.value))} /></Field>
+              <ScientificNumberField id="electron-lifetime" labelText={<>τ<sub>n</sub></>} unit="s" value={inputs.electronLifetimeS} min={1e-12} max={1e-3} onValueChange={(value) => { if (value !== null) update("electronLifetimeS", value); }} />
+              <ScientificNumberField id="hole-lifetime" labelText={<>τ<sub>p</sub></>} unit="s" value={inputs.holeLifetimeS} min={1e-12} max={1e-3} onValueChange={(value) => { if (value !== null) update("holeLifetimeS", value); }} />
             </div>
             {validation.derived && <MetricGrid compact entries={[
               ["Built-in potential", `${fixed(validation.derived.builtInPotentialV)} V`],

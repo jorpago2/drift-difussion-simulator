@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { ScientificStatus } from "@jorpago2/scientific-ui";
 import type { SolverState } from "../types";
 
 export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "bjt"; state: SolverState; onRun: () => void; onCancel: () => void }) {
@@ -46,7 +47,10 @@ export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "
             <dl><div><dt><kbd>Ctrl/⌘</kbd> + <kbd>Enter</kbd></dt><dd>Calculate</dd></div><div><dt><kbd>Esc</kbd></dt><dd>Cancel calculation</dd></div><div><dt><kbd>?</kbd></dt><dd>Toggle this help</dd></div></dl>
           </div>
         </details>
-        <output className="status-pill" data-state={state} aria-live="polite"><span />{status}</output>
+        <ScientificStatus className="status-pill" compact status={{
+          state: state === "idle" ? "needs-input" : state === "solving" ? "running" : state === "converged" ? "validated" : "failed",
+          label: status,
+        }} />
       </div>
     </header>
     </>

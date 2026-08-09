@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { GlobalTheme } from "@carbon/react";
 import App from "./App";
 import "./carbon.scss";
+import "@jorpago2/scientific-ui/styles.css";
 import "./styles.css";
 
 const root = document.getElementById("root");

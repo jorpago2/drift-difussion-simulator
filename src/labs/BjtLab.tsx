@@ -9,6 +9,7 @@ import {
 import { Heatmap } from "../components/Heatmap";
 import { LineChart, type ChartSeries, type LineChartHandle } from "../components/LineChart";
 import { AppHeader, Disclosure, Field, LabLayout, Message, MetricGrid } from "../components/ui";
+import { ScientificNumberField } from "@jorpago2/scientific-ui";
 import { downloadText } from "../lib/download";
 import { fixed, linearGrid, nearestIndex, percent, scientific } from "../lib/format";
 import { cssToken } from "../lib/theme";
@@ -244,9 +245,9 @@ export function BjtLab() {
           <details className="advanced-panel">
             <summary>Doping, geometry, and numerics</summary>
             <div className="field-grid two">
-              <Field label={<>Emitter N<sub>D</sub> (cm⁻³)</>}><input type="number" value={inputs.emitterDopingCm3} min="1e14" max="5e17" step="any" onChange={(event) => update("emitterDopingCm3", Number(event.target.value))} /></Field>
-              <Field label={<>Base N<sub>A</sub> (cm⁻³)</>}><input type="number" value={inputs.baseDopingCm3} min="1e14" max="5e17" step="any" onChange={(event) => update("baseDopingCm3", Number(event.target.value))} /></Field>
-              <Field label={<>Collector N<sub>D</sub> (cm⁻³)</>}><input type="number" value={inputs.collectorDopingCm3} min="1e14" max="5e17" step="any" onChange={(event) => update("collectorDopingCm3", Number(event.target.value))} /></Field>
+              <ScientificNumberField id="emitter-doping" labelText={<>Emitter N<sub>D</sub></>} unit="cm⁻³" value={inputs.emitterDopingCm3} min={1e14} max={5e17} onValueChange={(value) => { if (value !== null) update("emitterDopingCm3", value); }} />
+              <ScientificNumberField id="base-doping" labelText={<>Base N<sub>A</sub></>} unit="cm⁻³" value={inputs.baseDopingCm3} min={1e14} max={5e17} onValueChange={(value) => { if (value !== null) update("baseDopingCm3", value); }} />
+              <ScientificNumberField id="collector-doping" labelText={<>Collector N<sub>D</sub></>} unit="cm⁻³" value={inputs.collectorDopingCm3} min={1e14} max={5e17} onValueChange={(value) => { if (value !== null) update("collectorDopingCm3", value); }} />
               <Field label="Length (µm)"><input type="number" value={inputs.lengthUm} min="1.5" max="10" step="0.1" onChange={(event) => update("lengthUm", Number(event.target.value))} /></Field>
               <Field label="Height (µm)"><input type="number" value={inputs.heightUm} min="0.2" max="3" step="0.05" onChange={(event) => update("heightUm", Number(event.target.value))} /></Field>
               <Field label="Device depth (µm)"><input type="number" value={inputs.deviceDepthUm} min="1" max="1e5" step="any" onChange={(event) => update("deviceDepthUm", Number(event.target.value))} /></Field>
@@ -254,8 +255,8 @@ export function BjtLab() {
               <Field label="Base width (µm)"><input type="number" value={inputs.baseWidthUm} min="0.1" max="2" step="0.05" onChange={(event) => update("baseWidthUm", Number(event.target.value))} /></Field>
               <Field label="x nodes"><input type="number" value={inputs.nx} min="41" max="501" step="2" onChange={(event) => update("nx", Number(event.target.value))} /></Field>
               <Field label="y nodes"><input type="number" value={inputs.ny} min="9" max="121" step="2" onChange={(event) => update("ny", Number(event.target.value))} /></Field>
-              <Field label={<>τ<sub>n</sub> (s)</>}><input type="number" value={inputs.electronLifetimeS} min="1e-12" max="1e-3" step="any" onChange={(event) => update("electronLifetimeS", Number(event.target.value))} /></Field>
-              <Field label={<>τ<sub>p</sub> (s)</>}><input type="number" value={inputs.holeLifetimeS} min="1e-12" max="1e-3" step="any" onChange={(event) => update("holeLifetimeS", Number(event.target.value))} /></Field>
+              <ScientificNumberField id="bjt-electron-lifetime" labelText={<>τ<sub>n</sub></>} unit="s" value={inputs.electronLifetimeS} min={1e-12} max={1e-3} onValueChange={(value) => { if (value !== null) update("electronLifetimeS", value); }} />
+              <ScientificNumberField id="bjt-hole-lifetime" labelText={<>τ<sub>p</sub></>} unit="s" value={inputs.holeLifetimeS} min={1e-12} max={1e-3} onValueChange={(value) => { if (value !== null) update("holeLifetimeS", value); }} />
             </div>
           </details>
           </fieldset>
