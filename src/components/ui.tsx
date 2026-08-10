@@ -70,7 +70,7 @@ export function LabLayout({ controls, children }: { controls: ReactNode; childre
   }, []);
 
   useEffect(() => {
-    if (desktop || !controlsOpen) return;
+    if (!controlsOpen) return;
     const handleEscape = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.key !== "Escape") return;
       event.preventDefault();
@@ -78,7 +78,7 @@ export function LabLayout({ controls, children }: { controls: ReactNode; childre
     };
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
-  }, [closeControls, controlsOpen, desktop]);
+  }, [closeControls, controlsOpen]);
 
   const selectWorkspace = (id: string | null) => {
     const showControls = id === "configure";
