@@ -115,10 +115,11 @@ export function LabLayout({ controls, children }: { controls: ReactNode; childre
       <ScientificTaskPanel
         id="configuration-panel"
         className="control-panel"
-        title="Configuration"
+        title="Device inputs"
         titleId="configuration-panel-title"
-        eyebrow="Device inputs"
+        eyebrow="Configuration"
         onClose={closeControls}
+        closeLabel="Close"
         bodyClassName="control-panel-content"
         hidden={!controlsOpen}
       >
