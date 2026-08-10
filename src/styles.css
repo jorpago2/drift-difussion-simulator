@@ -20,7 +20,7 @@
     overflow: hidden;
   }
 
-  .control-panel.control-panel.control-panel {
+  .control-panel {
     block-size: calc(100dvh - var(--scientific-ui-header-block-size) - var(--scientific-ui-mobile-nav-total-block-size));
     min-block-size: 0;
   }
@@ -994,7 +994,7 @@ input[type='range'] {
     align-self: start;
   }
 
-  .control-panel {
+  .control-panel.control-panel.control-panel {
     grid-area: panel;
     align-self: start;
     position: sticky;
