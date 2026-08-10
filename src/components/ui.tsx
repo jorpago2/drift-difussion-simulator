@@ -28,7 +28,7 @@ export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "
     <a className="skip-link" href="#device-workspace">Skip to device workspace</a>
     <ScientificHeader
       aria-label="Semiconductor Devices Lab"
-      product="Semiconductor Devices Lab"
+      product="Device Lab"
       productMark="SD"
       descriptor="Drift–diffusion"
       href={device === "pn" ? "./index.html" : "./bjt.html"}
