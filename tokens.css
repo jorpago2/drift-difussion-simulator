@@ -1,33 +1,36 @@
 :root {
-  --color-paper: oklch(98% 0.008 170);
-  --color-paper-2: oklch(96% 0.011 170);
-  --color-paper-3: oklch(93% 0.014 170);
-  --color-panel: oklch(99% 0.006 170);
-  --color-ink: oklch(21% 0.018 170);
-  --color-ink-2: oklch(33% 0.018 170);
-  --color-muted: oklch(46% 0.014 170);
-  --color-neutral: oklch(38% 0.016 170);
-  --color-rule: oklch(87% 0.012 170);
-  --color-rule-2: oklch(76% 0.018 170);
-  --color-accent: oklch(44% 0.12 178);
-  --color-accent-strong: oklch(36% 0.105 178);
-  --color-accent-soft: oklch(94% 0.035 178);
-  --color-accent-ink: oklch(98% 0.008 170);
-  --color-focus: oklch(31% 0.13 178);
+  /* Carbon g10 owns every application-chrome colour and both UI typefaces. */
+  --color-paper: var(--cds-background);
+  --color-paper-2: var(--cds-layer-01);
+  --color-paper-3: var(--cds-layer-02);
+  --color-panel: var(--cds-layer);
+  --color-ink: var(--cds-text-primary);
+  --color-ink-2: var(--cds-text-secondary);
+  --color-muted: var(--cds-text-secondary);
+  --color-neutral: var(--cds-icon-primary);
+  --color-rule: var(--cds-border-subtle);
+  --color-rule-2: var(--cds-border-strong);
+  --color-accent: var(--cds-link-primary);
+  --color-accent-strong: var(--cds-link-primary-hover);
+  --color-accent-soft: var(--cds-layer-accent-01);
+  --color-accent-ink: var(--cds-text-on-color);
+  --color-focus: var(--cds-focus);
+  --color-danger: var(--cds-support-error);
+  --color-danger-soft: color-mix(in srgb, var(--cds-support-error) 10%, var(--cds-layer));
+  --color-warning: var(--cds-support-warning);
+  --color-warning-strong: var(--cds-support-warning);
+  --color-warning-soft: color-mix(in srgb, var(--cds-support-warning) 12%, var(--cds-layer));
+  --color-success: var(--cds-support-success);
+  --color-success-soft: color-mix(in srgb, var(--cds-support-success) 10%, var(--cds-layer));
+
+  /* Device and plot encodings are scientific exceptions, never UI accents. */
   --color-p: oklch(45% 0.14 15);
   --color-p-soft: oklch(95% 0.035 15);
   --color-n: oklch(43% 0.12 250);
   --color-n-soft: oklch(94% 0.03 250);
   --color-contact: oklch(34% 0.025 210);
-  --color-success: oklch(43% 0.095 165);
-  --color-success-soft: oklch(95% 0.03 165);
-  --color-warning: oklch(48% 0.09 68);
-  --color-warning-strong: oklch(61% 0.12 72);
-  --color-warning-soft: oklch(95% 0.035 75);
-  --color-danger: oklch(45% 0.16 25);
-  --color-danger-soft: oklch(95% 0.035 25);
-  --color-plot-grid: oklch(91% 0.012 190);
-  --color-plot-axis: oklch(69% 0.018 190);
+  --color-plot-grid: var(--cds-border-subtle);
+  --color-plot-axis: var(--cds-border-strong);
   --color-plot-teal: oklch(48% 0.11 190);
   --color-plot-gold: oklch(58% 0.11 72);
   --color-plot-violet: oklch(48% 0.12 305);
@@ -45,8 +48,9 @@
   --color-map-warm-2: oklch(58% 0.14 35);
   --color-map-warm-3: oklch(30% 0.11 20);
 
-  --font-display: 'Space Grotesk', ui-sans-serif, sans-serif;
-  --font-body: 'IBM Plex Sans', ui-sans-serif, sans-serif;
+  --font-display: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
 
   --space-3xs: 0.125rem;
   --space-2xs: 0.25rem;
@@ -54,64 +58,30 @@
   --space-sm: 0.75rem;
   --space-md: 1rem;
   --space-lg: 1.5rem;
-  --space-xl: 2.5rem;
+  --space-xl: 2rem;
   --space-2xl: 4rem;
-
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
   --text-md: 1.125rem;
   --text-lg: 1.25rem;
-  --text-xl: 1.5625rem;
-  --text-2xl: 1.953rem;
-
+  --text-xl: 1.5rem;
+  --text-2xl: 1.75rem;
   --rule-hair: 1px;
   --rule-fine: 2px;
-  --radius-input: 0.5rem;
-  --radius-card: 0.875rem;
-  --radius-pill: 999px;
-  --shadow-whisper: 0 1px 2px oklch(20% 0.015 170 / 0.06);
-  --shadow-float: 0 12px 28px oklch(20% 0.02 170 / 0.12);
-
+  --radius-input: 0;
+  --radius-card: 0;
+  --radius-pill: 0;
+  --shadow-whisper: none;
+  --shadow-float: none;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --dur-micro: 120ms;
   --dur-short: 220ms;
   --dur-long: 420ms;
-
   --z-base: 1;
   --z-raised: 10;
   --z-dropdown: 100;
   --z-sticky: 200;
-}
-
-/* Carbon g10 governs UI surfaces, type, focus and shape. */
-:root,
-.cds--g10 {
-  --color-paper: var(--cds-background);
-  --color-paper-2: var(--cds-layer-01);
-  --color-paper-3: var(--cds-layer-02);
-  --color-panel: var(--cds-layer);
-  --color-ink: var(--cds-text-primary);
-  --color-ink-2: var(--cds-text-secondary);
-  --color-muted: var(--cds-text-secondary);
-  --color-neutral: var(--cds-icon-primary);
-  --color-rule: var(--cds-border-subtle);
-  --color-rule-2: var(--cds-border-strong);
-  --color-accent: var(--cds-link-primary);
-  --color-accent-strong: var(--cds-link-primary-hover);
-  --color-accent-soft: var(--cds-layer-accent-01);
-  --color-accent-ink: var(--cds-text-on-color);
-  --color-focus: var(--cds-focus);
-  --color-danger: var(--cds-support-error);
-  --color-warning: var(--cds-support-warning);
-  --color-success: var(--cds-support-success);
-  --font-display: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
-  --font-body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
-  --radius-input: 0;
-  --radius-card: 0;
-  --radius-pill: 0;
-  --shadow-float: 0 2px 6px rgb(0 0 0 / 0.16);
 }

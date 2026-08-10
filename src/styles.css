@@ -12,9 +12,10 @@
 .workspace { padding: .75rem; }
 
 .lab-layout[data-panel-open='false'] .control-panel { display: none; }
-.lab-layout[data-panel-open='true'] .workspace { display: none; }
 
 @media (max-width: 65.99rem) {
+  .lab-layout[data-panel-open='true'] .workspace { display: none; }
+
   .lab-layout {
     block-size: calc(100dvh - var(--scientific-ui-header-block-size));
     overflow: hidden;
@@ -161,40 +162,8 @@ sub {
   background: var(--color-accent);
 }
 
-.app-help { position: relative; }
-
-.app-help > summary {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  padding-inline: var(--space-sm);
-  border: var(--rule-hair) solid var(--color-rule);
-  background: var(--color-paper);
-  font-size: var(--text-sm);
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.app-help > summary {
-  color: var(--color-accent-strong);
-  cursor: pointer;
-  list-style: none;
-}
-
-.app-help > summary::-webkit-details-marker { display: none; }
-
 .app-help-panel {
-  position: fixed;
-  z-index: var(--z-dropdown);
-  inset-block-start: var(--scientific-ui-header-block-size);
-  inset-inline: var(--space-sm);
-  width: auto;
-  padding: var(--space-md);
-  border: var(--rule-hair) solid var(--color-rule-2);
-  border-radius: var(--radius-card);
-  color: var(--color-ink);
-  background: var(--color-panel);
-  box-shadow: var(--shadow-float);
+  inline-size: min(24rem, calc(100vw - 2rem));
 }
 
 .app-help-panel p {
@@ -897,7 +866,6 @@ input[type='range'] {
 
 @media (hover: hover) and (pointer: fine) {
   .suite-link:hover,
-  .app-help > summary:hover,
   .button-row button:hover:not(:disabled),
   input:hover:not(:disabled),
   select:hover:not(:disabled) {
@@ -948,12 +916,6 @@ input[type='range'] {
     grid-template-columns: minmax(12rem, auto) minmax(0, 1fr);
   }
 
-  .app-help-panel {
-    position: absolute;
-    inset-block-start: calc(100% + var(--space-xs));
-    inset-inline: auto 0;
-    width: min(24rem, calc(100vw - 2rem));
-  }
 }
 
 @media (max-width: 41.99rem) {
@@ -962,7 +924,6 @@ input[type='range'] {
   .device-label-short { display: inline; }
   .device-switcher { width: min(10rem, 100%); justify-self: center; }
   .device-switcher a { min-height: 44px; padding-inline: var(--space-xs); }
-  .app-help > summary { padding-inline: var(--space-xs); }
 }
 
 @media (min-width: 42rem) {
@@ -1003,7 +964,7 @@ input[type='range'] {
   }
 
   .workspace {
-    display: block !important;
+    display: block;
     grid-area: workspace;
   }
 
@@ -1037,7 +998,7 @@ input[type='range'] {
   .bjt-inspector .chart-frame .plotly-chart { height: 210px; }
 }
 
-@media (max-width: 360px) {
+@media (max-width: 25.875rem) {
   .pn-strip .region small,
   .pn-strip .mobile-charge,
   .pn-strip .depletion span { display: none; }
@@ -1054,8 +1015,8 @@ input[type='range'] {
   *,
   *::before,
   *::after {
-    animation-duration: 150ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 150ms !important;
+    animation-duration: 0s;
+    animation-iteration-count: 1;
+    transition-duration: 0s;
   }
 }

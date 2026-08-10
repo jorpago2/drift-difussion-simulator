@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { ChartLine, SettingsAdjust } from "@carbon/react/icons";
+import { Toggletip, ToggletipButton, ToggletipContent } from "@carbon/react";
+import { ChartLine, Help, SettingsAdjust } from "@carbon/react/icons";
 import { ScientificHeader, ScientificTaskPanel, ScientificToolRail } from "@jorpago2/scientific-ui";
 import type { SolverState } from "../types";
 
 export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "bjt"; state: SolverState; onRun: () => void; onCancel: () => void }) {
   const status = state === "idle" ? "Not solved" : state === "solving" ? "Solving…" : state === "converged" ? "Converged" : "Failed";
-  const helpRef = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {
       if (event.repeat) return;
@@ -13,11 +13,10 @@ export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "
         event.preventDefault();
         if (state !== "solving") onRun();
       } else if (event.key === "Escape") {
-        if (helpRef.current) helpRef.current.open = false;
         if (state === "solving") onCancel();
       } else if (event.key === "?" && !isEditableTarget(event.target)) {
         event.preventDefault();
-        if (helpRef.current) helpRef.current.open = !helpRef.current.open;
+        document.getElementById("device-help")?.click();
       }
     };
     document.addEventListener("keydown", handleShortcut);
@@ -39,14 +38,16 @@ export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "
       </nav>}
       status={{ state: state === "idle" ? "needs-input" : state === "solving" ? "running" : state === "converged" ? "validated" : "failed", label: status }}
       secondaryActions={<>
-        <details className="app-help" ref={helpRef}>
-          <summary aria-keyshortcuts="?">Help</summary>
-          <div className="app-help-panel">
+        <Toggletip className="app-help" align="bottom-end" autoAlign>
+          <ToggletipButton id="device-help" className="scientific-header__icon-action" label="Help" aria-keyshortcuts="?">
+            <Help size={20} aria-hidden={true} />
+          </ToggletipButton>
+          <ToggletipContent className="app-help-panel">
             <strong>Quick workflow</strong>
             <p>Set the device and sweep inputs, calculate, then inspect profiles and numerical diagnostics before exporting.</p>
             <dl><div><dt><kbd>Ctrl/⌘</kbd> + <kbd>Enter</kbd></dt><dd>Calculate</dd></div><div><dt><kbd>Esc</kbd></dt><dd>Cancel calculation</dd></div><div><dt><kbd>?</kbd></dt><dd>Toggle this help</dd></div></dl>
-          </div>
-        </details>
+          </ToggletipContent>
+        </Toggletip>
         <a className="suite-link" href="https://jorpago2.github.io/" aria-label="Online Simulators & Tools">All tools</a>
       </>}
     />
