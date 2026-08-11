@@ -50,7 +50,7 @@
 
   --font-display: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
   --font-body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  --font-mono: var(--scientific-ui-font-sans, "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif);
 
   --space-3xs: 0.125rem;
   --space-2xs: 0.25rem;
