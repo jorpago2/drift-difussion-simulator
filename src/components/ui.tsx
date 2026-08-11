@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Toggletip, ToggletipButton, ToggletipContent } from "@carbon/react";
-import { ChartLine, Help, SettingsAdjust } from "@carbon/react/icons";
+import { ChartLine, SettingsAdjust } from "@carbon/react/icons";
 import { ScientificHeader, ScientificTaskPanel, ScientificToolRail } from "@jorpago2/scientific-ui";
 import type { SolverState } from "../types";
 
@@ -14,9 +13,6 @@ export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "
         if (state !== "solving") onRun();
       } else if (event.key === "Escape") {
         if (state === "solving") onCancel();
-      } else if (event.key === "?" && !isEditableTarget(event.target)) {
-        event.preventDefault();
-        document.getElementById("device-help")?.click();
       }
     };
     document.addEventListener("keydown", handleShortcut);
@@ -37,26 +33,20 @@ export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "
         <a href="./bjt.html" aria-current={device === "bjt" ? "page" : undefined}><span className="device-label-full">NPN transistor</span><span className="device-label-short">NPN</span></a>
       </nav>}
       status={{ state: state === "idle" ? "needs-input" : state === "solving" ? "running" : state === "converged" ? "validated" : "failed", label: status }}
+      help={{
+        id: "device-help",
+        summary: "Set the device and sweep inputs, calculate, then inspect profiles and numerical diagnostics before exporting.",
+        shortcuts: [
+          { keys: ["Ctrl/⌘", "Enter"], description: "Calculate" },
+          { keys: ["Esc"], description: "Cancel calculation" },
+        ],
+      }}
       secondaryActions={<>
-        <Toggletip className="app-help" align="bottom-end" autoAlign>
-          <ToggletipButton id="device-help" className="scientific-header__icon-action" label="Help" aria-keyshortcuts="?">
-            <Help size={20} aria-hidden={true} />
-          </ToggletipButton>
-          <ToggletipContent className="app-help-panel">
-            <strong>Quick workflow</strong>
-            <p>Set the device and sweep inputs, calculate, then inspect profiles and numerical diagnostics before exporting.</p>
-            <dl><div><dt><kbd>Ctrl/⌘</kbd> + <kbd>Enter</kbd></dt><dd>Calculate</dd></div><div><dt><kbd>Esc</kbd></dt><dd>Cancel calculation</dd></div><div><dt><kbd>?</kbd></dt><dd>Toggle this help</dd></div></dl>
-          </ToggletipContent>
-        </Toggletip>
         <a className="suite-link" href="https://jorpago2.github.io/" aria-label="Online Simulators & Tools">All tools</a>
       </>}
     />
     </>
   );
-}
-
-function isEditableTarget(target: EventTarget | null): boolean {
-  return target instanceof HTMLElement && (target.matches("input, select, textarea") || target.isContentEditable);
 }
 
 export function LabLayout({ controls, children }: { controls: ReactNode; children: ReactNode }) {

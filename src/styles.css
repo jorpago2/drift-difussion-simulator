@@ -162,46 +162,6 @@ sub {
   background: var(--color-accent);
 }
 
-.app-help-panel {
-  inline-size: min(24rem, calc(100vw - 2rem));
-}
-
-.app-help-panel p {
-  max-width: 60ch;
-  margin: var(--space-xs) 0 var(--space-sm);
-  color: var(--color-muted);
-  font-size: var(--text-sm);
-  line-height: 1.55;
-}
-
-.app-help-panel dl,
-.app-help-panel dl div {
-  display: grid;
-  gap: var(--space-xs);
-  margin: 0;
-}
-
-.app-help-panel dl div {
-  grid-template-columns: minmax(7.5rem, auto) minmax(0, 1fr);
-  align-items: center;
-}
-
-.app-help-panel dt,
-.app-help-panel dd {
-  margin: 0;
-  font-size: var(--text-sm);
-}
-
-.app-help-panel kbd {
-  padding: var(--space-3xs) var(--space-2xs);
-  border: var(--rule-hair) solid var(--color-rule-2);
-  border-radius: var(--space-2xs);
-  background: var(--color-paper-2);
-  font-family: var(--font-display);
-  font-size: var(--text-xs);
-  font-weight: 700;
-}
-
 .workspace {
   border: var(--rule-hair) solid var(--color-rule);
 }
