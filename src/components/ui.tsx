@@ -1,23 +1,20 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ChartLine, SettingsAdjust } from "@carbon/react/icons";
-import { ScientificHeader, ScientificTaskPanel, ScientificToolRail } from "@jorpago2/scientific-ui";
+import { ScientificHeader, ScientificRunControl, ScientificTaskPanel, ScientificToolRail, useScientificShortcut } from "@jorpago2/scientific-ui";
 import type { SolverState } from "../types";
 
 export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "bjt"; state: SolverState; onRun: () => void; onCancel: () => void }) {
   const status = state === "idle" ? "Not solved" : state === "solving" ? "Solving…" : state === "converged" ? "Converged" : "Failed";
-  useEffect(() => {
-    const handleShortcut = (event: KeyboardEvent) => {
-      if (event.repeat) return;
-      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-        event.preventDefault();
-        if (state !== "solving") onRun();
-      } else if (event.key === "Escape") {
-        if (state === "solving") onCancel();
-      }
-    };
-    document.addEventListener("keydown", handleShortcut);
-    return () => document.removeEventListener("keydown", handleShortcut);
-  }, [onCancel, onRun, state]);
+  const cancelShortcut = useMemo(() => ({
+    id: "device:cancel-calculation",
+    shortcut: "Escape",
+    displayKeys: ["Esc"],
+    description: "Cancel calculation",
+    enabled: state === "solving",
+    priority: 20,
+    handler: onCancel,
+  }), [onCancel, state]);
+  useScientificShortcut(cancelShortcut);
   return (
     <>
     <a className="skip-link" href="#device-workspace">Skip to device workspace</a>
@@ -36,11 +33,18 @@ export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "
       help={{
         id: "device-help",
         summary: "Set the device and sweep inputs, calculate, then inspect profiles and numerical diagnostics before exporting.",
-        shortcuts: [
-          { keys: ["Ctrl/⌘", "Enter"], description: "Calculate" },
-          { keys: ["Esc"], description: "Cancel calculation" },
-        ],
       }}
+      primaryAction={<ScientificRunControl
+        size="lg"
+        execution={{
+          state: state === "idle" ? "ready" : state === "solving" ? "running" : state === "converged" ? "validated" : "failed",
+          label: status,
+          onRun,
+          onStop: onCancel,
+          runLabel: "Calculate",
+          stopLabel: "Cancel",
+        }}
+      />}
       secondaryActions={<>
         <a className="suite-link" href="https://jorpago2.github.io/" aria-label="Online Simulators & Tools">All tools</a>
       </>}
