@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@carbon/react";
 import {
   DEFAULT_NPN_CONFIG,
   idealNpnTransportCurrentA,
@@ -226,9 +227,11 @@ export function BjtLab() {
   const emitter = result?.terminalCurrents.emitter.currentIntoDeviceA ?? NaN;
   const beta = base > 0 ? collector / base : NaN;
   return (
-    <>
-      <AppHeader device="bjt" state={solverState} onRun={solve} onCancel={cancel} />
-      <LabLayout controls={
+      <LabLayout
+        header={<AppHeader device="bjt" state={solverState} onRun={solve} onCancel={cancel} />}
+        state={solverState}
+        statusMessage={message}
+        controls={
         <>
           <div className="panel-heading"><h2>Lateral NPN</h2><p>Sweep output and transfer characteristics on one reusable bias grid.</p></div>
           <fieldset className="configuration-fields" disabled={solverState === "solving"}>
@@ -261,7 +264,6 @@ export function BjtLab() {
           </details>
           </fieldset>
           <Message state={errors.length ? "error" : validation.warnings.length ? "warning" : "ready"}>{errors[0] ?? validation.warnings[0] ?? "Configuration and mesh checks passed."}</Message>
-          <button className="primary-action" data-action={solverState === "solving" ? "cancel" : "solve"} type="button" disabled={solverState === "solving" ? cancelPending : Boolean(errors.length)} onClick={solverState === "solving" ? cancel : solve}>{solverState === "solving" ? (cancelPending ? "Cancellingâ€¦" : "Cancel calculation") : "Calculate characteristic grid"}</button>
           <div className="solver-progress"><progress max={Math.max(1, progress.total)} value={progress.completed} aria-label="Characteristic grid progress" /><span>{progress.completed} / {progress.total} bias points</span></div>
           <output className="solver-line" aria-live="polite">{message}</output>
         </>
@@ -351,10 +353,9 @@ export function BjtLab() {
           </> : <Message state="idle">Calculate the characteristic grid before interpreting numerical confidence.</Message>}
         </Disclosure>
 
-        <details className="export-panel"><summary>Export converged results</summary><div className="button-row"><button disabled={!result} onClick={() => { if (!result) return; downloadText(serializeNpnProfileCsv(result), "npn-selected-2d.csv"); setMessage("Selected profile exported as npn-selected-2d.csv."); }}>Selected 2D CSV</button><button disabled={!selectedCurve || !family} onClick={() => { if (!selectedCurve || !family) return; downloadText(serializeNpnSweepCsv({ ...selectedCurve, config: { ...family.config, baseEmitterVoltageV: selectedCurve.baseEmitterVoltageV } }), "npn-output-curve.csv"); setMessage("Output curve exported as npn-output-curve.csv."); }}>Selected curve CSV</button><button disabled={!family} onClick={() => { outputChartRef.current?.downloadSvg("npn-output-characteristics.svg"); setMessage("Plot exported as npn-output-characteristics.svg."); }}>Plot SVG</button></div></details>
+        <details className="export-panel"><summary>Export converged results</summary><div className="button-row"><Button kind="tertiary" size="sm" disabled={!result} onClick={() => { if (!result) return; downloadText(serializeNpnProfileCsv(result), "npn-selected-2d.csv"); setMessage("Selected profile exported as npn-selected-2d.csv."); }}>Selected 2D CSV</Button><Button kind="tertiary" size="sm" disabled={!selectedCurve || !family} onClick={() => { if (!selectedCurve || !family) return; downloadText(serializeNpnSweepCsv({ ...selectedCurve, config: { ...family.config, baseEmitterVoltageV: selectedCurve.baseEmitterVoltageV } }), "npn-output-curve.csv"); setMessage("Output curve exported as npn-output-curve.csv."); }}>Selected curve CSV</Button><Button kind="tertiary" size="sm" disabled={!family} onClick={() => { outputChartRef.current?.downloadSvg("npn-output-characteristics.svg"); setMessage("Plot exported as npn-output-characteristics.svg."); }}>Plot SVG</Button></div></details>
         <p className="model-boundary"><strong>Model boundary:</strong> lateral 2D homogeneous silicon, Boltzmann statistics, constant mobility, ohmic contacts, and midgap SRH. Breakdown, tunneling, high-field mobility, contact resistance, and self-heating are excluded.</p>
       </LabLayout>
-    </>
   );
 }
 

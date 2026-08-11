@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ChartLine, SettingsAdjust } from "@carbon/react/icons";
-import { ScientificHeader, ScientificRunControl, ScientificTaskPanel, ScientificToolRail, useScientificShortcut } from "@jorpago2/scientific-ui";
+import {
+  ScientificAppShell,
+  ScientificHeader,
+  ScientificRunControl,
+  ScientificStatusBar,
+  ScientificTaskPanel,
+  ScientificToolRail,
+  useScientificShortcut,
+} from "@jorpago2/scientific-ui";
 import type { SolverState } from "../types";
 
 export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "bjt"; state: SolverState; onRun: () => void; onCancel: () => void }) {
@@ -41,19 +49,22 @@ export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "
           label: status,
           onRun,
           onStop: onCancel,
-          runLabel: "Calculate",
+          runLabel: device === "pn" ? "Calculate I–V sweep" : "Calculate characteristic grid",
           stopLabel: "Cancel",
         }}
       />}
-      secondaryActions={<>
-        <a className="suite-link" href="https://jorpago2.github.io/" aria-label="Online Simulators & Tools">All tools</a>
-      </>}
     />
     </>
   );
 }
 
-export function LabLayout({ controls, children }: { controls: ReactNode; children: ReactNode }) {
+export function LabLayout({ header, controls, children, state, statusMessage }: {
+  header: ReactNode;
+  controls: ReactNode;
+  children: ReactNode;
+  state: SolverState;
+  statusMessage: string;
+}) {
   const desktop = useMediaQuery("(min-width: 66rem)");
   const [controlsOpen, setControlsOpen] = useState(desktop);
   const configureTriggerRef = useRef<HTMLButtonElement>(null);
@@ -84,8 +95,11 @@ export function LabLayout({ controls, children }: { controls: ReactNode; childre
   };
 
   return (
-    <main className="lab-layout" data-panel-open={controlsOpen ? "true" : "false"}>
-      <ScientificToolRail
+    <ScientificAppShell
+      className="device-lab-shell"
+      header={header}
+      panelOpen={controlsOpen}
+      navigation={<ScientificToolRail
         className="lab-tool-rail"
         label="Laboratory tools"
         activeId={controlsOpen ? "configure" : "results"}
@@ -106,8 +120,8 @@ export function LabLayout({ controls, children }: { controls: ReactNode; childre
             controlsId: "device-workspace",
           },
         ]}
-      />
-      <ScientificTaskPanel
+      />}
+      panel={<ScientificTaskPanel
         id="configuration-panel"
         className="control-panel"
         title="Device inputs"
@@ -119,9 +133,17 @@ export function LabLayout({ controls, children }: { controls: ReactNode; childre
         hidden={!controlsOpen}
       >
         {controls}
-      </ScientificTaskPanel>
+      </ScientificTaskPanel>}
+      statusBar={<ScientificStatusBar
+        aria-label="Calculation status"
+        status={{
+          state: state === "idle" ? "needs-input" : state === "solving" ? "running" : state === "converged" ? "validated" : "failed",
+          label: statusMessage,
+        }}
+      />}
+    >
       <section id="device-workspace" className="workspace scientific-stage" tabIndex={-1}>{children}</section>
-    </main>
+    </ScientificAppShell>
   );
 }
 

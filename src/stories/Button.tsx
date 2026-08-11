@@ -1,12 +1,8 @@
-import React from 'react';
-
-import './button.css';
+import { Button as CarbonButton } from '@carbon/react';
 
 export interface ButtonProps {
   /** Is this the principal call to action on the page? */
   primary?: boolean;
-  /** What background color to use */
-  backgroundColor?: string;
   /** How large should the button be? */
   size?: 'small' | 'medium' | 'large';
   /** Button contents */
@@ -19,19 +15,17 @@ export interface ButtonProps {
 export const Button = ({
   primary = false,
   size = 'medium',
-  backgroundColor,
   label,
   ...props
 }: ButtonProps) => {
-  const mode = primary ? 'storybook-button--primary' : 'storybook-button--secondary';
   return (
-    <button
+    <CarbonButton
       type="button"
-      className={['storybook-button', `storybook-button--${size}`, mode].join(' ')}
-      style={{ backgroundColor }}
+      kind={primary ? 'primary' : 'secondary'}
+      size={size === 'small' ? 'sm' : size === 'large' ? 'lg' : 'md'}
       {...props}
     >
       {label}
-    </button>
+    </CarbonButton>
   );
 };

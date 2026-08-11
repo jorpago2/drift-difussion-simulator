@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@carbon/react";
 import {
   DEFAULT_PN_CONFIG,
   serializePnProfileCsv,
@@ -159,9 +160,11 @@ export function PnLab() {
   const depletionPercent = Math.min(62, Math.max(5, 100 * (result?.derived.depletionWidthM ?? validation.derived?.depletionWidthM ?? 0) / config.lengthUm / 1e-6));
 
   return (
-    <>
-      <AppHeader device="pn" state={solverState} onRun={solve} onCancel={cancel} />
-      <LabLayout controls={
+      <LabLayout
+        header={<AppHeader device="pn" state={solverState} onRun={solve} onCancel={cancel} />}
+        state={solverState}
+        statusMessage={message}
+        controls={
         <>
           <div className="panel-heading"><h2>PN diode</h2><p>Sweep the terminal characteristic and inspect the device at any solved bias.</p></div>
           <fieldset className="configuration-fields" disabled={solverState === "solving"}>
@@ -192,7 +195,6 @@ export function PnLab() {
           </details>
           </fieldset>
           <Message state={errors.length ? "error" : validation.warnings.length ? "warning" : "ready"}>{errors[0] ?? validation.warnings[0] ?? "Configuration and mesh checks passed."}</Message>
-          <button className="primary-action" data-action={solverState === "solving" ? "cancel" : undefined} type="button" disabled={solverState !== "solving" && Boolean(errors.length)} onClick={solverState === "solving" ? cancel : solve}>{solverState === "solving" ? "Cancel calculation" : "Calculate I–V sweep"}</button>
           <output className="solver-line" aria-live="polite">{message}</output>
         </>
       }>
@@ -249,7 +251,7 @@ export function PnLab() {
               <div className="field-grid two">
                 {(["xMin", "xMax", "yMin", "yMax"] as const).map((key) => <Field key={key} label={key.replace("Min", " min").replace("Max", " max").toUpperCase()}><input type="number" step="any" placeholder="Auto" value={axis[key]} onChange={(event) => setAxis((current) => ({ ...current, [key]: event.target.value }))} /></Field>)}
               </div>
-              <div className="button-row"><button type="button" disabled={Object.values(axis).some((value) => value.trim() === "")} onClick={() => chartRef.current?.setDomain({ xMin: Number(axis.xMin), xMax: Number(axis.xMax), yMin: Number(axis.yMin), yMax: Number(axis.yMax) })}>Apply</button><button type="button" onClick={resetChartView}>Auto</button></div>
+              <div className="button-row"><Button type="button" kind="tertiary" size="sm" disabled={Object.values(axis).some((value) => value.trim() === "")} onClick={() => chartRef.current?.setDomain({ xMin: Number(axis.xMin), xMax: Number(axis.xMax), yMin: Number(axis.yMin), yMax: Number(axis.yMax) })}>Apply</Button><Button type="button" kind="ghost" size="sm" onClick={resetChartView}>Auto</Button></div>
             </details>
             <Field label={<>Inspect profiles at V<sub>D</sub> = {selectedPoint ? fixed(selectedPoint.voltageV) : "—"} V</>}><input type="range" min="0" max={Math.max(0, (sweep?.points.length ?? 1) - 1)} step="1" value={Math.max(0, selectedIndex)} disabled={!sweep} onChange={(event) => selectPoint(Number(event.target.value))} /></Field>
             <p className="interaction-note">Wheel to zoom · drag to pan · double-click or Home to reset.</p>
@@ -279,10 +281,9 @@ export function PnLab() {
           </> : <Message state="idle">Calculate the sweep before interpreting numerical confidence.</Message>}
         </Disclosure>
 
-        <details className="export-panel"><summary>Export converged results</summary><div className="button-row"><button disabled={!result} onClick={() => { if (!result) return; downloadText(serializePnProfileCsv(result), "pn-profile.csv"); setMessage("Profile exported as pn-profile.csv."); }}>Profile CSV</button><button disabled={!sweep} onClick={() => { if (!sweep) return; downloadText(serializePnSweepCsv(sweep), "pn-iv.csv"); setMessage("Sweep exported as pn-iv.csv."); }}>Sweep CSV</button><button disabled={!sweep} onClick={() => { chartRef.current?.downloadSvg("pn-iv.svg"); setMessage("Plot exported as pn-iv.svg."); }}>Plot SVG</button></div></details>
+        <details className="export-panel"><summary>Export converged results</summary><div className="button-row"><Button kind="tertiary" size="sm" disabled={!result} onClick={() => { if (!result) return; downloadText(serializePnProfileCsv(result), "pn-profile.csv"); setMessage("Profile exported as pn-profile.csv."); }}>Profile CSV</Button><Button kind="tertiary" size="sm" disabled={!sweep} onClick={() => { if (!sweep) return; downloadText(serializePnSweepCsv(sweep), "pn-iv.csv"); setMessage("Sweep exported as pn-iv.csv."); }}>Sweep CSV</Button><Button kind="tertiary" size="sm" disabled={!sweep} onClick={() => { chartRef.current?.downloadSvg("pn-iv.svg"); setMessage("Plot exported as pn-iv.svg."); }}>Plot SVG</Button></div></details>
         <p className="model-boundary"><strong>Model boundary:</strong> homogeneous silicon, Boltzmann statistics, constant mobility, ohmic contacts, and midgap SRH. Breakdown, tunneling, degeneracy, self-heating, and high-field mobility are excluded.</p>
       </LabLayout>
-    </>
   );
 }
 

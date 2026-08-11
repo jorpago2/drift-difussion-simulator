@@ -22,11 +22,12 @@ assert.throws(() => sweepNpnOutputFamily(DEFAULT_NPN_CONFIG, [0.5], []), RangeEr
 assert.throws(() => sweepNpnOutputFamily(DEFAULT_NPN_CONFIG, [], [0, 0.1]), RangeError);
 assert.throws(() => sweepNpnOutputFamily(DEFAULT_NPN_CONFIG, [NaN], [0, 0.1]), RangeError);
 
-const [bjtHtml, bjtLab, bjtWorker, heatmap] = await Promise.all([
+const [bjtHtml, bjtLab, bjtWorker, heatmap, uiComponents] = await Promise.all([
   readFile(new URL("../bjt.html", import.meta.url), "utf8"),
   readFile(new URL("../src/labs/BjtLab.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/workers/bjt.worker.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/components/Heatmap.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../src/components/ui.tsx", import.meta.url), "utf8"),
 ]);
 assert.match(bjtHtml, /<div id="root"><\/div>/);
 assert.match(bjtHtml, /src="\/src\/main\.tsx"/);
@@ -37,7 +38,8 @@ assert.match(bjtLab, /maximumVceV: 0\.8/);
 assert.match(bjtLab, /collectorPointCount: 7/);
 assert.match(bjtLab, /Lateral NPN characteristics/);
 assert.match(bjtLab, /Internal 2D fields/);
-assert.match(bjtLab, /Cancel calculation/);
+assert.match(uiComponents, /Calculate characteristic grid/);
+assert.match(uiComponents, /stopLabel: "Cancel"/);
 assert.match(bjtLab, /<progress/);
 assert.doesNotMatch(bjtLab, /solveOperatingPoint/);
 assert.ok(bjtWorker.includes('data.action === "select"'));
