@@ -37,7 +37,7 @@ export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "
         <a href="./index.html" aria-current={device === "pn" ? "page" : undefined}><span className="device-label-full">PN diode</span><span className="device-label-short">PN</span></a>
         <a href="./bjt.html" aria-current={device === "bjt" ? "page" : undefined}><span className="device-label-full">NPN transistor</span><span className="device-label-short">NPN</span></a>
       </nav>}
-      status={{ state: state === "idle" ? "needs-input" : state === "solving" ? "running" : state === "converged" ? "validated" : "failed", label: status }}
+      status={{ state: state === "idle" ? "needs-input" : state === "solving" ? "running" : state === "converged" ? "up-to-date" : "failed", label: state === "converged" ? "Solved · review numerical checks" : status }}
       help={{
         id: "device-help",
         summary: "Set the device and sweep inputs, calculate, then inspect profiles and numerical diagnostics before exporting.",
@@ -45,7 +45,7 @@ export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "
       primaryAction={<ScientificRunControl
         size="lg"
         execution={{
-          state: state === "idle" ? "ready" : state === "solving" ? "running" : state === "converged" ? "validated" : "failed",
+          state: state === "idle" ? "ready" : state === "solving" ? "running" : state === "converged" ? "up-to-date" : "failed",
           label: status,
           onRun,
           onStop: onCancel,
@@ -109,7 +109,7 @@ export function LabLayout({ header, controls, children, state, statusMessage }: 
         items={[
           {
             id: "configure",
-            label: "Configure",
+            label: "Model",
             icon: <SettingsAdjust size={20} />,
             controlsId: "configuration-panel",
           },
@@ -137,8 +137,8 @@ export function LabLayout({ header, controls, children, state, statusMessage }: 
       statusBar={<ScientificStatusBar
         aria-label="Calculation status"
         status={{
-          state: state === "idle" ? "needs-input" : state === "solving" ? "running" : state === "converged" ? "validated" : "failed",
-          label: statusMessage,
+          state: state === "idle" ? "needs-input" : state === "solving" ? "running" : state === "converged" ? "up-to-date" : "failed",
+          label: state === "converged" ? `${statusMessage} · review numerical checks` : statusMessage,
         }}
       />}
     >

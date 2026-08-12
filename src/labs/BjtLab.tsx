@@ -10,7 +10,7 @@ import {
 import { Heatmap } from "../components/Heatmap";
 import { LineChart, type ChartSeries, type LineChartHandle } from "../components/LineChart";
 import { AppHeader, Disclosure, Field, LabLayout, Message, MetricGrid } from "../components/ui";
-import { ScientificNumberField } from "@jorpago2/scientific-ui";
+import { ScientificModelScope, ScientificNumberField, ScientificValidationSummary } from "@jorpago2/scientific-ui";
 import { downloadText } from "../lib/download";
 import { fixed, linearGrid, nearestIndex, percent, scientific } from "../lib/format";
 import { cssToken } from "../lib/theme";
@@ -340,21 +340,26 @@ export function BjtLab() {
 
         <Disclosure title="Numerical confidence" summary="Residuals, terminal balance, mesh, and model limits">
           {result ? <>
-            <Message state="pass">PASS — the selected grid point satisfies residual, KCL, carrier-balance, positivity, and contact constraints.</Message>
-            <MetricGrid entries={[
-              ["Backend", result.diagnostics.backend],
-              ["Gummel iterations", result.diagnostics.totalIterations],
-              ["Scaled residuals (ψ / n / p)", `${scientific(result.diagnostics.poissonResidual)} / ${scientific(result.diagnostics.electronResidual)} / ${scientific(result.diagnostics.holeResidual)}`],
-              ["Terminal KCL error", percent(result.diagnostics.terminalKclError)],
-              ["Carrier balance (n / p)", `${percent(result.diagnostics.electronBalanceError)} / ${percent(result.diagnostics.holeBalanceError)}`],
-              ["Mesh", `${result.nx} × ${result.ny} nodes`],
-            ]} />
+            <ScientificValidationSummary
+              status={{ state: result.warnings.length ? "warning" : "validated", label: result.warnings.length ? "Converged with warnings" : "Numerically validated" }}
+              checks={[
+                { id: "solver", label: "Nonlinear solve", state: "passed", value: `${result.diagnostics.totalIterations} iterations`, detail: result.diagnostics.backend },
+                { id: "residuals", label: "Coupled residuals", state: "passed", value: `${scientific(result.diagnostics.poissonResidual)} / ${scientific(result.diagnostics.electronResidual)} / ${scientific(result.diagnostics.holeResidual)}`, detail: "Poisson / electron / hole" },
+                { id: "kcl", label: "Terminal KCL", state: "passed", value: percent(result.diagnostics.terminalKclError) },
+                { id: "carriers", label: "Carrier balance", state: "passed", value: `${percent(result.diagnostics.electronBalanceError)} / ${percent(result.diagnostics.holeBalanceError)}`, detail: "Electron / hole" },
+                { id: "mesh", label: "Mesh", state: "passed", value: `${result.nx} × ${result.ny} nodes` },
+              ]}
+            />
             <WarningList warnings={result.warnings} />
           </> : <Message state="idle">Calculate the characteristic grid before interpreting numerical confidence.</Message>}
         </Disclosure>
 
         <details className="export-panel"><summary>Export converged results</summary><div className="button-row"><Button kind="tertiary" size="sm" disabled={!result} onClick={() => { if (!result) return; downloadText(serializeNpnProfileCsv(result), "npn-selected-2d.csv"); setMessage("Selected profile exported as npn-selected-2d.csv."); }}>Selected 2D CSV</Button><Button kind="tertiary" size="sm" disabled={!selectedCurve || !family} onClick={() => { if (!selectedCurve || !family) return; downloadText(serializeNpnSweepCsv({ ...selectedCurve, config: { ...family.config, baseEmitterVoltageV: selectedCurve.baseEmitterVoltageV } }), "npn-output-curve.csv"); setMessage("Output curve exported as npn-output-curve.csv."); }}>Selected curve CSV</Button><Button kind="tertiary" size="sm" disabled={!family} onClick={() => { outputChartRef.current?.downloadSvg("npn-output-characteristics.svg"); setMessage("Plot exported as npn-output-characteristics.svg."); }}>Plot SVG</Button></div></details>
-        <p className="model-boundary"><strong>Model boundary:</strong> lateral 2D homogeneous silicon, Boltzmann statistics, constant mobility, ohmic contacts, and midgap SRH. Breakdown, tunneling, high-field mobility, contact resistance, and self-heating are excluded.</p>
+        <ScientificModelScope
+          model="Two-dimensional stationary lateral NPN drift–diffusion model."
+          assumptions={["Homogeneous silicon", "Boltzmann statistics", "Constant mobility", "Ohmic contacts", "Midgap SRH recombination"]}
+          limits={["No breakdown or tunneling", "No high-field mobility", "No contact resistance", "No self-heating"]}
+        />
       </LabLayout>
   );
 }

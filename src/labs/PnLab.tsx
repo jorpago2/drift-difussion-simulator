@@ -8,7 +8,7 @@ import {
 } from "../ddm-core.js";
 import { LineChart, type ChartSeries, type LineChartHandle } from "../components/LineChart";
 import { AppHeader, Disclosure, Field, LabLayout, Message, MetricGrid } from "../components/ui";
-import { ScientificNumberField } from "@jorpago2/scientific-ui";
+import { ScientificModelScope, ScientificNumberField, ScientificValidationSummary } from "@jorpago2/scientific-ui";
 import { downloadText } from "../lib/download";
 import { fixed, nearestIndex, percent, scientific } from "../lib/format";
 import { cssToken } from "../lib/theme";
@@ -270,19 +270,25 @@ export function PnLab() {
 
         <Disclosure title="Numerical confidence" summary="Residuals, conservation, mesh, and model limits">
           {result ? <>
-            <Message state="pass">PASS — all coupled residual and conservation thresholds are satisfied.</Message>
-            <MetricGrid entries={[
-              ["Scaled residuals (ψ / n / p)", `${scientific(result.diagnostics.poissonResidual)} / ${scientific(result.diagnostics.electronResidual)} / ${scientific(result.diagnostics.holeResidual)}`],
-              ["Current uniformity", percent(result.diagnostics.currentContinuityError)],
-              ["Carrier balance (n / p)", `${percent(result.diagnostics.electronBalanceError)} / ${percent(result.diagnostics.holeBalanceError)}`],
-              ["Mesh", `${result.config.cells} nodes · Δx ${scientific(result.derived.dxM * 1e9)} nm`],
-            ]} />
+            <ScientificValidationSummary
+              status={{ state: result.warnings.length ? "warning" : "validated", label: result.warnings.length ? "Converged with warnings" : "Numerically validated" }}
+              checks={[
+                { id: "residuals", label: "Coupled residuals", state: "passed", value: `${scientific(result.diagnostics.poissonResidual)} / ${scientific(result.diagnostics.electronResidual)} / ${scientific(result.diagnostics.holeResidual)}`, detail: "Poisson / electron / hole" },
+                { id: "current", label: "Current conservation", state: "passed", value: percent(result.diagnostics.currentContinuityError) },
+                { id: "carriers", label: "Carrier balance", state: "passed", value: `${percent(result.diagnostics.electronBalanceError)} / ${percent(result.diagnostics.holeBalanceError)}`, detail: "Electron / hole" },
+                { id: "mesh", label: "Mesh", state: "passed", value: `${result.config.cells} nodes`, detail: `Δx ${scientific(result.derived.dxM * 1e9)} nm` },
+              ]}
+            />
             <WarningList warnings={result.warnings} />
           </> : <Message state="idle">Calculate the sweep before interpreting numerical confidence.</Message>}
         </Disclosure>
 
         <details className="export-panel"><summary>Export converged results</summary><div className="button-row"><Button kind="tertiary" size="sm" disabled={!result} onClick={() => { if (!result) return; downloadText(serializePnProfileCsv(result), "pn-profile.csv"); setMessage("Profile exported as pn-profile.csv."); }}>Profile CSV</Button><Button kind="tertiary" size="sm" disabled={!sweep} onClick={() => { if (!sweep) return; downloadText(serializePnSweepCsv(sweep), "pn-iv.csv"); setMessage("Sweep exported as pn-iv.csv."); }}>Sweep CSV</Button><Button kind="tertiary" size="sm" disabled={!sweep} onClick={() => { chartRef.current?.downloadSvg("pn-iv.svg"); setMessage("Plot exported as pn-iv.svg."); }}>Plot SVG</Button></div></details>
-        <p className="model-boundary"><strong>Model boundary:</strong> homogeneous silicon, Boltzmann statistics, constant mobility, ohmic contacts, and midgap SRH. Breakdown, tunneling, degeneracy, self-heating, and high-field mobility are excluded.</p>
+        <ScientificModelScope
+          model="One-dimensional stationary drift–diffusion with coupled Poisson and continuity equations."
+          assumptions={["Homogeneous silicon", "Boltzmann statistics", "Constant mobility", "Ohmic contacts", "Midgap SRH recombination"]}
+          limits={["No breakdown or tunneling", "No degeneracy", "No self-heating", "No high-field mobility"]}
+        />
       </LabLayout>
   );
 }
