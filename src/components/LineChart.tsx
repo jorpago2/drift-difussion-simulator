@@ -1,5 +1,11 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import type { Config, Data, Layout, PlotlyHTMLElement } from "plotly.js";
+import {
+  createScientificPlotlyConfig,
+  createScientificPlotlyLayout,
+  prepareScientificPlotlyToolbar,
+  readScientificPlotTheme,
+} from "@jorpago2/scientific-ui";
 import type { NumericArray } from "../types";
 import { cssToken } from "../lib/theme";
 
@@ -177,16 +183,18 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
   useEffect(() => {
     const element = plotRef.current;
     if (!plotly || !element) return;
-    const config: Partial<Config> = {
-      displaylogo: false,
-      responsive: true,
+    const config = createScientificPlotlyConfig({
+      filename: "scientific-plot",
       scrollZoom: interactive,
       displayModeBar: interactive,
-      modeBarButtonsToRemove: ["lasso2d", "select2d"],
-      doubleClick: "reset",
-      toImageButtonOptions: { format: "svg", filename: "scientific-plot", width: 1400, height: 800, scale: 1 },
-    };
-    void plotly.react(element, state === "ready" ? data : [], layout, config).then((plot) => {
+    }) as Partial<Config>;
+    const normalizedLayout = createScientificPlotlyLayout({
+      height,
+      theme: readScientificPlotTheme(element),
+      overrides: layout as Record<string, unknown>,
+    }) as Partial<Layout>;
+    void plotly.react(element, state === "ready" ? data : [], normalizedLayout, config).then((plot) => {
+      prepareScientificPlotlyToolbar(plot);
       const interactivePlot = plot as PlotlyHTMLElement;
       interactivePlot.removeAllListeners("plotly_click");
       if (interactive && onSelectX) interactivePlot.on("plotly_click", (event) => {
@@ -206,7 +214,7 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
       tabIndex={0}
       onPointerDown={(event) => event.currentTarget.focus({ preventScroll: true })}
     >
-      <div ref={plotRef} className="plotly-chart" role="img" aria-label={`${plainPlotText(yLabel)} versus ${plainPlotText(xLabel)}`} />
+      <div ref={plotRef} className="plotly-chart scientific-plot-surface" role="img" aria-label={`${plainPlotText(yLabel)} versus ${plainPlotText(xLabel)}`} />
     </div>
   );
 });

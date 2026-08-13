@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Config, Data, Layout } from "plotly.js";
+import {
+  createScientificPlotlyConfig,
+  createScientificPlotlyLayout,
+  prepareScientificPlotlyToolbar,
+  readScientificPlotTheme,
+} from "@jorpago2/scientific-ui";
 import type { NumericArray } from "../types";
 import { cssToken } from "../lib/theme";
 
@@ -88,9 +94,14 @@ export function Heatmap({ values, nx = 0, ny = 0, lengthUm = 1, heightUm = 1, la
       xaxis: { title: { text: "x (µm)" }, gridcolor: plotTheme.panel, showline: true, linecolor: plotTheme.axis },
       yaxis: { title: { text: "y (µm)" }, autorange: "reversed", gridcolor: plotTheme.panel, showline: true, linecolor: plotTheme.axis },
     };
-    const config: Partial<Config> = { displaylogo: false, responsive: true, scrollZoom: true, modeBarButtonsToRemove: ["lasso2d", "select2d"], toImageButtonOptions: { format: "png", filename: "field-map", width: 1200, height: 700, scale: 1 } };
-    void plotly.react(element, data, layout, config);
+    const config = createScientificPlotlyConfig({ filename: "field-map", format: "png", scrollZoom: true }) as Partial<Config>;
+    const normalizedLayout = createScientificPlotlyLayout({
+      height: 260,
+      theme: readScientificPlotTheme(element),
+      overrides: layout as Record<string, unknown>,
+    }) as Partial<Layout>;
+    void plotly.react(element, data, normalizedLayout, config).then(prepareScientificPlotlyToolbar);
   }, [data, plotTheme, plotly]);
 
-  return <div ref={plotRef} className="heatmap-plot" role="img" aria-label={label} />;
+  return <div ref={plotRef} className="heatmap-plot scientific-plot-surface" role="img" aria-label={label} />;
 }
