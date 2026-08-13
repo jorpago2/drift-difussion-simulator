@@ -29,7 +29,7 @@ export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "
     <ScientificHeader
       aria-label="Semiconductor Devices Lab"
       product="Device Lab"
-      productMark="SD"
+      productIcon="semiconductor-device"
       descriptor="Drift–diffusion"
       href={device === "pn" ? "./index.html" : "./bjt.html"}
       contextLabel="Device"
