@@ -10,7 +10,7 @@ import {
 import { Heatmap } from "../components/Heatmap";
 import { LineChart, type ChartSeries, type LineChartHandle } from "../components/LineChart";
 import { AppHeader, Disclosure, Field, LabLayout, Message, MetricGrid } from "../components/ui";
-import { SCIENTIFIC_PLOT_LINE_WIDTHS, ScientificModelScope, ScientificNumberField, ScientificOutcomeSummary, ScientificValidationSummary, useScientificResultTransition } from "@jorpago2/scientific-ui";
+import { SCIENTIFIC_PLOT_LINE_WIDTHS, ScientificAutosaveStatus, ScientificModelScope, ScientificNumberField, ScientificOutcomeSummary, ScientificRecoveryNotice, ScientificValidationSummary, useScientificAutosave, useScientificResultTransition } from "@jorpago2/scientific-ui";
 import { downloadText } from "../lib/download";
 import { fixed, linearGrid, nearestIndex, percent, scientific } from "../lib/format";
 import { cssToken } from "../lib/theme";
@@ -32,6 +32,12 @@ const initialInputs: Inputs = {
   maximumVceV: 0.8,
   collectorPointCount: 7,
 };
+
+function isBjtInputs(value: unknown): value is Inputs {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<Inputs>;
+  return [candidate.emitterDopingCm3, candidate.baseDopingCm3, candidate.collectorDopingCm3, candidate.minimumVbeV, candidate.maximumVbeV, candidate.basePointCount, candidate.maximumVceV, candidate.collectorPointCount].every(Number.isFinite);
+}
 const bjtCutaway = new URL("../../assets/device-cutaways/bjt-to92-cutaway-realistic.png", import.meta.url).href;
 
 const analyticalCurrent = idealNpnTransportCurrentA as unknown as (
@@ -75,6 +81,24 @@ export function BjtLab() {
   const validation = useMemo(() => validateNpnConfig(config) as Validation<NpnConfig, NpnDerived>, [config]);
   const sweepErrors = useMemo(() => validateSweep(inputs), [inputs]);
   const errors = [...validation.errors, ...sweepErrors];
+  const autosave = useScientificAutosave({
+    storageKey: "device-lab:bjt-session",
+    value: inputs,
+    schemaVersion: 1,
+    validate: isBjtInputs,
+    onRestore: (saved) => {
+      setInputs(saved);
+      setFamily(null);
+      setResult(null);
+      setCurveIndex(-1);
+      setPointIndex(-1);
+      selectionRef.current = { curve: -1, point: -1 };
+      setSolverState("idle");
+      setProgress({ completed: 0, total: saved.basePointCount * saved.collectorPointCount });
+      setMessage("Previous NPN configuration restored. Calculate a new characteristic grid.");
+      outputChartRef.current?.reset();
+    },
+  });
 
   useEffect(() => {
     const worker = new Worker(new URL("../workers/bjt.worker.ts", import.meta.url), { type: "module" });
@@ -235,6 +259,8 @@ export function BjtLab() {
   const beta = base > 0 ? collector / base : NaN;
   return (
       <LabLayout
+        recovery={autosave.recovery && <ScientificRecoveryNotice savedAt={autosave.recovery.savedAt} onRestore={autosave.restore} onDiscard={autosave.discard} />}
+        autosaveStatus={<ScientificAutosaveStatus status={autosave.status} savedAt={autosave.lastSavedAt} />}
         header={<AppHeader device="bjt" state={solverState} onRun={solve} onCancel={cancel} />}
         state={solverState}
         statusMessage={message}

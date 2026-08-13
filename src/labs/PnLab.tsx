@@ -8,7 +8,7 @@ import {
 } from "../ddm-core.js";
 import { LineChart, type ChartSeries, type LineChartHandle } from "../components/LineChart";
 import { AppHeader, Disclosure, Field, LabLayout, Message, MetricGrid } from "../components/ui";
-import { SCIENTIFIC_PLOT_LINE_WIDTHS, ScientificModelScope, ScientificNumberField, ScientificOutcomeSummary, ScientificValidationSummary, useScientificResultTransition } from "@jorpago2/scientific-ui";
+import { SCIENTIFIC_PLOT_LINE_WIDTHS, ScientificAutosaveStatus, ScientificModelScope, ScientificNumberField, ScientificOutcomeSummary, ScientificRecoveryNotice, ScientificValidationSummary, useScientificAutosave, useScientificResultTransition } from "@jorpago2/scientific-ui";
 import { downloadText } from "../lib/download";
 import { fixed, nearestIndex, percent, scientific } from "../lib/format";
 import { cssToken } from "../lib/theme";
@@ -27,6 +27,12 @@ const initialInputs: Inputs = {
   maximumV: 0.65,
   pointCount: 67,
 };
+
+function isPnInputs(value: unknown): value is Inputs {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<Inputs>;
+  return [candidate.acceptorCm3, candidate.donorCm3, candidate.minimumV, candidate.maximumV, candidate.pointCount].every(Number.isFinite);
+}
 const diodeCutaway = new URL("../../assets/device-cutaways/diode-axial-cutaway-realistic.png", import.meta.url).href;
 
 export function PnLab() {
@@ -53,6 +59,22 @@ export function PnLab() {
   const validation = useMemo(() => validatePnConfig(config) as Validation<PnConfig, PnDerived>, [config]);
   const sweepErrors = useMemo(() => validateSweep(inputs), [inputs]);
   const errors = [...validation.errors, ...sweepErrors];
+  const autosave = useScientificAutosave({
+    storageKey: "device-lab:pn-session",
+    value: inputs,
+    schemaVersion: 1,
+    validate: isPnInputs,
+    onRestore: (saved) => {
+      setInputs(saved);
+      setSweep(null);
+      setResult(null);
+      setSelectedIndex(-1);
+      selectedIndexRef.current = -1;
+      setSolverState("idle");
+      setMessage("Previous PN configuration restored. Calculate a new Iâ€“V sweep.");
+      chartRef.current?.reset();
+    },
+  });
 
   useEffect(() => {
     const worker = new Worker(new URL("../workers/pn.worker.ts", import.meta.url), { type: "module" });
@@ -168,6 +190,8 @@ export function PnLab() {
 
   return (
       <LabLayout
+        recovery={autosave.recovery && <ScientificRecoveryNotice savedAt={autosave.recovery.savedAt} onRestore={autosave.restore} onDiscard={autosave.discard} />}
+        autosaveStatus={<ScientificAutosaveStatus status={autosave.status} savedAt={autosave.lastSavedAt} />}
         header={<AppHeader device="pn" state={solverState} onRun={solve} onCancel={cancel} />}
         state={solverState}
         statusMessage={message}

@@ -58,12 +58,14 @@ export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "
   );
 }
 
-export function LabLayout({ header, controls, children, state, statusMessage }: {
+export function LabLayout({ header, controls, children, state, statusMessage, recovery, autosaveStatus }: {
   header: ReactNode;
   controls: ReactNode;
   children: ReactNode;
   state: SolverState;
   statusMessage: string;
+  recovery?: ReactNode;
+  autosaveStatus?: ReactNode;
 }) {
   const desktop = useMediaQuery("(min-width: 66rem)");
   const [controlsOpen, setControlsOpen] = useState(desktop);
@@ -98,6 +100,7 @@ export function LabLayout({ header, controls, children, state, statusMessage }: 
     <ScientificAppShell
       className="device-lab-shell"
       header={header}
+      recovery={recovery}
       panelOpen={controlsOpen}
       navigation={<ScientificToolRail
         className="lab-tool-rail"
@@ -140,6 +143,7 @@ export function LabLayout({ header, controls, children, state, statusMessage }: 
           state: state === "idle" ? "needs-input" : state === "solving" ? "running" : state === "converged" ? "up-to-date" : "failed",
           label: state === "converged" ? `${statusMessage} · review numerical checks` : statusMessage,
         }}
+        metadata={autosaveStatus}
       />}
     >
       <section id="device-workspace" className="workspace scientific-stage" tabIndex={-1}>{children}</section>
