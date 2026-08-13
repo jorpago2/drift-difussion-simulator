@@ -5,7 +5,7 @@ import {
   createScientificPlotlyConfig,
   createScientificPlotlyLayout,
   prepareScientificPlotlyToolbar,
-  readScientificPlotTheme,
+  useScientificPlotTheme,
 } from "@jorpago2/scientific-ui";
 import type { NumericArray } from "../types";
 import { cssToken } from "../lib/theme";
@@ -67,14 +67,15 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
   const plotlyRef = useRef<PlotlyModule | null>(null);
   const [plotly, setPlotly] = useState<PlotlyModule | null>(null);
   const [manualDomain, setManualDomain] = useState<ChartDomain | null>(null);
+  const carbonPlotTheme = useScientificPlotTheme();
   const plotTheme = useMemo(() => ({
-    panel: cssToken("--color-panel"),
-    ink: cssToken("--color-ink-2"),
-    grid: cssToken("--color-plot-grid"),
-    axis: cssToken("--color-plot-axis"),
+    panel: carbonPlotTheme.background,
+    ink: carbonPlotTheme.text,
+    grid: carbonPlotTheme.grid,
+    axis: carbonPlotTheme.axis,
     marker: cssToken("--color-danger"),
     font: cssToken("--font-body"),
-  }), []);
+  }), [carbonPlotTheme]);
 
   useImperativeHandle(forwardedRef, () => ({
     reset: () => setManualDomain(null),
@@ -191,7 +192,7 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
     }) as Partial<Config>;
     const normalizedLayout = createScientificPlotlyLayout({
       height,
-      theme: readScientificPlotTheme(element),
+      theme: carbonPlotTheme,
       overrides: layout as Record<string, unknown>,
     }) as Partial<Layout>;
     void plotly.react(element, state === "ready" ? data : [], normalizedLayout, config).then((plot) => {
@@ -203,7 +204,7 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
         if (Number.isFinite(selectedX)) onSelectX(selectedX);
       });
     });
-  }, [data, interactive, layout, onSelectX, plotly, state]);
+  }, [carbonPlotTheme, data, interactive, layout, onSelectX, plotly, state]);
 
   return (
     <div

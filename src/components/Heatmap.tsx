@@ -4,7 +4,7 @@ import {
   createScientificPlotlyConfig,
   createScientificPlotlyLayout,
   prepareScientificPlotlyToolbar,
-  readScientificPlotTheme,
+  useScientificPlotTheme,
 } from "@jorpago2/scientific-ui";
 import type { NumericArray } from "../types";
 import { cssToken } from "../lib/theme";
@@ -26,10 +26,11 @@ export function Heatmap({ values, nx = 0, ny = 0, lengthUm = 1, heightUm = 1, la
   const plotRef = useRef<HTMLDivElement>(null);
   const plotlyRef = useRef<PlotlyModule | null>(null);
   const [plotly, setPlotly] = useState<PlotlyModule | null>(null);
+  const carbonPlotTheme = useScientificPlotTheme();
   const plotTheme = useMemo(() => ({
-    panel: cssToken("--color-panel"),
-    ink: cssToken("--color-ink-2"),
-    axis: cssToken("--color-plot-axis"),
+    panel: carbonPlotTheme.background,
+    ink: carbonPlotTheme.text,
+    axis: carbonPlotTheme.axis,
     font: cssToken("--font-body"),
     diverging: [
       cssToken("--color-map-cold-3"),
@@ -40,7 +41,7 @@ export function Heatmap({ values, nx = 0, ny = 0, lengthUm = 1, heightUm = 1, la
       cssToken("--color-map-warm-2"),
       cssToken("--color-map-warm-3"),
     ],
-  }), []);
+  }), [carbonPlotTheme]);
 
   const data = useMemo<Data[]>(() => {
     if (!values || !nx || !ny || values.length !== nx * ny) return [];
@@ -97,11 +98,11 @@ export function Heatmap({ values, nx = 0, ny = 0, lengthUm = 1, heightUm = 1, la
     const config = createScientificPlotlyConfig({ filename: "field-map", format: "png", scrollZoom: true }) as Partial<Config>;
     const normalizedLayout = createScientificPlotlyLayout({
       height: 260,
-      theme: readScientificPlotTheme(element),
+      theme: carbonPlotTheme,
       overrides: layout as Record<string, unknown>,
     }) as Partial<Layout>;
     void plotly.react(element, data, normalizedLayout, config).then(prepareScientificPlotlyToolbar);
-  }, [data, plotTheme, plotly]);
+  }, [carbonPlotTheme, data, plotTheme, plotly]);
 
   return <div ref={plotRef} className="heatmap-plot scientific-plot-surface" role="img" aria-label={label} />;
 }
