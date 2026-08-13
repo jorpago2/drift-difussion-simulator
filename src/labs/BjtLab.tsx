@@ -10,7 +10,7 @@ import {
 import { Heatmap } from "../components/Heatmap";
 import { LineChart, type ChartSeries, type LineChartHandle } from "../components/LineChart";
 import { AppHeader, Disclosure, Field, LabLayout, Message, MetricGrid } from "../components/ui";
-import { ScientificModelScope, ScientificNumberField, ScientificValidationSummary } from "@jorpago2/scientific-ui";
+import { SCIENTIFIC_PLOT_LINE_WIDTHS, ScientificModelScope, ScientificNumberField, ScientificValidationSummary } from "@jorpago2/scientific-ui";
 import { downloadText } from "../lib/download";
 import { fixed, linearGrid, nearestIndex, percent, scientific } from "../lib/format";
 import { cssToken } from "../lib/theme";
@@ -188,7 +188,7 @@ export function BjtLab() {
         label: `V<sub>BE</sub> = ${fixed(curve.baseEmitterVoltageV)} V`,
         values: Float64Array.from(curve.points, (point) => point.collectorCurrentA * 1e3),
         color,
-        lineWidth: index === curveIndex ? 3.2 : 2,
+        lineWidth: index === curveIndex ? SCIENTIFIC_PLOT_LINE_WIDTHS.emphasis : SCIENTIFIC_PLOT_LINE_WIDTHS.primary,
       };
       if (!showReference) return [numerical];
       return [numerical, {
@@ -196,7 +196,7 @@ export function BjtLab() {
         values: Float64Array.from(curve.points, (point) => analyticalCurrent(family.config, curve.baseEmitterVoltageV, point.collectorEmitterVoltageV) * 1e3),
         color,
         dash: [7, 4],
-        lineWidth: 1.5,
+        lineWidth: SCIENTIFIC_PLOT_LINE_WIDTHS.reference,
         showInLegend: false,
       }];
     });
@@ -209,14 +209,14 @@ export function BjtLab() {
       label: "2D DD",
       values: Float64Array.from(family.curves, (curve) => curve.points[pointIndex]!.collectorCurrentA * 1e3),
       color: cssToken("--color-plot-teal"),
-      lineWidth: 2.6,
+      lineWidth: SCIENTIFIC_PLOT_LINE_WIDTHS.primary,
     }];
     if (showReference) values.push({
       label: "Ideal 1D",
       values: Float64Array.from(family.curves, (curve) => analyticalCurrent(family.config, curve.baseEmitterVoltageV, selectedVce) * 1e3),
       color: cssToken("--color-plot-gold"),
       dash: [6, 4],
-      lineWidth: 1.7,
+      lineWidth: SCIENTIFIC_PLOT_LINE_WIDTHS.secondary,
     });
     return values;
   }, [family, pointIndex, showReference]);

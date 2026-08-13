@@ -8,7 +8,7 @@ import {
 } from "../ddm-core.js";
 import { LineChart, type ChartSeries, type LineChartHandle } from "../components/LineChart";
 import { AppHeader, Disclosure, Field, LabLayout, Message, MetricGrid } from "../components/ui";
-import { ScientificModelScope, ScientificNumberField, ScientificValidationSummary } from "@jorpago2/scientific-ui";
+import { SCIENTIFIC_PLOT_LINE_WIDTHS, ScientificModelScope, ScientificNumberField, ScientificValidationSummary } from "@jorpago2/scientific-ui";
 import { downloadText } from "../lib/download";
 import { fixed, nearestIndex, percent, scientific } from "../lib/format";
 import { cssToken } from "../lib/theme";
@@ -148,8 +148,8 @@ export function PnLab() {
     return scale === "log" ? Math.abs(value) : value;
   }), [chartScale, scale, sweep]);
   const series = useMemo<ChartSeries[]>(() => {
-    const values: ChartSeries[] = [{ label: "DD + SRH", values: numerical, color: cssToken("--color-plot-teal"), lineWidth: 2.8 }];
-    if (showReference) values.push({ label: "Finite-base analytical", values: reference, color: cssToken("--color-plot-gold"), dash: [7, 4], lineWidth: 2 });
+    const values: ChartSeries[] = [{ label: "DD + SRH", values: numerical, color: cssToken("--color-plot-teal"), lineWidth: SCIENTIFIC_PLOT_LINE_WIDTHS.primary }];
+    if (showReference) values.push({ label: "Finite-base analytical", values: reference, color: cssToken("--color-plot-gold"), dash: [7, 4], lineWidth: SCIENTIFIC_PLOT_LINE_WIDTHS.reference });
     return values;
   }, [numerical, reference, showReference]);
 

@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import type { Config, Data, Layout, PlotlyHTMLElement } from "plotly.js";
 import {
+  SCIENTIFIC_PLOT_LINE_WIDTHS,
   createScientificPlotlyConfig,
   createScientificPlotlyLayout,
   prepareScientificPlotlyToolbar,
@@ -122,7 +123,7 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
       customdata: scale === "symlog" ? values : undefined,
       connectgaps: false,
       showlegend: line.showInLegend !== false,
-      line: { color: line.color, width: line.lineWidth ?? 2.25, dash: line.dash?.length ? "dash" : "solid" },
+      line: { color: line.color, width: line.lineWidth ?? SCIENTIFIC_PLOT_LINE_WIDTHS.primary, dash: line.dash?.length ? "dash" : "solid" },
       hovertemplate: scale === "symlog"
         ? `${line.label}: %{customdata:.4g}<extra></extra>`
         : `${line.label}: %{y:.4g}<extra></extra>`,
@@ -175,7 +176,7 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
         y0: 0,
         y1: 1,
         yref: "paper",
-        line: { color: plotTheme.marker, width: 1.4, dash: "dash" },
+        line: { color: plotTheme.marker, width: SCIENTIFIC_PLOT_LINE_WIDTHS.reference, dash: "dash" },
       }] : [],
     };
   }, [height, includeZero, interactive, manualDomain, markerX, plotTheme, scale, series, xLabel, yLabel]);
