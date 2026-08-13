@@ -8,7 +8,7 @@ import {
 } from "../ddm-core.js";
 import { LineChart, type ChartSeries, type LineChartHandle } from "../components/LineChart";
 import { AppHeader, Disclosure, Field, LabLayout, Message, MetricGrid } from "../components/ui";
-import { SCIENTIFIC_PLOT_LINE_WIDTHS, ScientificModelScope, ScientificNumberField, ScientificValidationSummary } from "@jorpago2/scientific-ui";
+import { SCIENTIFIC_PLOT_LINE_WIDTHS, ScientificModelScope, ScientificNumberField, ScientificOutcomeSummary, ScientificValidationSummary } from "@jorpago2/scientific-ui";
 import { downloadText } from "../lib/download";
 import { fixed, nearestIndex, percent, scientific } from "../lib/format";
 import { cssToken } from "../lib/theme";
@@ -215,6 +215,35 @@ export function PnLab() {
           <div><img src={diodeCutaway} width="1774" height="887" loading="lazy" alt="Cutaway of an axial silicon diode showing the semiconductor die, contacts, bond connection, and encapsulation" /><p>The simulated 1D junction represents the active silicon die. Package leads, metallization, contact resistance, edge fields, and thermal effects are outside this model.</p></div>
         </details>
 
+        <ScientificOutcomeSummary
+          className="device-outcome"
+          title="Diode sweep outcome"
+          status={solverState === "solving"
+            ? { state: "running", label: "Calculating I–V sweep", detail: message }
+            : solverState === "failed"
+              ? { state: "failed", label: "Sweep failed", detail: message }
+              : result?.warnings.length
+                ? { state: "warning", label: "Converged with warnings" }
+                : result
+                  ? { state: "up-to-date", label: "Result current" }
+                  : { state: "needs-input", label: "Not solved" }}
+          summary={result
+            ? result.warnings.length
+              ? `The selected bias point converged with ${result.warnings.length} warning${result.warnings.length === 1 ? "" : "s"}. Review numerical confidence before interpretation.`
+              : "The sweep and selected device profile are current. Review numerical confidence before exporting or comparing with the analytical reference."
+            : solverState === "failed" ? message : "Calculate the voltage sweep to obtain the terminal characteristic and spatial device profiles."}
+          metrics={result ? [
+            { id: "bias", label: "Selected bias", value: fixed(result.config.biasV), unit: "V" },
+            { id: "current", label: "Terminal current", value: scientific(currentA * 1e3), unit: "mA" },
+            { id: "continuity", label: "Current mismatch", value: percent(result.diagnostics.currentContinuityError), status: result.warnings.length ? "warning" : "success" },
+          ] : []}
+          actions={[
+            { id: "profile-csv", label: "Export profile CSV", emphasis: "primary", disabled: !result, disabledReason: "Calculate the sweep before exporting.", onClick: () => { if (!result) return; downloadText(serializePnProfileCsv(result), "pn-profile.csv"); setMessage("Profile exported as pn-profile.csv."); } },
+            { id: "sweep-csv", label: "Export sweep CSV", emphasis: "secondary", collapseAt: "sm", disabled: !sweep, onClick: () => { if (!sweep) return; downloadText(serializePnSweepCsv(sweep), "pn-iv.csv"); setMessage("Sweep exported as pn-iv.csv."); } },
+            { id: "plot-svg", label: "Export plot SVG", emphasis: "tertiary", overflowOnly: true, disabled: !sweep, onClick: () => { chartRef.current?.downloadSvg("pn-iv.svg"); setMessage("Plot exported as pn-iv.svg."); } },
+          ]}
+        />
+
         <section className="primary-dashboard" aria-labelledby="pn-result-title">
           <div className="main-chart">
             <LineChart
@@ -283,7 +312,6 @@ export function PnLab() {
           </> : <Message state="idle">Calculate the sweep before interpreting numerical confidence.</Message>}
         </Disclosure>
 
-        <details className="export-panel"><summary>Export converged results</summary><div className="button-row"><Button kind="tertiary" size="sm" disabled={!result} onClick={() => { if (!result) return; downloadText(serializePnProfileCsv(result), "pn-profile.csv"); setMessage("Profile exported as pn-profile.csv."); }}>Profile CSV</Button><Button kind="tertiary" size="sm" disabled={!sweep} onClick={() => { if (!sweep) return; downloadText(serializePnSweepCsv(sweep), "pn-iv.csv"); setMessage("Sweep exported as pn-iv.csv."); }}>Sweep CSV</Button><Button kind="tertiary" size="sm" disabled={!sweep} onClick={() => { chartRef.current?.downloadSvg("pn-iv.svg"); setMessage("Plot exported as pn-iv.svg."); }}>Plot SVG</Button></div></details>
         <ScientificModelScope
           model="One-dimensional stationary drift–diffusion with coupled Poisson and continuity equations."
           assumptions={["Homogeneous silicon", "Boltzmann statistics", "Constant mobility", "Ohmic contacts", "Midgap SRH recombination"]}

@@ -10,7 +10,7 @@ import {
 import { Heatmap } from "../components/Heatmap";
 import { LineChart, type ChartSeries, type LineChartHandle } from "../components/LineChart";
 import { AppHeader, Disclosure, Field, LabLayout, Message, MetricGrid } from "../components/ui";
-import { SCIENTIFIC_PLOT_LINE_WIDTHS, ScientificModelScope, ScientificNumberField, ScientificValidationSummary } from "@jorpago2/scientific-ui";
+import { SCIENTIFIC_PLOT_LINE_WIDTHS, ScientificModelScope, ScientificNumberField, ScientificOutcomeSummary, ScientificValidationSummary } from "@jorpago2/scientific-ui";
 import { downloadText } from "../lib/download";
 import { fixed, linearGrid, nearestIndex, percent, scientific } from "../lib/format";
 import { cssToken } from "../lib/theme";
@@ -281,6 +281,36 @@ export function BjtLab() {
           <div><img src={bjtCutaway} width="1536" height="1024" loading="lazy" alt="Cutaway of a TO-92 bipolar transistor showing its silicon die, bond wires, lead frame, and encapsulation" /><p>The solver uses a lateral NPN cross-section to expose 2D transport. A commercial discrete BJT commonly uses a vertical die, so geometry-dependent gain and current crowding are not claimed to match the package illustration.</p></div>
         </details>
 
+        <ScientificOutcomeSummary
+          className="device-outcome"
+          title="NPN characteristic outcome"
+          status={solverState === "solving"
+            ? { state: "running", label: "Calculating bias grid", detail: `${progress.completed} of ${progress.total} bias points` }
+            : solverState === "failed"
+              ? { state: "failed", label: "Characteristic grid failed", detail: message }
+              : result?.warnings.length
+                ? { state: "warning", label: "Converged with warnings" }
+                : result
+                  ? { state: "up-to-date", label: "Result current" }
+                  : { state: "needs-input", label: "Not solved" }}
+          summary={result
+            ? result.warnings.length
+              ? `The selected operating point converged with ${result.warnings.length} warning${result.warnings.length === 1 ? "" : "s"}. Review terminal balance and residuals before interpretation.`
+              : "The characteristic family and selected 2D operating point are current. Review numerical confidence before export."
+            : solverState === "failed" ? message : "Calculate the VBE × VCE grid to reveal the output family, transfer curve and internal 2D fields."}
+          metrics={result ? [
+            { id: "region", label: "Operating region", value: classifyRegion(result.config.baseEmitterVoltageV, result.config.collectorEmitterVoltageV) },
+            { id: "collector-current", label: "Collector current", value: scientific(collector * 1e3), unit: "mA" },
+            { id: "current-gain", label: "Current gain β", value: Number.isFinite(beta) ? fixed(beta, 2) : "—" },
+            { id: "terminal-kcl", label: "Terminal KCL mismatch", value: percent(result.diagnostics.terminalKclError), status: result.warnings.length ? "warning" : "success" },
+          ] : []}
+          actions={[
+            { id: "selected-2d-csv", label: "Export selected 2D CSV", emphasis: "primary", disabled: !result, disabledReason: "Calculate the characteristic grid before exporting.", onClick: () => { if (!result) return; downloadText(serializeNpnProfileCsv(result), "npn-selected-2d.csv"); setMessage("Selected profile exported as npn-selected-2d.csv."); } },
+            { id: "curve-csv", label: "Export curve CSV", emphasis: "secondary", collapseAt: "sm", disabled: !selectedCurve || !family, onClick: () => { if (!selectedCurve || !family) return; downloadText(serializeNpnSweepCsv({ ...selectedCurve, config: { ...family.config, baseEmitterVoltageV: selectedCurve.baseEmitterVoltageV } }), "npn-output-curve.csv"); setMessage("Output curve exported as npn-output-curve.csv."); } },
+            { id: "plot-svg", label: "Export plot SVG", emphasis: "tertiary", overflowOnly: true, disabled: !family, onClick: () => { outputChartRef.current?.downloadSvg("npn-output-characteristics.svg"); setMessage("Plot exported as npn-output-characteristics.svg."); } },
+          ]}
+        />
+
         <section className="primary-dashboard bjt-dashboard" aria-labelledby="bjt-result-title">
           <div className="main-chart">
             <LineChart
@@ -354,7 +384,6 @@ export function BjtLab() {
           </> : <Message state="idle">Calculate the characteristic grid before interpreting numerical confidence.</Message>}
         </Disclosure>
 
-        <details className="export-panel"><summary>Export converged results</summary><div className="button-row"><Button kind="tertiary" size="sm" disabled={!result} onClick={() => { if (!result) return; downloadText(serializeNpnProfileCsv(result), "npn-selected-2d.csv"); setMessage("Selected profile exported as npn-selected-2d.csv."); }}>Selected 2D CSV</Button><Button kind="tertiary" size="sm" disabled={!selectedCurve || !family} onClick={() => { if (!selectedCurve || !family) return; downloadText(serializeNpnSweepCsv({ ...selectedCurve, config: { ...family.config, baseEmitterVoltageV: selectedCurve.baseEmitterVoltageV } }), "npn-output-curve.csv"); setMessage("Output curve exported as npn-output-curve.csv."); }}>Selected curve CSV</Button><Button kind="tertiary" size="sm" disabled={!family} onClick={() => { outputChartRef.current?.downloadSvg("npn-output-characteristics.svg"); setMessage("Plot exported as npn-output-characteristics.svg."); }}>Plot SVG</Button></div></details>
         <ScientificModelScope
           model="Two-dimensional stationary lateral NPN drift–diffusion model."
           assumptions={["Homogeneous silicon", "Boltzmann statistics", "Constant mobility", "Ohmic contacts", "Midgap SRH recombination"]}
