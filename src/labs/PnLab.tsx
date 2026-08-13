@@ -71,7 +71,7 @@ export function PnLab() {
       setSelectedIndex(-1);
       selectedIndexRef.current = -1;
       setSolverState("idle");
-      setMessage("Previous PN configuration restored. Calculate a new Iâ€“V sweep.");
+      setMessage("Previous PN configuration restored. Calculate a new I–V sweep.");
       chartRef.current?.reset();
     },
   });
