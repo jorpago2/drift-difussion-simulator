@@ -8,7 +8,7 @@ import {
 } from "../ddm-core.js";
 import { LineChart, type ChartSeries, type LineChartHandle } from "../components/LineChart";
 import { AppHeader, Disclosure, Field, LabLayout, Message, MetricGrid } from "../components/ui";
-import { SCIENTIFIC_PLOT_LINE_WIDTHS, ScientificModelScope, ScientificNumberField, ScientificOutcomeSummary, ScientificValidationSummary } from "@jorpago2/scientific-ui";
+import { SCIENTIFIC_PLOT_LINE_WIDTHS, ScientificModelScope, ScientificNumberField, ScientificOutcomeSummary, ScientificValidationSummary, useScientificResultTransition } from "@jorpago2/scientific-ui";
 import { downloadText } from "../lib/download";
 import { fixed, nearestIndex, percent, scientific } from "../lib/format";
 import { cssToken } from "../lib/theme";
@@ -44,6 +44,7 @@ export function PnLab() {
   const workerRef = useRef<Worker | null>(null);
   const selectedIndexRef = useRef(-1);
   const chartRef = useRef<LineChartHandle>(null);
+  const outcomeHeading = useRef<HTMLHeadingElement>(null);
 
   const config = useMemo<PnConfig>(() => ({
     ...inputs,
@@ -159,6 +160,12 @@ export function PnLab() {
   const plotState = solverState === "failed" ? "error" : solverState === "solving" ? "loading" : sweep ? "ready" : "empty";
   const depletionPercent = Math.min(62, Math.max(5, 100 * (result?.derived.depletionWidthM ?? validation.derived?.depletionWidthM ?? 0) / config.lengthUm / 1e-6));
 
+  useScientificResultTransition({
+    state: solverState === "solving" ? "running" : solverState === "failed" ? "failed" : result?.warnings.length ? "warning" : result ? "up-to-date" : "ready",
+    resultRef: outcomeHeading,
+    completionKey: result ? message : null,
+  });
+
   return (
       <LabLayout
         header={<AppHeader device="pn" state={solverState} onRun={solve} onCancel={cancel} />}
@@ -218,6 +225,7 @@ export function PnLab() {
         <ScientificOutcomeSummary
           className="device-outcome"
           title="Diode sweep outcome"
+          headingRef={outcomeHeading}
           status={solverState === "solving"
             ? { state: "running", label: "Calculating I–V sweep", detail: message }
             : solverState === "failed"
@@ -233,8 +241,8 @@ export function PnLab() {
               : "The sweep and selected device profile are current. Review numerical confidence before exporting or comparing with the analytical reference."
             : solverState === "failed" ? message : "Calculate the voltage sweep to obtain the terminal characteristic and spatial device profiles."}
           metrics={result ? [
-            { id: "bias", label: "Selected bias", value: fixed(result.config.biasV), unit: "V" },
-            { id: "current", label: "Terminal current", value: scientific(currentA * 1e3), unit: "mA" },
+            { id: "bias", label: "Selected bias", value: result.config.biasV, unit: "V", format: { significantDigits: 4 } },
+            { id: "current", label: "Terminal current", value: currentA * 1e3, unit: "mA", format: { significantDigits: 4 } },
             { id: "continuity", label: "Current mismatch", value: percent(result.diagnostics.currentContinuityError), status: result.warnings.length ? "warning" : "success" },
           ] : []}
           actions={[

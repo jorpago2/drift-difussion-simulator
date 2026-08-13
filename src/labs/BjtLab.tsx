@@ -10,7 +10,7 @@ import {
 import { Heatmap } from "../components/Heatmap";
 import { LineChart, type ChartSeries, type LineChartHandle } from "../components/LineChart";
 import { AppHeader, Disclosure, Field, LabLayout, Message, MetricGrid } from "../components/ui";
-import { SCIENTIFIC_PLOT_LINE_WIDTHS, ScientificModelScope, ScientificNumberField, ScientificOutcomeSummary, ScientificValidationSummary } from "@jorpago2/scientific-ui";
+import { SCIENTIFIC_PLOT_LINE_WIDTHS, ScientificModelScope, ScientificNumberField, ScientificOutcomeSummary, ScientificValidationSummary, useScientificResultTransition } from "@jorpago2/scientific-ui";
 import { downloadText } from "../lib/download";
 import { fixed, linearGrid, nearestIndex, percent, scientific } from "../lib/format";
 import { cssToken } from "../lib/theme";
@@ -65,6 +65,7 @@ export function BjtLab() {
   const workerRef = useRef<Worker | null>(null);
   const selectionRef = useRef({ curve: -1, point: -1 });
   const outputChartRef = useRef<LineChartHandle>(null);
+  const outcomeHeading = useRef<HTMLHeadingElement>(null);
 
   const config = useMemo<NpnConfig>(() => ({
     ...inputs,
@@ -222,6 +223,12 @@ export function BjtLab() {
   }, [family, pointIndex, showReference]);
 
   const plotState = solverState === "failed" ? "error" : solverState === "solving" ? "loading" : family ? "ready" : "empty";
+
+  useScientificResultTransition({
+    state: solverState === "solving" ? "running" : solverState === "failed" ? "failed" : result?.warnings.length ? "warning" : result ? "up-to-date" : "ready",
+    resultRef: outcomeHeading,
+    completionKey: result ? message : null,
+  });
   const collector = result?.terminalCurrents.collector.currentIntoDeviceA ?? NaN;
   const base = result?.terminalCurrents.base.currentIntoDeviceA ?? NaN;
   const emitter = result?.terminalCurrents.emitter.currentIntoDeviceA ?? NaN;
@@ -284,6 +291,7 @@ export function BjtLab() {
         <ScientificOutcomeSummary
           className="device-outcome"
           title="NPN characteristic outcome"
+          headingRef={outcomeHeading}
           status={solverState === "solving"
             ? { state: "running", label: "Calculating bias grid", detail: `${progress.completed} of ${progress.total} bias points` }
             : solverState === "failed"
@@ -300,8 +308,8 @@ export function BjtLab() {
             : solverState === "failed" ? message : "Calculate the VBE × VCE grid to reveal the output family, transfer curve and internal 2D fields."}
           metrics={result ? [
             { id: "region", label: "Operating region", value: classifyRegion(result.config.baseEmitterVoltageV, result.config.collectorEmitterVoltageV) },
-            { id: "collector-current", label: "Collector current", value: scientific(collector * 1e3), unit: "mA" },
-            { id: "current-gain", label: "Current gain β", value: Number.isFinite(beta) ? fixed(beta, 2) : "—" },
+            { id: "collector-current", label: "Collector current", value: collector * 1e3, unit: "mA", format: { significantDigits: 4 } },
+            { id: "current-gain", label: "Current gain β", value: Number.isFinite(beta) ? beta : "—", format: { significantDigits: 4 } },
             { id: "terminal-kcl", label: "Terminal KCL mismatch", value: percent(result.diagnostics.terminalKclError), status: result.warnings.length ? "warning" : "success" },
           ] : []}
           actions={[
