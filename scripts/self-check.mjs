@@ -66,7 +66,7 @@ const carbonStyles = await readFile(new URL("../src/carbon.scss", import.meta.ur
 assert.match(carbonStyles, /@use ["']@carbon\/react["']/);
 assert.doesNotMatch(pnStyles, /tailwindcss|@theme inline/);
 assert.match(uiComponents, /<ScientificHeader\b/);
-assert.match(uiComponents, /productMark="SD"/);
+assert.match(uiComponents, /productIcon="semiconductor-device"/);
 
 const voltageScale = createNiceScale([-1, 0.65], 8);
 assert.deepEqual(voltageScale.ticks, [-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75]);
