@@ -14,7 +14,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "node scripts/self-check.mjs && node scripts/bjt-self-check.mjs && node scripts/bjt-wasm-self-check.mjs",
+    "test": "node scripts/self-check.mjs && node scripts/bjt-self-check.mjs && node scripts/bjt-wasm-self-check.mjs && node --experimental-strip-types --test tests/*.test.mjs",
     "build:wasm": "powershell -ExecutionPolicy Bypass -File scripts/build-wasm.ps1",
     "build:bjt-wasm": "powershell -ExecutionPolicy Bypass -File scripts/build-wasm.ps1 -SourcePath native/bjt-core/bjt-core.c -WasmPath assets/wasm/bjt-core.wasm -ExportNames npn_solve,npn_array_count,npn_diagnostic_count -UseLibm",
     "storybook": "storybook dev -p 6006",

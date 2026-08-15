@@ -4,6 +4,7 @@ import {
   createScientificPlotlyConfig,
   createScientificPlotlyLayout,
   prepareScientificPlotlyToolbar,
+  ScientificPlotFrame,
   useScientificPlotTheme,
 } from "@jorpago2/scientific-ui";
 import type { NumericArray } from "../types";
@@ -26,6 +27,8 @@ export function Heatmap({ values, nx = 0, ny = 0, lengthUm = 1, heightUm = 1, la
   const plotRef = useRef<HTMLDivElement>(null);
   const plotlyRef = useRef<PlotlyModule | null>(null);
   const [plotly, setPlotly] = useState<PlotlyModule | null>(null);
+  const [plotError, setPlotError] = useState<string | null>(null);
+  const [retryToken, setRetryToken] = useState(0);
   const carbonPlotTheme = useScientificPlotTheme();
   const plotTheme = useMemo(() => ({
     panel: carbonPlotTheme.background,
@@ -71,16 +74,19 @@ export function Heatmap({ values, nx = 0, ny = 0, lengthUm = 1, heightUm = 1, la
 
   useEffect(() => {
     let cancelled = false;
+    setPlotError(null);
     void import("plotly.js-cartesian-dist-min").then((module) => {
       if (cancelled) return;
       plotlyRef.current = module.default;
       setPlotly(module.default);
+    }).catch((error: unknown) => {
+      if (!cancelled) setPlotError(error instanceof Error ? error.message : "Plotly could not be loaded.");
     });
     return () => {
       cancelled = true;
       if (plotlyRef.current && plotRef.current) plotlyRef.current.purge(plotRef.current);
     };
-  }, []);
+  }, [retryToken]);
 
   useEffect(() => {
     const element = plotRef.current;
@@ -101,8 +107,18 @@ export function Heatmap({ values, nx = 0, ny = 0, lengthUm = 1, heightUm = 1, la
       theme: carbonPlotTheme,
       overrides: layout as Record<string, unknown>,
     }) as Partial<Layout>;
-    void plotly.react(element, data, normalizedLayout, config).then(prepareScientificPlotlyToolbar);
+    void plotly.react(element, data, normalizedLayout, config).then((plot) => {
+      setPlotError(null);
+      prepareScientificPlotlyToolbar(plot);
+    }).catch((error: unknown) => setPlotError(error instanceof Error ? error.message : "The field map could not be rendered."));
   }, [carbonPlotTheme, data, plotTheme, plotly]);
 
-  return <div ref={plotRef} className="heatmap-plot scientific-plot-surface" role="img" aria-label={label} />;
+  return <ScientificPlotFrame
+    className="heatmap-frame"
+    title={label}
+    status={plotError ? <span role="alert">Plot unavailable: {plotError}</span> : undefined}
+    actions={plotError ? <button type="button" onClick={() => setRetryToken((current) => current + 1)}>Retry plot</button> : undefined}
+  >
+    <div ref={plotRef} className="heatmap-plot scientific-plot-surface" role="img" aria-label={label} />
+  </ScientificPlotFrame>;
 }

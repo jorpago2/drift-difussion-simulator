@@ -5,6 +5,7 @@ import {
   createScientificPlotlyConfig,
   createScientificPlotlyLayout,
   prepareScientificPlotlyToolbar,
+  ScientificPlotFrame,
   useScientificPlotTheme,
 } from "@jorpago2/scientific-ui";
 import type { NumericArray } from "../types";
@@ -66,6 +67,8 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
   const plotRef = useRef<HTMLDivElement>(null);
   const plotlyRef = useRef<PlotlyModule | null>(null);
   const [plotly, setPlotly] = useState<PlotlyModule | null>(null);
+  const [plotError, setPlotError] = useState<string | null>(null);
+  const [retryToken, setRetryToken] = useState(0);
   const [manualDomain, setManualDomain] = useState<ChartDomain | null>(null);
   const carbonPlotTheme = useScientificPlotTheme();
   const plotTheme = useMemo(() => ({
@@ -99,16 +102,19 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
 
   useEffect(() => {
     let cancelled = false;
+    setPlotError(null);
     void import("plotly.js-cartesian-dist-min").then((module) => {
       if (cancelled) return;
       plotlyRef.current = module.default;
       setPlotly(module.default);
+    }).catch((error: unknown) => {
+      if (!cancelled) setPlotError(error instanceof Error ? error.message : "Plotly could not be loaded.");
     });
     return () => {
       cancelled = true;
       if (plotlyRef.current && plotRef.current) plotlyRef.current.purge(plotRef.current);
     };
-  }, []);
+  }, [retryToken]);
 
   useEffect(() => setManualDomain(null), [scale, x]);
 
@@ -196,6 +202,7 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
       overrides: layout as Record<string, unknown>,
     }) as Partial<Layout>;
     void plotly.react(element, state === "ready" ? data : [], normalizedLayout, config).then((plot) => {
+      setPlotError(null);
       prepareScientificPlotlyToolbar(plot);
       const interactivePlot = plot as PlotlyHTMLElement;
       interactivePlot.removeAllListeners("plotly_click");
@@ -203,21 +210,26 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
         const selectedX = Number(event.points[0]?.x);
         if (Number.isFinite(selectedX)) onSelectX(selectedX);
       });
-    });
+    }).catch((error: unknown) => setPlotError(error instanceof Error ? error.message : "The plot could not be rendered."));
   }, [carbonPlotTheme, data, interactive, layout, onSelectX, plotly, state]);
 
+  const accessibleTitle = `${plainPlotText(yLabel)} versus ${plainPlotText(xLabel)}`;
   return (
-    <div
-      className={`chart-frame chart-${state}`}
-      data-message={message}
-      style={{ "--chart-height": `${height}px` } as React.CSSProperties}
-      role="group"
-      aria-label="Interactive scientific plot"
-      tabIndex={0}
-      onPointerDown={(event) => event.currentTarget.focus({ preventScroll: true })}
+    <ScientificPlotFrame
+      className={`chart-frame chart-${plotError ? "error" : state}`}
+      title={accessibleTitle}
+      status={plotError ? <span role="alert">Plot unavailable: {plotError}</span> : state !== "ready" ? message : undefined}
+      actions={plotError ? <button type="button" onClick={() => setRetryToken((current) => current + 1)}>Retry plot</button> : undefined}
+      instructions={interactive ? "Use the external plot controls to pan, zoom and export." : undefined}
     >
-      <div ref={plotRef} className="plotly-chart scientific-plot-surface" role="img" aria-label={`${plainPlotText(yLabel)} versus ${plainPlotText(xLabel)}`} />
-    </div>
+      <div className="chart-body" data-message={plotError ?? message} style={{ "--chart-height": `${height}px` } as React.CSSProperties}>
+        <div ref={plotRef} className="plotly-chart scientific-plot-surface" role="img" aria-label={accessibleTitle} />
+      </div>
+      <details className="chart-data-table">
+        <summary>Data table</summary>
+        <div className="table-scroll"><table><thead><tr><th scope="col">{plainPlotText(xLabel)}</th>{series.map((line) => <th scope="col" key={line.label}>{plainPlotText(line.label)}</th>)}</tr></thead><tbody>{Array.from(x, (xValue, index) => <tr key={index}><td>{Number(xValue).toPrecision(6)}</td>{series.map((line) => <td key={line.label}>{Number(line.values[index]).toPrecision(6)}</td>)}</tr>)}</tbody></table></div>
+      </details>
+    </ScientificPlotFrame>
   );
 });
 

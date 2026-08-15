@@ -12,6 +12,7 @@ import { SCIENTIFIC_PLOT_LINE_WIDTHS, ScientificAutosaveStatus, ScientificModelS
 import { downloadText } from "../lib/download";
 import { fixed, nearestIndex, percent, scientific } from "../lib/format";
 import { cssToken } from "../lib/theme";
+import { actionableWarnings, meshWarnings } from "../lib/diagnostics";
 import type { PnConfig, PnDerived, PnResult, PnSweep, SolverState, Validation } from "../types";
 
 interface Inputs extends PnConfig {
@@ -183,7 +184,7 @@ export function PnLab() {
   const depletionPercent = Math.min(62, Math.max(5, 100 * (result?.derived.depletionWidthM ?? validation.derived?.depletionWidthM ?? 0) / config.lengthUm / 1e-6));
 
   useScientificResultTransition({
-    state: solverState === "solving" ? "running" : solverState === "failed" ? "failed" : result?.warnings.length ? "warning" : result ? "up-to-date" : "ready",
+    state: solverState === "solving" ? "running" : solverState === "failed" ? "failed" : result && actionableWarnings(result.warnings).length ? "warning" : result ? "up-to-date" : "ready",
     resultRef: outcomeHeading,
     completionKey: result ? message : null,
   });
@@ -254,14 +255,14 @@ export function PnLab() {
             ? { state: "running", label: "Calculating I–V sweep", detail: message }
             : solverState === "failed"
               ? { state: "failed", label: "Sweep failed", detail: message }
-              : result?.warnings.length
+              : result && actionableWarnings(result.warnings).length
                 ? { state: "warning", label: "Converged with warnings" }
                 : result
                   ? { state: "up-to-date", label: "Result current" }
                   : { state: "needs-input", label: "Not solved" }}
           summary={result
-            ? result.warnings.length
-              ? `The selected bias point converged with ${result.warnings.length} warning${result.warnings.length === 1 ? "" : "s"}. Review numerical confidence before interpretation.`
+            ? actionableWarnings(result.warnings).length
+              ? `The selected bias point converged with ${actionableWarnings(result.warnings).length} numerical or regime warning${actionableWarnings(result.warnings).length === 1 ? "" : "s"}. Review numerical confidence before interpretation.`
               : "The sweep and selected device profile are current. Review numerical confidence before exporting or comparing with the analytical reference."
             : solverState === "failed" ? message : "Calculate the voltage sweep to obtain the terminal characteristic and spatial device profiles."}
           metrics={result ? [
@@ -332,12 +333,12 @@ export function PnLab() {
         <Disclosure title="Numerical confidence" summary="Residuals, conservation, mesh, and model limits">
           {result ? <>
             <ScientificValidationSummary
-              status={{ state: result.warnings.length ? "warning" : "validated", label: result.warnings.length ? "Converged with warnings" : "Numerically validated" }}
+              status={{ state: actionableWarnings(result.warnings).length ? "warning" : "validated", label: actionableWarnings(result.warnings).length ? "Converged with numerical or regime warnings" : "Numerical checks passed · model limits listed separately" }}
               checks={[
                 { id: "residuals", label: "Coupled residuals", state: "passed", value: `${scientific(result.diagnostics.poissonResidual)} / ${scientific(result.diagnostics.electronResidual)} / ${scientific(result.diagnostics.holeResidual)}`, detail: "Poisson / electron / hole" },
                 { id: "current", label: "Current conservation", state: "passed", value: percent(result.diagnostics.currentContinuityError) },
                 { id: "carriers", label: "Carrier balance", state: "passed", value: `${percent(result.diagnostics.electronBalanceError)} / ${percent(result.diagnostics.holeBalanceError)}`, detail: "Electron / hole" },
-                { id: "mesh", label: "Mesh", state: "passed", value: `${result.config.cells} nodes`, detail: `Δx ${scientific(result.derived.dxM * 1e9)} nm` },
+                { id: "mesh", label: "Mesh", state: meshWarnings(result.warnings).length ? "warning" : "passed", value: `${result.config.cells} nodes`, detail: meshWarnings(result.warnings)[0] ?? `Δx ${scientific(result.derived.dxM * 1e9)} nm` },
               ]}
             />
             <WarningList warnings={result.warnings} />

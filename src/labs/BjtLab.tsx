@@ -14,6 +14,7 @@ import { SCIENTIFIC_PLOT_LINE_WIDTHS, ScientificAutosaveStatus, ScientificModelS
 import { downloadText } from "../lib/download";
 import { fixed, linearGrid, nearestIndex, percent, scientific } from "../lib/format";
 import { cssToken } from "../lib/theme";
+import { actionableWarnings, meshWarnings } from "../lib/diagnostics";
 import type { NpnConfig, NpnDerived, NpnFamily, NpnResult, SolverState, Validation } from "../types";
 
 interface Inputs extends NpnConfig {
@@ -56,7 +57,7 @@ export function BjtLab() {
   const [pointIndex, setPointIndex] = useState(-1);
   const [showReference, setShowReference] = useState(true);
   const [progress, setProgress] = useState({ completed: 0, total: initialInputs.basePointCount * initialInputs.collectorPointCount });
-  const [cancelPending, setCancelPending] = useState(false);
+  const [workerGeneration, setWorkerGeneration] = useState(0);
   const curveColors = useMemo(() => [
     cssToken("--color-plot-violet"),
     cssToken("--color-plot-blue"),
@@ -106,7 +107,6 @@ export function BjtLab() {
     worker.onmessage = ({ data }) => {
       if (data.action === "failed") {
         setSolverState("failed");
-        setCancelPending(false);
         setMessage(data.message);
         setFamily(null);
         setResult(null);
@@ -120,13 +120,11 @@ export function BjtLab() {
       }
       if (data.action === "cancelled") {
         setSolverState("idle");
-        setCancelPending(false);
         setProgress({ completed: data.completed, total: data.total });
         setMessage(`Calculation cancelled after ${data.completed} of ${data.total} bias points. Partial data were not presented as a valid family.`);
       }
       if (data.action === "swept") {
         const nextFamily = data.result as NpnFamily;
-        setCancelPending(false);
         if (!nextFamily.converged) {
           setSolverState("failed");
           setMessage("The characteristic grid contains an unconverged point.");
@@ -153,7 +151,7 @@ export function BjtLab() {
       worker.terminate();
       workerRef.current = null;
     };
-  }, []);
+  }, [workerGeneration]);
 
   function update<K extends keyof Inputs>(key: K, value: Inputs[K]) {
     if (solverState === "solving") return;
@@ -172,7 +170,6 @@ export function BjtLab() {
   function solve() {
     if (errors.length || solverState === "solving") return;
     setSolverState("solving");
-    setCancelPending(false);
     setProgress({ completed: 0, total: inputs.basePointCount * inputs.collectorPointCount });
     setMessage(`Solving ${inputs.basePointCount} × ${inputs.collectorPointCount} coupled bias points…`);
     setFamily(null);
@@ -186,10 +183,14 @@ export function BjtLab() {
   }
 
   function cancel() {
-    if (solverState !== "solving" || cancelPending) return;
-    setCancelPending(true);
-    setMessage("Cancellation requested. The current nonlinear bias point will finish before the sweep stops.");
-    workerRef.current?.postMessage({ action: "cancel" });
+    if (solverState !== "solving") return;
+    workerRef.current?.terminate();
+    workerRef.current = null;
+    setWorkerGeneration((current) => current + 1);
+    setSolverState("idle");
+    setFamily(null);
+    setResult(null);
+    setMessage("Calculation cancelled. No partial characteristic grid was kept.");
   }
 
   function requestPoint(nextCurve: number, nextPoint: number, worker = workerRef.current) {
@@ -249,7 +250,7 @@ export function BjtLab() {
   const plotState = solverState === "failed" ? "error" : solverState === "solving" ? "loading" : family ? "ready" : "empty";
 
   useScientificResultTransition({
-    state: solverState === "solving" ? "running" : solverState === "failed" ? "failed" : result?.warnings.length ? "warning" : result ? "up-to-date" : "ready",
+    state: solverState === "solving" ? "running" : solverState === "failed" ? "failed" : result && actionableWarnings(result.warnings).length ? "warning" : result ? "up-to-date" : "ready",
     resultRef: outcomeHeading,
     completionKey: result ? message : null,
   });
@@ -322,14 +323,14 @@ export function BjtLab() {
             ? { state: "running", label: "Calculating bias grid", detail: `${progress.completed} of ${progress.total} bias points` }
             : solverState === "failed"
               ? { state: "failed", label: "Characteristic grid failed", detail: message }
-              : result?.warnings.length
+              : result && actionableWarnings(result.warnings).length
                 ? { state: "warning", label: "Converged with warnings" }
                 : result
                   ? { state: "up-to-date", label: "Result current" }
                   : { state: "needs-input", label: "Not solved" }}
           summary={result
-            ? result.warnings.length
-              ? `The selected operating point converged with ${result.warnings.length} warning${result.warnings.length === 1 ? "" : "s"}. Review terminal balance and residuals before interpretation.`
+            ? actionableWarnings(result.warnings).length
+              ? `The selected operating point converged with ${actionableWarnings(result.warnings).length} numerical or regime warning${actionableWarnings(result.warnings).length === 1 ? "" : "s"}. Review terminal balance and residuals before interpretation.`
               : "The characteristic family and selected 2D operating point are current. Review numerical confidence before export."
             : solverState === "failed" ? message : "Calculate the VBE × VCE grid to reveal the output family, transfer curve and internal 2D fields."}
           metrics={result ? [
@@ -405,13 +406,13 @@ export function BjtLab() {
         <Disclosure title="Numerical confidence" summary="Residuals, terminal balance, mesh, and model limits">
           {result ? <>
             <ScientificValidationSummary
-              status={{ state: result.warnings.length ? "warning" : "validated", label: result.warnings.length ? "Converged with warnings" : "Numerically validated" }}
+              status={{ state: actionableWarnings(result.warnings).length ? "warning" : "validated", label: actionableWarnings(result.warnings).length ? "Converged with numerical or regime warnings" : "Numerical checks passed · model limits listed separately" }}
               checks={[
                 { id: "solver", label: "Nonlinear solve", state: "passed", value: `${result.diagnostics.totalIterations} iterations`, detail: result.diagnostics.backend },
                 { id: "residuals", label: "Coupled residuals", state: "passed", value: `${scientific(result.diagnostics.poissonResidual)} / ${scientific(result.diagnostics.electronResidual)} / ${scientific(result.diagnostics.holeResidual)}`, detail: "Poisson / electron / hole" },
                 { id: "kcl", label: "Terminal KCL", state: "passed", value: percent(result.diagnostics.terminalKclError) },
                 { id: "carriers", label: "Carrier balance", state: "passed", value: `${percent(result.diagnostics.electronBalanceError)} / ${percent(result.diagnostics.holeBalanceError)}`, detail: "Electron / hole" },
-                { id: "mesh", label: "Mesh", state: "passed", value: `${result.nx} × ${result.ny} nodes` },
+                { id: "mesh", label: "Mesh", state: meshWarnings(result.warnings).length ? "warning" : "passed", value: `${result.nx} × ${result.ny} nodes`, detail: meshWarnings(result.warnings)[0] },
               ]}
             />
             <WarningList warnings={result.warnings} />

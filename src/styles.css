@@ -617,7 +617,9 @@ input[type='range'] {
   background-size: 20% 100%, 100% 25%;
 }
 
-.chart-frame:not(.chart-ready)::after {
+.chart-body { position: relative; }
+
+.chart-frame:not(.chart-ready) .chart-body::after {
   content: attr(data-message);
   position: absolute;
   inset-block-start: 48%;
@@ -754,6 +756,22 @@ input[type='range'] {
   }
 
 }
+
+.chart-frame .scientific-plot-frame__header,
+.heatmap-frame .scientific-plot-frame__header {
+  min-block-size: 0;
+}
+
+.chart-data-table {
+  border-block-start: var(--rule-hair) solid var(--color-rule);
+  font-size: var(--text-xs);
+}
+
+.chart-data-table summary { padding: var(--space-xs); cursor: pointer; }
+.chart-data-table .table-scroll { max-block-size: 18rem; overflow: auto; }
+.chart-data-table table { inline-size: 100%; border-collapse: collapse; }
+.chart-data-table th,
+.chart-data-table td { padding: var(--space-2xs) var(--space-xs); text-align: end; font-variant-numeric: tabular-nums; }
 
 @media (min-width: 40rem) {
   .workspace { padding: var(--space-md); }
