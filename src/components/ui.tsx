@@ -29,6 +29,7 @@ export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "
     <ScientificHeader
       aria-label="Semiconductor Devices Lab"
       product="Device Lab"
+      compactProduct="Device Lab"
       productIcon="semiconductor-device"
       descriptor="Drift–diffusion"
       href={device === "pn" ? "./index.html" : "./bjt.html"}
@@ -99,6 +100,7 @@ export function LabLayout({ header, controls, children, state, statusMessage, re
   return (
     <ScientificAppShell
       className="device-lab-shell"
+      previewStageWhenPanelOpen
       header={header}
       recovery={recovery}
       panelOpen={controlsOpen}
