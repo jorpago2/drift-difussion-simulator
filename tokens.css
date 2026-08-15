@@ -19,8 +19,10 @@
   --color-danger-soft: color-mix(in srgb, var(--cds-support-error) 10%, var(--cds-layer));
   --color-warning: var(--cds-support-warning);
   --color-warning-strong: var(--cds-support-warning);
+  --color-warning-text: #684e00;
   --color-warning-soft: color-mix(in srgb, var(--cds-support-warning) 12%, var(--cds-layer));
   --color-success: var(--cds-support-success);
+  --color-success-text: #0e6027;
   --color-success-soft: color-mix(in srgb, var(--cds-support-success) 10%, var(--cds-layer));
 
   /* Device and plot encodings are scientific exceptions, never UI accents. */
@@ -84,4 +86,13 @@
   --z-raised: 10;
   --z-dropdown: 100;
   --z-sticky: 200;
+}
+
+.cds--g100 {
+  --color-p: oklch(78% 0.1 15);
+  --color-p-soft: oklch(27% 0.04 15);
+  --color-n: oklch(78% 0.09 250);
+  --color-n-soft: oklch(27% 0.035 250);
+  --color-warning-text: #f1c21b;
+  --color-success-text: #6fdc8c;
 }

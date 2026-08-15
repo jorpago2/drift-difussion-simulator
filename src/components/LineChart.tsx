@@ -227,7 +227,7 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
       </div>
       <details className="chart-data-table">
         <summary>Data table</summary>
-        <div className="table-scroll"><table><thead><tr><th scope="col">{plainPlotText(xLabel)}</th>{series.map((line) => <th scope="col" key={line.label}>{plainPlotText(line.label)}</th>)}</tr></thead><tbody>{Array.from(x, (xValue, index) => <tr key={index}><td>{Number(xValue).toPrecision(6)}</td>{series.map((line) => <td key={line.label}>{Number(line.values[index]).toPrecision(6)}</td>)}</tr>)}</tbody></table></div>
+        <div className="table-scroll" tabIndex={0} aria-label={`${accessibleTitle} data`}><table><thead><tr><th scope="col">{plainPlotText(xLabel)}</th>{series.map((line) => <th scope="col" key={line.label}>{plainPlotText(line.label)}</th>)}</tr></thead><tbody>{Array.from(x, (xValue, index) => <tr key={index}><td>{Number(xValue).toPrecision(6)}</td>{series.map((line) => <td key={line.label}>{Number(line.values[index]).toPrecision(6)}</td>)}</tr>)}</tbody></table></div>
       </details>
     </ScientificPlotFrame>
   );
