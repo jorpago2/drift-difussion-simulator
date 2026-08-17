@@ -86,19 +86,6 @@ sub {
   vertical-align: baseline;
 }
 
-.skip-link {
-  position: fixed;
-  z-index: var(--z-dropdown);
-  inset-block-start: var(--space-xs);
-  inset-inline-start: var(--space-xs);
-  padding: var(--space-xs) var(--space-sm);
-  color: var(--color-accent-ink);
-  background: var(--color-ink);
-  transform: translateY(-160%);
-}
-
-.skip-link:focus { transform: translateY(0); }
-
 .device-switcher { min-width: 0; }
 
 .device-switcher {

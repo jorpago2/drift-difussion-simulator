@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { SkipToContent } from "@carbon/react";
 import { ChartLine, SettingsAdjust } from "@carbon/react/icons";
 import {
   ScientificAppShell,
@@ -24,9 +25,8 @@ export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "
   }), [onCancel, state]);
   useScientificShortcut(cancelShortcut);
   return (
-    <>
-    <a className="skip-link" href="#device-workspace">Skip to device workspace</a>
     <ScientificHeader
+      skipLink={<SkipToContent href="#device-workspace">Skip to device workspace</SkipToContent>}
       aria-label="Semiconductor Devices Lab"
       product="Device Lab"
       compactProduct="Device Lab"
@@ -55,7 +55,6 @@ export function AppHeader({ device, state, onRun, onCancel }: { device: "pn" | "
         }}
       />}
     />
-    </>
   );
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { Config, Data, Layout } from "plotly.js";
 import {
   createScientificPlotlyConfig,
@@ -25,6 +25,7 @@ type PlotlyModule = typeof import("plotly.js-cartesian-dist-min").default;
 
 export function Heatmap({ values, nx = 0, ny = 0, lengthUm = 1, heightUm = 1, label, diverging = false, transform }: Props) {
   const plotRef = useRef<HTMLDivElement>(null);
+  const summaryId = `heatmap-summary-${useId().replace(/:/g, "")}`;
   const plotlyRef = useRef<PlotlyModule | null>(null);
   const [plotly, setPlotly] = useState<PlotlyModule | null>(null);
   const [plotError, setPlotError] = useState<string | null>(null);
@@ -46,17 +47,22 @@ export function Heatmap({ values, nx = 0, ny = 0, lengthUm = 1, heightUm = 1, la
     ],
   }), [carbonPlotTheme]);
 
-  const data = useMemo<Data[]>(() => {
-    if (!values || !nx || !ny || values.length !== nx * ny) return [];
+  const { data, summary } = useMemo(() => {
+    if (!values || !nx || !ny || values.length !== nx * ny) {
+      return { data: [] as Data[], summary: `${label}: no finite grid data is available.` };
+    }
     const plotted = Array.from(values, (value, index) => transform ? transform(Number(value), index) : Number(value));
-    let minimum = Math.min(...plotted.filter(Number.isFinite));
-    let maximum = Math.max(...plotted.filter(Number.isFinite));
+    const finite = plotted.filter(Number.isFinite);
+    const observedMinimum = finite.length ? finite.reduce((current, value) => Math.min(current, value), Number.POSITIVE_INFINITY) : 0;
+    const observedMaximum = finite.length ? finite.reduce((current, value) => Math.max(current, value), Number.NEGATIVE_INFINITY) : 1;
+    let minimum = observedMinimum;
+    let maximum = observedMaximum;
     if (diverging) {
       const extent = Math.max(Math.abs(minimum), Math.abs(maximum), Number.MIN_VALUE);
       minimum = -extent;
       maximum = extent;
     }
-    return [{
+    const data = [{
       type: "heatmap",
       x: Array.from({ length: nx }, (_, index) => nx > 1 ? index * lengthUm / (nx - 1) : 0),
       y: Array.from({ length: ny }, (_, index) => ny > 1 ? index * heightUm / (ny - 1) : 0),
@@ -69,7 +75,11 @@ export function Heatmap({ values, nx = 0, ny = 0, lengthUm = 1, heightUm = 1, la
         : "Cividis",
       colorbar: { title: { text: label }, thickness: 12 },
       hovertemplate: `x: %{x:.4g} µm<br>y: %{y:.4g} µm<br>${label}: %{z:.4g}<extra></extra>`,
-    }];
+    } as Data];
+    const summary = finite.length
+      ? `${label}: ${nx} × ${ny} cell grid spanning x 0–${formatPlotNumber(lengthUm)} µm and y 0–${formatPlotNumber(heightUm)} µm; ${finite.length} finite values ranging from ${formatPlotNumber(observedMinimum)} to ${formatPlotNumber(observedMaximum)}.`
+      : `${label}: ${nx} × ${ny} cell grid; no finite values are available.`;
+    return { data, summary };
   }, [diverging, heightUm, label, lengthUm, nx, ny, plotTheme, transform, values]);
 
   useEffect(() => {
@@ -119,6 +129,11 @@ export function Heatmap({ values, nx = 0, ny = 0, lengthUm = 1, heightUm = 1, la
     status={plotError ? <span role="alert">Plot unavailable: {plotError}</span> : undefined}
     actions={plotError ? <button type="button" onClick={() => setRetryToken((current) => current + 1)}>Retry plot</button> : undefined}
   >
-    <div ref={plotRef} className="heatmap-plot scientific-plot-surface" role="img" aria-label={label} />
+    <span id={summaryId} className="scientific-visually-hidden">{summary}</span>
+    <div ref={plotRef} className="heatmap-plot scientific-plot-surface" role="img" aria-label={label} aria-describedby={summaryId} />
   </ScientificPlotFrame>;
+}
+
+function formatPlotNumber(value: number): string {
+  return Number.isFinite(value) ? value.toPrecision(4) : "not finite";
 }

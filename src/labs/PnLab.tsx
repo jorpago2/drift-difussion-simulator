@@ -205,17 +205,17 @@ export function PnLab() {
             <ScientificNumberField id="donor-doping" labelText={<>N<sub>D</sub></>} unit="cm⁻³" value={inputs.donorCm3} min={1e14} max={1e18} onValueChange={(value) => { if (value !== null) update("donorCm3", value); }} />
           </div>
           <div className="field-grid three">
-            <Field label={<>V<sub>D,min</sub> (V)</>}><input type="number" value={inputs.minimumV} min="-1" max="0.8" step="0.025" onChange={(event) => update("minimumV", Number(event.target.value))} /></Field>
-            <Field label={<>V<sub>D,max</sub> (V)</>}><input type="number" value={inputs.maximumV} min="-1" max="0.8" step="0.025" onChange={(event) => update("maximumV", Number(event.target.value))} /></Field>
-            <Field label="Points"><input type="number" value={inputs.pointCount} min="17" max="201" step="1" onChange={(event) => update("pointCount", Number(event.target.value))} /></Field>
+            <ScientificNumberField id="minimum-voltage" labelText={<>V<sub>D,min</sub></>} unit="V" value={inputs.minimumV} min={-1} max={0.8} onValueChange={(value) => { if (value !== null) update("minimumV", value); }} />
+            <ScientificNumberField id="maximum-voltage" labelText={<>V<sub>D,max</sub></>} unit="V" value={inputs.maximumV} min={-1} max={0.8} onValueChange={(value) => { if (value !== null) update("maximumV", value); }} />
+            <ScientificNumberField id="voltage-points" labelText="Points" value={inputs.pointCount} min={17} max={201} onValueChange={(value) => { if (value !== null) update("pointCount", value); }} />
           </div>
           <p className="field-note">V<sub>D</sub> = V<sub>A</sub> − V<sub>C</sub>. Internal continuation steps remain ≤25 mV.</p>
           <details className="advanced-panel">
             <summary>Area, mesh, and lifetimes</summary>
             <div className="field-grid two">
-              <Field label="Area (µm²)"><input type="number" value={inputs.deviceAreaUm2} min="1" max="1e8" step="any" onChange={(event) => update("deviceAreaUm2", Number(event.target.value))} /></Field>
-              <Field label="Length (µm)"><input type="number" value={inputs.lengthUm} min="1" max="20" step="0.1" onChange={(event) => update("lengthUm", Number(event.target.value))} /></Field>
-              <Field label="Mesh nodes"><input type="number" value={inputs.cells} min="101" max="2001" step="2" onChange={(event) => update("cells", Number(event.target.value))} /></Field>
+              <ScientificNumberField id="device-area" labelText="Area" unit="µm²" value={inputs.deviceAreaUm2} min={1} max={1e8} onValueChange={(value) => { if (value !== null) update("deviceAreaUm2", value); }} />
+              <ScientificNumberField id="device-length" labelText="Length" unit="µm" value={inputs.lengthUm} min={1} max={20} onValueChange={(value) => { if (value !== null) update("lengthUm", value); }} />
+              <ScientificNumberField id="mesh-nodes" labelText="Mesh nodes" value={inputs.cells} min={101} max={2001} onValueChange={(value) => { if (value !== null) update("cells", value); }} />
               <ScientificNumberField id="electron-lifetime" labelText={<>τ<sub>n</sub></>} unit="s" value={inputs.electronLifetimeS} min={1e-12} max={1e-3} onValueChange={(value) => { if (value !== null) update("electronLifetimeS", value); }} />
               <ScientificNumberField id="hole-lifetime" labelText={<>τ<sub>p</sub></>} unit="s" value={inputs.holeLifetimeS} min={1e-12} max={1e-3} onValueChange={(value) => { if (value !== null) update("holeLifetimeS", value); }} />
             </div>

@@ -270,13 +270,13 @@ export function BjtLab() {
           <div className="panel-heading"><h2>Lateral NPN</h2><p>Sweep output and transfer characteristics on one reusable bias grid.</p></div>
           <fieldset className="configuration-fields" disabled={solverState === "solving"}>
           <div className="field-grid two">
-            <Field label={<>V<sub>BE,min</sub> (V)</>}><input type="number" value={inputs.minimumVbeV} min="-0.2" max="0.75" step="0.01" onChange={(event) => update("minimumVbeV", Number(event.target.value))} /></Field>
-            <Field label={<>V<sub>BE,max</sub> (V)</>}><input type="number" value={inputs.maximumVbeV} min="-0.2" max="0.75" step="0.01" onChange={(event) => update("maximumVbeV", Number(event.target.value))} /></Field>
+            <ScientificNumberField id="minimum-vbe" labelText={<>V<sub>BE,min</sub></>} unit="V" value={inputs.minimumVbeV} min={-0.2} max={0.75} onValueChange={(value) => { if (value !== null) update("minimumVbeV", value); }} />
+            <ScientificNumberField id="maximum-vbe" labelText={<>V<sub>BE,max</sub></>} unit="V" value={inputs.maximumVbeV} min={-0.2} max={0.75} onValueChange={(value) => { if (value !== null) update("maximumVbeV", value); }} />
           </div>
           <div className="field-grid three">
-            <Field label={<>V<sub>BE</sub> curves</>}><input type="number" value={inputs.basePointCount} min="3" max="9" step="1" onChange={(event) => update("basePointCount", Number(event.target.value))} /></Field>
-            <Field label={<>V<sub>CE,max</sub> (V)</>}><input type="number" value={inputs.maximumVceV} min="0.1" max="5" step="0.05" onChange={(event) => update("maximumVceV", Number(event.target.value))} /></Field>
-            <Field label={<>V<sub>CE</sub> points</>}><input type="number" value={inputs.collectorPointCount} min="5" max="21" step="1" onChange={(event) => update("collectorPointCount", Number(event.target.value))} /></Field>
+            <ScientificNumberField id="vbe-curves" labelText={<>V<sub>BE</sub> curves</>} value={inputs.basePointCount} min={3} max={9} onValueChange={(value) => { if (value !== null) update("basePointCount", value); }} />
+            <ScientificNumberField id="maximum-vce" labelText={<>V<sub>CE,max</sub></>} unit="V" value={inputs.maximumVceV} min={0.1} max={5} onValueChange={(value) => { if (value !== null) update("maximumVceV", value); }} />
+            <ScientificNumberField id="vce-points" labelText={<>V<sub>CE</sub> points</>} value={inputs.collectorPointCount} min={5} max={21} onValueChange={(value) => { if (value !== null) update("collectorPointCount", value); }} />
           </div>
           <p className="field-note">Each curve holds V<sub>BE</sub> constant. This is not a constant-I<sub>B</sub> family.</p>
           <details className="advanced-panel">
@@ -285,13 +285,13 @@ export function BjtLab() {
               <ScientificNumberField id="emitter-doping" labelText={<>Emitter N<sub>D</sub></>} unit="cm⁻³" value={inputs.emitterDopingCm3} min={1e14} max={5e17} onValueChange={(value) => { if (value !== null) update("emitterDopingCm3", value); }} />
               <ScientificNumberField id="base-doping" labelText={<>Base N<sub>A</sub></>} unit="cm⁻³" value={inputs.baseDopingCm3} min={1e14} max={5e17} onValueChange={(value) => { if (value !== null) update("baseDopingCm3", value); }} />
               <ScientificNumberField id="collector-doping" labelText={<>Collector N<sub>D</sub></>} unit="cm⁻³" value={inputs.collectorDopingCm3} min={1e14} max={5e17} onValueChange={(value) => { if (value !== null) update("collectorDopingCm3", value); }} />
-              <Field label="Length (µm)"><input type="number" value={inputs.lengthUm} min="1.5" max="10" step="0.1" onChange={(event) => update("lengthUm", Number(event.target.value))} /></Field>
-              <Field label="Height (µm)"><input type="number" value={inputs.heightUm} min="0.2" max="3" step="0.05" onChange={(event) => update("heightUm", Number(event.target.value))} /></Field>
-              <Field label="Device depth (µm)"><input type="number" value={inputs.deviceDepthUm} min="1" max="1e5" step="any" onChange={(event) => update("deviceDepthUm", Number(event.target.value))} /></Field>
-              <Field label="Emitter width (µm)"><input type="number" value={inputs.emitterWidthUm} min="0.2" max="4" step="0.05" onChange={(event) => update("emitterWidthUm", Number(event.target.value))} /></Field>
-              <Field label="Base width (µm)"><input type="number" value={inputs.baseWidthUm} min="0.1" max="2" step="0.05" onChange={(event) => update("baseWidthUm", Number(event.target.value))} /></Field>
-              <Field label="x nodes"><input type="number" value={inputs.nx} min="41" max="501" step="2" onChange={(event) => update("nx", Number(event.target.value))} /></Field>
-              <Field label="y nodes"><input type="number" value={inputs.ny} min="9" max="121" step="2" onChange={(event) => update("ny", Number(event.target.value))} /></Field>
+              <ScientificNumberField id="bjt-length" labelText="Length" unit="µm" value={inputs.lengthUm} min={1.5} max={10} onValueChange={(value) => { if (value !== null) update("lengthUm", value); }} />
+              <ScientificNumberField id="bjt-height" labelText="Height" unit="µm" value={inputs.heightUm} min={0.2} max={3} onValueChange={(value) => { if (value !== null) update("heightUm", value); }} />
+              <ScientificNumberField id="device-depth" labelText="Device depth" unit="µm" value={inputs.deviceDepthUm} min={1} max={1e5} onValueChange={(value) => { if (value !== null) update("deviceDepthUm", value); }} />
+              <ScientificNumberField id="emitter-width" labelText="Emitter width" unit="µm" value={inputs.emitterWidthUm} min={0.2} max={4} onValueChange={(value) => { if (value !== null) update("emitterWidthUm", value); }} />
+              <ScientificNumberField id="base-width" labelText="Base width" unit="µm" value={inputs.baseWidthUm} min={0.1} max={2} onValueChange={(value) => { if (value !== null) update("baseWidthUm", value); }} />
+              <ScientificNumberField id="bjt-x-nodes" labelText="x nodes" value={inputs.nx} min={41} max={501} onValueChange={(value) => { if (value !== null) update("nx", value); }} />
+              <ScientificNumberField id="bjt-y-nodes" labelText="y nodes" value={inputs.ny} min={9} max={121} onValueChange={(value) => { if (value !== null) update("ny", value); }} />
               <ScientificNumberField id="bjt-electron-lifetime" labelText={<>τ<sub>n</sub></>} unit="s" value={inputs.electronLifetimeS} min={1e-12} max={1e-3} onValueChange={(value) => { if (value !== null) update("electronLifetimeS", value); }} />
               <ScientificNumberField id="bjt-hole-lifetime" labelText={<>τ<sub>p</sub></>} unit="s" value={inputs.holeLifetimeS} min={1e-12} max={1e-3} onValueChange={(value) => { if (value !== null) update("holeLifetimeS", value); }} />
             </div>
