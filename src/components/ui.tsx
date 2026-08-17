@@ -99,7 +99,6 @@ export function LabLayout({ header, controls, children, state, statusMessage, re
   return (
     <ScientificAppShell
       className="device-lab-shell"
-      previewStageWhenPanelOpen
       header={header}
       recovery={recovery}
       panelOpen={controlsOpen}
