@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@carbon/react";
+import { Button, Checkbox, Select, SelectItem, Slider } from "@carbon/react";
 import {
   DEFAULT_NPN_CONFIG,
   idealNpnTransportCurrentA,
@@ -9,7 +9,7 @@ import {
 } from "../bjt-core.js";
 import { Heatmap } from "../components/Heatmap";
 import { LineChart, type ChartSeries, type LineChartHandle } from "../components/LineChart";
-import { AppHeader, Disclosure, Field, LabLayout, Message, MetricGrid } from "../components/ui";
+import { AppHeader, Disclosure, LabLayout, Message, MetricGrid } from "../components/ui";
 import { SCIENTIFIC_PLOT_LINE_WIDTHS, ScientificAutosaveStatus, ScientificModelScope, ScientificNumberField, ScientificOutcomeSummary, ScientificRecoveryNotice, ScientificValidationSummary, useScientificAutosave, useScientificResultTransition } from "@jorpago2/scientific-ui";
 import { downloadText } from "../lib/download";
 import { fixed, linearGrid, nearestIndex, percent, scientific } from "../lib/format";
@@ -398,10 +398,12 @@ export function BjtLab() {
               onSelectX={(value) => family && requestPoint(nearestIndex(family.curves, value, (curve) => curve.baseEmitterVoltageV), pointIndex)}
             />
             <div className="control-row">
-              <Field label={<>V<sub>BE</sub> curve</>}><select disabled={!family} value={Math.max(0, curveIndex)} onChange={(event) => requestPoint(Number(event.target.value), pointIndex)}>{family?.curves.map((curve, index) => <option key={curve.baseEmitterVoltageV} value={index}>{fixed(curve.baseEmitterVoltageV)} V</option>)}</select></Field>
-              <Field label={<>Inspect V<sub>CE</sub> = {selectedPoint ? fixed(selectedPoint.collectorEmitterVoltageV) : "—"} V</>}><input type="range" min="0" max={Math.max(0, (selectedCurve?.points.length ?? 1) - 1)} step="1" value={Math.max(0, pointIndex)} disabled={!family} onChange={(event) => requestPoint(curveIndex, Number(event.target.value))} /></Field>
+              <Select id="bjt-curve" labelText={<>V<sub>BE</sub> curve</>} size="sm" disabled={!family} value={String(Math.max(0, curveIndex))} onChange={(event) => requestPoint(Number(event.target.value), pointIndex)}>
+                {family?.curves.map((curve, index) => <SelectItem key={curve.baseEmitterVoltageV} value={String(index)} text={`${fixed(curve.baseEmitterVoltageV)} V`} />)}
+              </Select>
+              <Slider id="bjt-point-index" labelText={<>Inspect V<sub>CE</sub> = {selectedPoint ? fixed(selectedPoint.collectorEmitterVoltageV) : "—"} V</>} min={0} max={Math.max(0, (selectedCurve?.points.length ?? 1) - 1)} step={1} value={Math.max(0, pointIndex)} disabled={!family} onChange={({ value }) => requestPoint(curveIndex, Number(value))} />
             </div>
-            <label className="check"><input type="checkbox" checked={showReference} onChange={(event) => setShowReference(event.target.checked)} /> Low-injection analytical reference</label>
+            <Checkbox id="bjt-reference" labelText="Low-injection analytical reference" checked={showReference} onChange={(event) => setShowReference(event.target.checked)} />
             <MetricGrid compact entries={[
               ["Region", result ? classifyRegion(result.config.baseEmitterVoltageV, result.config.collectorEmitterVoltageV) : "—"],
               [<>V<sub>BE</sub> / V<sub>CE</sub></>, result ? `${fixed(result.config.baseEmitterVoltageV)} / ${fixed(result.config.collectorEmitterVoltageV)} V` : "—"],

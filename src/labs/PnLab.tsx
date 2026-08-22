@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@carbon/react";
+import { Button, Checkbox, Select, SelectItem, Slider, TextInput } from "@carbon/react";
 import {
   DEFAULT_PN_CONFIG,
   serializePnProfileCsv,
@@ -7,7 +7,7 @@ import {
   validatePnConfig,
 } from "../ddm-core.js";
 import { LineChart, type ChartSeries, type LineChartHandle } from "../components/LineChart";
-import { AppHeader, Disclosure, Field, LabLayout, Message, MetricGrid } from "../components/ui";
+import { AppHeader, Disclosure, LabLayout, Message, MetricGrid } from "../components/ui";
 import { SCIENTIFIC_PLOT_LINE_WIDTHS, ScientificAutosaveStatus, ScientificModelScope, ScientificNumberField, ScientificOutcomeSummary, ScientificRecoveryNotice, ScientificValidationSummary, useScientificAutosave, useScientificResultTransition } from "@jorpago2/scientific-ui";
 import { downloadText } from "../lib/download";
 import { fixed, nearestIndex, percent, scientific } from "../lib/format";
@@ -322,18 +322,24 @@ export function PnLab() {
               [<>r<sub>d</sub></>, Number.isFinite(dynamicResistance) ? `${scientific(dynamicResistance)} Ω` : "—"],
             ]} />
             <div className="control-row">
-              <Field label="Quantity"><select value={quantity} onChange={(event) => { setQuantity(event.target.value as typeof quantity); resetChartView(); }}><option value="current">Terminal current</option><option value="density">Current density</option></select></Field>
-              <Field label="Y scale"><select value={scale} onChange={(event) => { setScale(event.target.value as typeof scale); resetChartView(); }}><option value="linear">Linear</option><option value="log">Log magnitude</option></select></Field>
+              <Select id="pn-quantity" labelText="Quantity" size="sm" value={quantity} onChange={(event) => { setQuantity(event.target.value as typeof quantity); resetChartView(); }}>
+                <SelectItem value="current" text="Terminal current" />
+                <SelectItem value="density" text="Current density" />
+              </Select>
+              <Select id="pn-scale" labelText="Y scale" size="sm" value={scale} onChange={(event) => { setScale(event.target.value as typeof scale); resetChartView(); }}>
+                <SelectItem value="linear" text="Linear" />
+                <SelectItem value="log" text="Log magnitude" />
+              </Select>
             </div>
-            <label className="check"><input type="checkbox" checked={showReference} onChange={(event) => setShowReference(event.target.checked)} /> Analytical reference</label>
+            <Checkbox id="pn-reference" labelText="Analytical reference" checked={showReference} onChange={(event) => setShowReference(event.target.checked)} />
             <details className="axis-controls">
               <summary>Axis limits</summary>
               <div className="field-grid two">
-                {(["xMin", "xMax", "yMin", "yMax"] as const).map((key) => <Field key={key} label={key.replace("Min", " min").replace("Max", " max").toUpperCase()}><input type="number" step="any" placeholder="Auto" value={axis[key]} onChange={(event) => setAxis((current) => ({ ...current, [key]: event.target.value }))} /></Field>)}
+                {(["xMin", "xMax", "yMin", "yMax"] as const).map((key) => <TextInput key={key} id={`pn-axis-${key}`} size="sm" type="number" step="any" labelText={key.replace("Min", " min").replace("Max", " max").toUpperCase()} placeholder="Auto" value={axis[key]} onChange={(event) => setAxis((current) => ({ ...current, [key]: event.target.value }))} />)}
               </div>
               <div className="button-row"><Button type="button" kind="tertiary" size="sm" disabled={Object.values(axis).some((value) => value.trim() === "")} onClick={() => chartRef.current?.setDomain({ xMin: Number(axis.xMin), xMax: Number(axis.xMax), yMin: Number(axis.yMin), yMax: Number(axis.yMax) })}>Apply</Button><Button type="button" kind="ghost" size="sm" onClick={resetChartView}>Auto</Button></div>
             </details>
-            <Field label={<>Inspect profiles at V<sub>D</sub> = {selectedPoint ? fixed(selectedPoint.voltageV) : "—"} V</>}><input type="range" min="0" max={Math.max(0, (sweep?.points.length ?? 1) - 1)} step="1" value={Math.max(0, selectedIndex)} disabled={!sweep} onChange={(event) => selectPoint(Number(event.target.value))} /></Field>
+            <Slider id="pn-profile-index" labelText={<>Inspect profiles at V<sub>D</sub> = {selectedPoint ? fixed(selectedPoint.voltageV) : "—"} V</>} min={0} max={Math.max(0, (sweep?.points.length ?? 1) - 1)} step={1} value={Math.max(0, selectedIndex)} disabled={!sweep} onChange={({ value }) => selectPoint(Number(value))} />
             <p className="interaction-note">Wheel to zoom · drag to pan · double-click or Home to reset.</p>
           </aside>
         </section>

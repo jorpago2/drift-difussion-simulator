@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { SkipToContent } from "@carbon/react";
+import { ProgressIndicator, ProgressStep, SkipToContent } from "@carbon/react";
 import { ChartLine, SettingsAdjust } from "@carbon/react/icons";
 import {
   ScientificAppShell,
@@ -146,7 +146,17 @@ export function LabLayout({ header, controls, children, state, statusMessage, re
         metadata={autosaveStatus}
       />}
     >
-      <section id="device-workspace" className="workspace scientific-stage" tabIndex={-1}>{children}</section>
+      <section id="device-workspace" className="workspace scientific-stage" tabIndex={-1}>
+        <div className="workflow-progress" aria-label="Simulation workflow">
+          <ProgressIndicator currentIndex={state === "idle" ? 0 : state === "solving" || state === "failed" ? 1 : 3} spaceEqually>
+            <ProgressStep label="Configure" description="Set model and bias" />
+            <ProgressStep label="Execute" description="Solve the device" invalid={state === "failed"} />
+            <ProgressStep label="Results" description="Inspect curves and fields" />
+            <ProgressStep label="Validate" description="Review numerical confidence" />
+          </ProgressIndicator>
+        </div>
+        {children}
+      </section>
     </ScientificAppShell>
   );
 }
