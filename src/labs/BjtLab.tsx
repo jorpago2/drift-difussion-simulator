@@ -104,7 +104,23 @@ export function BjtLab() {
   useEffect(() => {
     const worker = new Worker(new URL("../workers/bjt.worker.ts", import.meta.url), { type: "module" });
     workerRef.current = worker;
+    let workerFailed = false;
+    const handleWorkerFailure = (reason: string) => {
+      if (workerFailed) return;
+      workerFailed = true;
+      worker.terminate();
+      if (workerRef.current === worker) workerRef.current = null;
+      setSolverState("failed");
+      setFamily(null);
+      setResult(null);
+      setCurveIndex(-1);
+      setPointIndex(-1);
+      selectionRef.current = { curve: -1, point: -1 };
+      setMessage(`The solver worker stopped unexpectedly${reason ? `: ${reason}` : "."} Inputs were preserved; try again.`);
+      setWorkerGeneration((current) => current + 1);
+    };
     worker.onmessage = ({ data }) => {
+      if (workerFailed) return;
       if (data.action === "failed") {
         setSolverState("failed");
         setMessage(data.message);
@@ -147,7 +163,10 @@ export function BjtLab() {
         setResult(data.result as NpnResult);
       }
     };
+    worker.onerror = (event) => handleWorkerFailure(event.message || "an unexpected worker error occurred");
+    worker.onmessageerror = () => handleWorkerFailure("the worker returned an unreadable message");
     return () => {
+      workerFailed = true;
       worker.terminate();
       workerRef.current = null;
     };
@@ -337,12 +356,12 @@ export function BjtLab() {
             { id: "region", label: "Operating region", value: classifyRegion(result.config.baseEmitterVoltageV, result.config.collectorEmitterVoltageV) },
             { id: "collector-current", label: "Collector current", value: collector * 1e3, unit: "mA", format: { significantDigits: 4 } },
             { id: "current-gain", label: "Current gain β", value: Number.isFinite(beta) ? beta : "—", format: { significantDigits: 4 } },
-            { id: "terminal-kcl", label: "Terminal KCL mismatch", value: percent(result.diagnostics.terminalKclError), status: result.warnings.length ? "warning" : "success" },
+            { id: "terminal-kcl", label: "Terminal KCL mismatch", value: percent(result.diagnostics.terminalKclError), status: actionableWarnings(result.warnings).length ? "warning" : "success" },
           ] : []}
           actions={[
             { id: "selected-2d-csv", label: "Export selected 2D CSV", emphasis: "primary", disabled: !result, disabledReason: "Calculate the characteristic grid before exporting.", onClick: () => { if (!result) return; downloadText(serializeNpnProfileCsv(result), "npn-selected-2d.csv"); setMessage("Selected profile exported as npn-selected-2d.csv."); } },
             { id: "curve-csv", label: "Export curve CSV", emphasis: "secondary", collapseAt: "sm", disabled: !selectedCurve || !family, onClick: () => { if (!selectedCurve || !family) return; downloadText(serializeNpnSweepCsv({ ...selectedCurve, config: { ...family.config, baseEmitterVoltageV: selectedCurve.baseEmitterVoltageV } }), "npn-output-curve.csv"); setMessage("Output curve exported as npn-output-curve.csv."); } },
-            { id: "plot-svg", label: "Export plot SVG", emphasis: "tertiary", overflowOnly: true, disabled: !family, onClick: () => { outputChartRef.current?.downloadSvg("npn-output-characteristics.svg"); setMessage("Plot exported as npn-output-characteristics.svg."); } },
+            { id: "plot-svg", label: "Export plot SVG", emphasis: "tertiary", overflowOnly: true, disabled: !family, onClick: async () => { const exported = await outputChartRef.current?.downloadSvg("npn-output-characteristics.svg"); setMessage(exported ? "Plot exported as npn-output-characteristics.svg." : "Plot export is not available yet; render the chart and try again."); } },
           ]}
         />
 

@@ -58,7 +58,7 @@ assert.match(uiComponents, /Calculate I–V sweep/);
 assert.match(uiComponents, /bodyClassName="control-panel-content"/);
 assert.doesNotMatch(pnStyles, /\.control-panel-content \{[^}]*overflow:/s);
 assert.doesNotMatch(pnStyles, /\.control-panel \{[^}]*overflow:/s);
-assert.match(pnStyles, /\.skip-link/);
+assert.match(uiComponents, /skipLink=\{<SkipToContent/);
 assert.match(pnStyles, /\.check input \{[^\n]*width: 20px;[^\n]*height: 20px/);
 assert.match(uiComponents, /id="device-workspace"/);
 assert.doesNotMatch(uiComponents, /href="https:\/\/jorpago2\.github\.io\/"/);

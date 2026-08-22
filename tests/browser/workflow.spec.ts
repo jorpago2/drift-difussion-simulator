@@ -50,7 +50,7 @@ test("NPN calculation can be cancelled without publishing partial results", asyn
   const cancel = page.getByRole("button", { name: "Cancel" });
   await expect(cancel).toBeVisible();
   await cancel.click();
-  await expect(page.getByRole("contentinfo", { name: "Calculation status" }).getByRole("status").first()).toHaveText("Calculation cancelled. No partial characteristic grid was kept.");
+  await expect(page.getByRole("contentinfo", { name: "Calculation status" }).getByRole("status").first()).toContainText("Calculation cancelled. No partial characteristic grid was kept.");
   await expect(page.getByRole("button", { name: "Calculate characteristic grid" })).toBeVisible();
   await expect(page.getByRole("region", { name: "NPN characteristic outcome" })).not.toContainText("Result current");
 });

@@ -30,7 +30,7 @@ export interface ChartDomain {
 export interface LineChartHandle {
   reset: () => void;
   setDomain: (domain: ChartDomain) => boolean;
-  downloadSvg: (filename: string) => void;
+  downloadSvg: (filename: string) => Promise<boolean>;
 }
 
 interface Props {
@@ -66,6 +66,7 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
 }, forwardedRef) {
   const plotRef = useRef<HTMLDivElement>(null);
   const plotlyRef = useRef<PlotlyModule | null>(null);
+  const plotReadyRef = useRef(false);
   const [plotly, setPlotly] = useState<PlotlyModule | null>(null);
   const [plotError, setPlotError] = useState<string | null>(null);
   const [retryToken, setRetryToken] = useState(0);
@@ -89,19 +90,25 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
       setManualDomain(domain);
       return true;
     },
-    downloadSvg(filename) {
-      if (!plotlyRef.current || !plotRef.current) return;
-      void plotlyRef.current.downloadImage(plotRef.current, {
-        format: "svg",
-        filename: filename.replace(/\.svg$/i, ""),
-        width: 1400,
-        height: 800,
-      });
+    async downloadSvg(filename) {
+      if (!plotlyRef.current || !plotRef.current || !plotReadyRef.current) return false;
+      try {
+        await plotlyRef.current.downloadImage(plotRef.current, {
+          format: "svg",
+          filename: filename.replace(/\.svg$/i, ""),
+          width: 1400,
+          height: 800,
+        });
+        return true;
+      } catch {
+        return false;
+      }
     },
   }), [scale]);
 
   useEffect(() => {
     let cancelled = false;
+    plotReadyRef.current = false;
     setPlotError(null);
     void import("plotly.js-cartesian-dist-min").then((module) => {
       if (cancelled) return;
@@ -191,6 +198,7 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
   useEffect(() => {
     const element = plotRef.current;
     if (!plotly || !element) return;
+    plotReadyRef.current = false;
     const config = createScientificPlotlyConfig({
       filename: "scientific-plot",
       scrollZoom: interactive,
@@ -202,6 +210,7 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
       overrides: layout as Record<string, unknown>,
     }) as Partial<Layout>;
     void plotly.react(element, state === "ready" ? data : [], normalizedLayout, config).then((plot) => {
+      plotReadyRef.current = true;
       setPlotError(null);
       prepareScientificPlotlyToolbar(plot);
       const interactivePlot = plot as PlotlyHTMLElement;
@@ -211,6 +220,9 @@ export const LineChart = forwardRef<LineChartHandle, Props>(function LineChart({
         if (Number.isFinite(selectedX)) onSelectX(selectedX);
       });
     }).catch((error: unknown) => setPlotError(error instanceof Error ? error.message : "The plot could not be rendered."));
+    return () => {
+      plotReadyRef.current = false;
+    };
   }, [carbonPlotTheme, data, interactive, layout, onSelectX, plotly, state]);
 
   const accessibleTitle = `${plainPlotText(yLabel)} versus ${plainPlotText(xLabel)}`;

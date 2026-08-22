@@ -80,7 +80,22 @@ export function PnLab() {
   useEffect(() => {
     const worker = new Worker(new URL("../workers/pn.worker.ts", import.meta.url), { type: "module" });
     workerRef.current = worker;
+    let workerFailed = false;
+    const handleWorkerFailure = (reason: string) => {
+      if (workerFailed) return;
+      workerFailed = true;
+      worker.terminate();
+      if (workerRef.current === worker) workerRef.current = null;
+      setSolverState("failed");
+      setSweep(null);
+      setResult(null);
+      setSelectedIndex(-1);
+      selectedIndexRef.current = -1;
+      setMessage(`The solver worker stopped unexpectedly${reason ? `: ${reason}` : "."} Inputs were preserved; try again.`);
+      setWorkerGeneration((current) => current + 1);
+    };
     worker.onmessage = ({ data }) => {
+      if (workerFailed) return;
       if (data.action === "failed") {
         setSolverState("failed");
         setMessage(data.message);
@@ -104,7 +119,10 @@ export function PnLab() {
       }
       if (data.action === "selected" && data.index === selectedIndexRef.current) setResult(data.result as PnResult);
     };
+    worker.onerror = (event) => handleWorkerFailure(event.message || "an unexpected worker error occurred");
+    worker.onmessageerror = () => handleWorkerFailure("the worker returned an unreadable message");
     return () => {
+      workerFailed = true;
       worker.terminate();
       workerRef.current = null;
     };
@@ -268,12 +286,12 @@ export function PnLab() {
           metrics={result ? [
             { id: "bias", label: "Selected bias", value: result.config.biasV, unit: "V", format: { significantDigits: 4 } },
             { id: "current", label: "Terminal current", value: currentA * 1e3, unit: "mA", format: { significantDigits: 4 } },
-            { id: "continuity", label: "Current mismatch", value: percent(result.diagnostics.currentContinuityError), status: result.warnings.length ? "warning" : "success" },
+            { id: "continuity", label: "Current mismatch", value: percent(result.diagnostics.currentContinuityError), status: actionableWarnings(result.warnings).length ? "warning" : "success" },
           ] : []}
           actions={[
             { id: "profile-csv", label: "Export profile CSV", emphasis: "primary", disabled: !result, disabledReason: "Calculate the sweep before exporting.", onClick: () => { if (!result) return; downloadText(serializePnProfileCsv(result), "pn-profile.csv"); setMessage("Profile exported as pn-profile.csv."); } },
             { id: "sweep-csv", label: "Export sweep CSV", emphasis: "secondary", collapseAt: "sm", disabled: !sweep, onClick: () => { if (!sweep) return; downloadText(serializePnSweepCsv(sweep), "pn-iv.csv"); setMessage("Sweep exported as pn-iv.csv."); } },
-            { id: "plot-svg", label: "Export plot SVG", emphasis: "tertiary", overflowOnly: true, disabled: !sweep, onClick: () => { chartRef.current?.downloadSvg("pn-iv.svg"); setMessage("Plot exported as pn-iv.svg."); } },
+            { id: "plot-svg", label: "Export plot SVG", emphasis: "tertiary", overflowOnly: true, disabled: !sweep, onClick: async () => { const exported = await chartRef.current?.downloadSvg("pn-iv.svg"); setMessage(exported ? "Plot exported as pn-iv.svg." : "Plot export is not available yet; render the chart and try again."); } },
           ]}
         />
 

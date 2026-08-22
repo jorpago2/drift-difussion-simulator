@@ -19,3 +19,18 @@ test("heatmaps expose a textual summary linked to the rendered surface", async (
   assert.match(source, /aria-describedby=\{summaryId\}/);
   assert.match(source, /finite values ranging from/);
 });
+
+test("solver workers and SVG export expose recoverable failure paths", async () => {
+  const [pn, bjt, chart] = await Promise.all([
+    readFile(new URL("../src/labs/PnLab.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/labs/BjtLab.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/LineChart.tsx", import.meta.url), "utf8"),
+  ]);
+  for (const source of [pn, bjt]) {
+    assert.match(source, /worker\.onerror/);
+    assert.match(source, /worker\.onmessageerror/);
+    assert.match(source, /Inputs were preserved; try again/);
+  }
+  assert.match(chart, /downloadSvg: \(filename: string\) => Promise<boolean>/);
+  assert.match(chart, /if \(!plotlyRef\.current \|\| !plotRef\.current \|\| !plotReadyRef\.current\) return false/);
+});
